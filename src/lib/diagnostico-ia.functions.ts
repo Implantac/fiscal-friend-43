@@ -61,7 +61,7 @@ export const diagnosticarNfe = createServerFn({ method: "POST" })
 
     const baseCampos = campos.filter((c) => c.documento === "nfe55").map((c) => `${c.id} | ${c.grupoXml}/${c.tagXml} | ${c.nome} | status: ${statusLabel[c.procedencia.status]} | fonte: ${c.procedencia.fonteId}`).join("\n");
     const baseRegras = regras.filter((r) => r.documento === "nfe55").map((r) => `${r.id} | ${r.titulo} | ${r.condicaoTecnica} | status: ${statusLabel[r.procedencia.status]} | fonte: ${r.procedencia.fonteId}`).join("\n");
-    const baseFontes = fontes.map((f) => `${f.id} | ${f.categoria} | ${f.nome}`).join("\n");
+    const baseFontes = fontes.filter((f) => f.id !== "sem-fonte").map((f) => `${f.id} | ${f.categoria} | ${f.nome}${f.observacao ? ` | ${f.observacao}` : ""}`).join("\n");
     const linhas = data.xml.split(/\r?\n/).map((l, i) => `${i + 1}: ${l}`).join("\n").slice(0, 120_000);
 
     const instrucoes = `Você é um especialista em NF-e modelo 55 ajudando desenvolvedores e suporte de um ERP brasileiro, em Ambiente de Simulação.
