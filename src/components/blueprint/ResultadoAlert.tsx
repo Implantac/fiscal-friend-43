@@ -10,7 +10,7 @@ const estilo: Record<
 > = {
   sucesso: {
     icone: CheckCircle2,
-    classe: "border-[hsl(var(--sim))]/40 bg-[hsl(var(--sim))]/10",
+    classe: "border-validated/40 bg-auto-surface",
     origem: "Camada de simulação",
   },
   erro_local: {
