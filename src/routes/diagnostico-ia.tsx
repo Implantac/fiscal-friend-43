@@ -34,9 +34,9 @@ function DiagnosticoPage() {
   const [d, setD] = useState<DiagnosticoIA | null>(null);
 
   const enviar = async () => {
-    if (xml.trim().length < 20) return toast.error("Carregue ou cole o XML da NF-e.");
-    if (descricao.trim().length < 5) return toast.error("Descreva o erro que apareceu.");
-    if (xml.length > 400_000) return toast.error("XML grande demais (máx. 400 KB).");
+    if (xml.trim().length < 20) { toast.error("Carregue ou cole o XML da NF-e."); return; }
+    if (descricao.trim().length < 5) { toast.error("Descreva o erro que apareceu."); return; }
+    if (xml.length > 400_000) { toast.error("XML grande demais (máx. 400 KB)."); return; }
     setCarregando(true); setErro(null); setD(null);
     try {
       const local = conferirNfe(xml);
