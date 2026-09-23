@@ -9,7 +9,7 @@ export interface FiscalGateway {
   manifestar(input: {
     nota: NotaRecebida;
     tipo: ManifestacaoTipo;
-    justificativa?: string;
+    justificativa?: string | undefined;
   }): Promise<ResultadoSimulado>;
   baixarXml(nota: NotaRecebida): Promise<ResultadoSimulado>;
 }
@@ -32,7 +32,7 @@ export class MockFiscalGateway implements FiscalGateway {
   }: {
     nota: NotaRecebida;
     tipo: ManifestacaoTipo;
-    justificativa?: string;
+    justificativa?: string | undefined;
   }): Promise<ResultadoSimulado> {
     await delay(700);
 
