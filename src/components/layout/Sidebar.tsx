@@ -17,6 +17,11 @@ import {
   GraduationCap,
   Map,
   Library,
+  Grid3x3,
+  FlaskConical,
+  LifeBuoy,
+  Gauge,
+  Rocket,
 } from "lucide-react";
 
 const secoes = [
@@ -35,6 +40,8 @@ const secoes = [
   {
     titulo: "Conhecimento",
     itens: [
+      { to: "/comece-aqui", label: "Comece aqui", desc: "Trilha de 7 dias", icon: Rocket },
+      { to: "/matriz", label: "Matriz fiscal", desc: "Cenário → regras", icon: Grid3x3 },
       { to: "/mapa", label: "Mapa fiscal", desc: "Do documento aos eventos", icon: Map },
       { to: "/conhecimento", label: "Base fiscal", desc: "Campos, regras, XML", icon: BookOpen },
       { to: "/cenarios", label: "Cenários", desc: "Operação passo a passo", icon: RouteIcon },
@@ -48,6 +55,9 @@ const secoes = [
       { to: "/debugger", label: "Debugger", desc: "Regras e diagnóstico", icon: Bug },
       { to: "/cstat", label: "Rejeições", desc: "Causa e correção", icon: ShieldAlert },
       { to: "/xml-lab", label: "XML Lab", desc: "Tag → campo → regra", icon: Code2 },
+      { to: "/regressao", label: "Regressão", desc: "Casos de teste", icon: FlaskConical },
+      { to: "/suporte", label: "Modo suporte", desc: "Roteiro do analista", icon: LifeBuoy },
+      { to: "/qualidade", label: "Qualidade", desc: "Lacunas e completude", icon: Gauge },
       { to: "/math-lab", label: "Cálculos", desc: "Fórmula e resultado", icon: Calculator },
     ],
   },
