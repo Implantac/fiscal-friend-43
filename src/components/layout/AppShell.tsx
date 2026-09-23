@@ -1,10 +1,40 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
+import { toast } from "sonner";
 import { Sidebar } from "./Sidebar";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { EngineeringPanel } from "./EngineeringPanel";
+import { useSimulator } from "@/blueprint/SimulatorProvider";
+
+/** F9 e F10 executam apenas ações simuladas. Nunca disparam operação fiscal real. */
+function useAtalhosSimulados() {
+  const { registrarLog } = useSimulator();
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "F9") {
+        e.preventDefault();
+        registrarLog("F9 — rascunho salvo na sessão (simulado)", "sucesso");
+        toast.success("Rascunho salvo (simulado)", {
+          description: "Nada foi gravado em sistema fiscal real.",
+        });
+      }
+      if (e.key === "F10") {
+        e.preventDefault();
+        registrarLog("F10 — transmissão simulada solicitada", "sucesso");
+        toast.success("Transmissão simulada executada", {
+          description: "Nenhum documento foi enviado à SEFAZ ou a provedores.",
+        });
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [registrarLog]);
+}
 
 export function AppShell({ children }: { children: ReactNode }) {
+  useAtalhosSimulados();
+
   return (
     <div className="flex h-screen overflow-hidden bg-background">
       <Sidebar />
