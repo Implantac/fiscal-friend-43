@@ -17,6 +17,8 @@ import { Route as CstatRouteImport } from './routes/cstat'
 import { Route as CteRouteImport } from './routes/cte'
 import { Route as CteOsRouteImport } from './routes/cte-os'
 import { Route as DebuggerRouteImport } from './routes/debugger'
+import { Route as FontesRouteImport } from './routes/fontes'
+import { Route as MapaRouteImport } from './routes/mapa'
 import { Route as MathLabRouteImport } from './routes/math-lab'
 import { Route as MdfeRouteImport } from './routes/mdfe'
 import { Route as NfceRouteImport } from './routes/nfce'
@@ -65,6 +67,16 @@ const DebuggerRoute = DebuggerRouteImport.update({
   path: '/debugger',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FontesRoute = FontesRouteImport.update({
+  id: '/fontes',
+  path: '/fontes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MapaRoute = MapaRouteImport.update({
+  id: '/mapa',
+  path: '/mapa',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MathLabRoute = MathLabRouteImport.update({
   id: '/math-lab',
   path: '/math-lab',
@@ -110,6 +122,8 @@ export interface FileRoutesByFullPath {
   '/cte': typeof CteRoute
   '/cte-os': typeof CteOsRoute
   '/debugger': typeof DebuggerRoute
+  '/fontes': typeof FontesRoute
+  '/mapa': typeof MapaRoute
   '/math-lab': typeof MathLabRoute
   '/mdfe': typeof MdfeRoute
   '/nfce': typeof NfceRoute
@@ -127,6 +141,8 @@ export interface FileRoutesByTo {
   '/cte': typeof CteRoute
   '/cte-os': typeof CteOsRoute
   '/debugger': typeof DebuggerRoute
+  '/fontes': typeof FontesRoute
+  '/mapa': typeof MapaRoute
   '/math-lab': typeof MathLabRoute
   '/mdfe': typeof MdfeRoute
   '/nfce': typeof NfceRoute
@@ -145,6 +161,8 @@ export interface FileRoutesById {
   '/cte': typeof CteRoute
   '/cte-os': typeof CteOsRoute
   '/debugger': typeof DebuggerRoute
+  '/fontes': typeof FontesRoute
+  '/mapa': typeof MapaRoute
   '/math-lab': typeof MathLabRoute
   '/mdfe': typeof MdfeRoute
   '/nfce': typeof NfceRoute
@@ -164,6 +182,8 @@ export interface FileRouteTypes {
     | '/cte'
     | '/cte-os'
     | '/debugger'
+    | '/fontes'
+    | '/mapa'
     | '/math-lab'
     | '/mdfe'
     | '/nfce'
@@ -181,6 +201,8 @@ export interface FileRouteTypes {
     | '/cte'
     | '/cte-os'
     | '/debugger'
+    | '/fontes'
+    | '/mapa'
     | '/math-lab'
     | '/mdfe'
     | '/nfce'
@@ -198,6 +220,8 @@ export interface FileRouteTypes {
     | '/cte'
     | '/cte-os'
     | '/debugger'
+    | '/fontes'
+    | '/mapa'
     | '/math-lab'
     | '/mdfe'
     | '/nfce'
@@ -216,6 +240,8 @@ export interface RootRouteChildren {
   CteRoute: typeof CteRoute
   CteOsRoute: typeof CteOsRoute
   DebuggerRoute: typeof DebuggerRoute
+  FontesRoute: typeof FontesRoute
+  MapaRoute: typeof MapaRoute
   MathLabRoute: typeof MathLabRoute
   MdfeRoute: typeof MdfeRoute
   NfceRoute: typeof NfceRoute
@@ -283,6 +309,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DebuggerRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/fontes': {
+      id: '/fontes'
+      path: '/fontes'
+      fullPath: '/fontes'
+      preLoaderRoute: typeof FontesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mapa': {
+      id: '/mapa'
+      path: '/mapa'
+      fullPath: '/mapa'
+      preLoaderRoute: typeof MapaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/math-lab': {
       id: '/math-lab'
       path: '/math-lab'
@@ -344,6 +384,8 @@ const rootRouteChildren: RootRouteChildren = {
   CteRoute: CteRoute,
   CteOsRoute: CteOsRoute,
   DebuggerRoute: DebuggerRoute,
+  FontesRoute: FontesRoute,
+  MapaRoute: MapaRoute,
   MathLabRoute: MathLabRoute,
   MdfeRoute: MdfeRoute,
   NfceRoute: NfceRoute,
