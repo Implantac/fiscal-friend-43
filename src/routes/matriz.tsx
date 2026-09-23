@@ -83,10 +83,10 @@ function MatrizPage() {
 
         <ol className="grid gap-2 md:grid-cols-2">
           {etapa(1, "Cenário", `${operacoes[op]} ${interestadual ? "interestadual" : "interna"} (${d.ufOrigem} → ${d.ufDestino}), ${d.contribuinte ? "destinatário contribuinte" : "não contribuinte"}.`)}
-          {etapa(2, "Documento", <Link to="/conhecimento" search={{ doc: "nfe55" }} className="text-primary hover:underline">NF-e modelo 55</Link>)}
+          {etapa(2, "Documento", <Link to="/conhecimento" search={{ doc: "nfe55", campo: undefined }} className="text-primary hover:underline">NF-e modelo 55</Link>)}
           {etapa(3, "Classificação", <>CFOP sugerido <code className="font-mono">{cfopSugerido}</code> · CST/CSOSN <code className="font-mono">{d.cst}</code> · NCM <code className="font-mono">{d.ncm}</code> <StatusBadge status="ilustrativo" /></>)}
           {etapa(4, "Tributação", <>ICMS próprio{partilha ? " + partilha para a UF de destino" : ""}{d.regime === "simples" ? " (regras do Simples)" : ""}. <Link to="/reforma" className="text-primary hover:underline">Novo modelo IBS/CBS</Link> <StatusBadge status="pendente" /></>)}
-          {etapa(5, "Cálculo", <>Base {brl(b)} × {d.aliquotaIcms}% = {brl(Math.round(b * d.aliquotaIcms) / 100)} <span className="text-xs text-muted-foreground">(exemplo didático)</span> · <Link to="/math-lab" className="text-primary hover:underline">abrir laboratório</Link></>)}
+          {etapa(5, "Cálculo", <>Base {brl(b)} × {d.aliquotaIcms}% = {brl(Math.round(b * d.aliquotaIcms) / 100)} <span className="text-xs text-muted-foreground">(exemplo didático)</span> · <Link to="/math-lab" search={{} as never} className="text-primary hover:underline">abrir laboratório</Link></>)}
           {etapa(6, "Campos", <div className="flex flex-wrap gap-1">{campos.map((c) => { const f = campoById.get(c); return f ? <Link key={c} to="/conhecimento" search={{ doc: f.documento, campo: c }} className="rounded border px-1.5 font-mono text-[11px] hover:bg-accent">{f.tagXml}</Link> : null; })}</div>)}
           {etapa(7, "XML (ilustrativo)", <pre className="overflow-x-auto rounded bg-muted p-2 font-mono text-[11px]">{`<prod><NCM>${d.ncm}</NCM><CFOP>${cfopSugerido}</CFOP></prod>\n<ICMS><CST>${d.cst}</CST><vBC>${b.toFixed(2)}</vBC></ICMS>`}</pre>)}
           {etapa(8, `Regras (${resultados.length - falhas.length} ok, ${falhas.length} falha${falhas.length === 1 ? "" : "s"})`, (
