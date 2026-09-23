@@ -10,16 +10,30 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ConhecimentoRouteImport } from './routes/conhecimento'
+import { Route as CstatRouteImport } from './routes/cstat'
 import { Route as CteRouteImport } from './routes/cte'
 import { Route as CteOsRouteImport } from './routes/cte-os'
+import { Route as DebuggerRouteImport } from './routes/debugger'
 import { Route as MdfeRouteImport } from './routes/mdfe'
 import { Route as NfceRouteImport } from './routes/nfce'
 import { Route as NfeRouteImport } from './routes/nfe'
 import { Route as NfseRouteImport } from './routes/nfse'
+import { Route as XmlLabRouteImport } from './routes/xml-lab'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConhecimentoRoute = ConhecimentoRouteImport.update({
+  id: '/conhecimento',
+  path: '/conhecimento',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CstatRoute = CstatRouteImport.update({
+  id: '/cstat',
+  path: '/cstat',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CteRoute = CteRouteImport.update({
@@ -30,6 +44,11 @@ const CteRoute = CteRouteImport.update({
 const CteOsRoute = CteOsRouteImport.update({
   id: '/cte-os',
   path: '/cte-os',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DebuggerRoute = DebuggerRouteImport.update({
+  id: '/debugger',
+  path: '/debugger',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MdfeRoute = MdfeRouteImport.update({
@@ -52,52 +71,106 @@ const NfseRoute = NfseRouteImport.update({
   path: '/nfse',
   getParentRoute: () => rootRouteImport,
 } as any)
+const XmlLabRoute = XmlLabRouteImport.update({
+  id: '/xml-lab',
+  path: '/xml-lab',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/conhecimento': typeof ConhecimentoRoute
+  '/cstat': typeof CstatRoute
   '/cte': typeof CteRoute
   '/cte-os': typeof CteOsRoute
+  '/debugger': typeof DebuggerRoute
   '/mdfe': typeof MdfeRoute
   '/nfce': typeof NfceRoute
   '/nfe': typeof NfeRoute
   '/nfse': typeof NfseRoute
+  '/xml-lab': typeof XmlLabRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/conhecimento': typeof ConhecimentoRoute
+  '/cstat': typeof CstatRoute
   '/cte': typeof CteRoute
   '/cte-os': typeof CteOsRoute
+  '/debugger': typeof DebuggerRoute
   '/mdfe': typeof MdfeRoute
   '/nfce': typeof NfceRoute
   '/nfe': typeof NfeRoute
   '/nfse': typeof NfseRoute
+  '/xml-lab': typeof XmlLabRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/conhecimento': typeof ConhecimentoRoute
+  '/cstat': typeof CstatRoute
   '/cte': typeof CteRoute
   '/cte-os': typeof CteOsRoute
+  '/debugger': typeof DebuggerRoute
   '/mdfe': typeof MdfeRoute
   '/nfce': typeof NfceRoute
   '/nfe': typeof NfeRoute
   '/nfse': typeof NfseRoute
+  '/xml-lab': typeof XmlLabRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/cte' | '/cte-os' | '/mdfe' | '/nfce' | '/nfe' | '/nfse'
+  fullPaths:
+    | '/'
+    | '/conhecimento'
+    | '/cstat'
+    | '/cte'
+    | '/cte-os'
+    | '/debugger'
+    | '/mdfe'
+    | '/nfce'
+    | '/nfe'
+    | '/nfse'
+    | '/xml-lab'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/cte' | '/cte-os' | '/mdfe' | '/nfce' | '/nfe' | '/nfse'
+  to:
+    | '/'
+    | '/conhecimento'
+    | '/cstat'
+    | '/cte'
+    | '/cte-os'
+    | '/debugger'
+    | '/mdfe'
+    | '/nfce'
+    | '/nfe'
+    | '/nfse'
+    | '/xml-lab'
   id:
-    '__root__' | '/' | '/cte' | '/cte-os' | '/mdfe' | '/nfce' | '/nfe' | '/nfse'
+    | '__root__'
+    | '/'
+    | '/conhecimento'
+    | '/cstat'
+    | '/cte'
+    | '/cte-os'
+    | '/debugger'
+    | '/mdfe'
+    | '/nfce'
+    | '/nfe'
+    | '/nfse'
+    | '/xml-lab'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ConhecimentoRoute: typeof ConhecimentoRoute
+  CstatRoute: typeof CstatRoute
   CteRoute: typeof CteRoute
   CteOsRoute: typeof CteOsRoute
+  DebuggerRoute: typeof DebuggerRoute
   MdfeRoute: typeof MdfeRoute
   NfceRoute: typeof NfceRoute
   NfeRoute: typeof NfeRoute
   NfseRoute: typeof NfseRoute
+  XmlLabRoute: typeof XmlLabRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -107,6 +180,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/conhecimento': {
+      id: '/conhecimento'
+      path: '/conhecimento'
+      fullPath: '/conhecimento'
+      preLoaderRoute: typeof ConhecimentoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cstat': {
+      id: '/cstat'
+      path: '/cstat'
+      fullPath: '/cstat'
+      preLoaderRoute: typeof CstatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cte': {
@@ -121,6 +208,13 @@ declare module '@tanstack/react-router' {
       path: '/cte-os'
       fullPath: '/cte-os'
       preLoaderRoute: typeof CteOsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/debugger': {
+      id: '/debugger'
+      path: '/debugger'
+      fullPath: '/debugger'
+      preLoaderRoute: typeof DebuggerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mdfe': {
@@ -151,17 +245,28 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NfseRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/xml-lab': {
+      id: '/xml-lab'
+      path: '/xml-lab'
+      fullPath: '/xml-lab'
+      preLoaderRoute: typeof XmlLabRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ConhecimentoRoute: ConhecimentoRoute,
+  CstatRoute: CstatRoute,
   CteRoute: CteRoute,
   CteOsRoute: CteOsRoute,
+  DebuggerRoute: DebuggerRoute,
   MdfeRoute: MdfeRoute,
   NfceRoute: NfceRoute,
   NfeRoute: NfeRoute,
   NfseRoute: NfseRoute,
+  XmlLabRoute: XmlLabRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
