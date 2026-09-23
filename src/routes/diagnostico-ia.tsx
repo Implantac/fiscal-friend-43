@@ -8,7 +8,7 @@ import { StatusBadge } from "@/components/knowledge/StatusBadge";
 import { conferirNfe, xmlExemploComErros } from "@/knowledge/conferir-nfe";
 import { campoById } from "@/knowledge/campos";
 import { regraById } from "@/knowledge/regras";
-import { nomeFonte } from "@/knowledge/fontes";
+import { nomeFonte, fonteById } from "@/knowledge/fontes";
 import { diagnosticarNfe, type DiagnosticoIA } from "@/lib/diagnostico-ia.functions";
 
 export const Route = createFileRoute("/diagnostico-ia")({
@@ -98,7 +98,24 @@ function DiagnosticoPage() {
             <p className="font-semibold text-sm">Ligações com a base</p>
             {campo ? <p>Campo: <Link to="/conhecimento" search={{ doc: "nfe55", campo: campo.id } as never} className="text-primary hover:underline">{campo.nome}</Link> <StatusBadge status={campo.procedencia.status} /></p> : <p>Campo: sem correspondência na base.</p>}
             {regra ? <p>Regra: <Link to="/debugger" search={{ regra: regra.id } as never} className="text-primary hover:underline">{regra.titulo}</Link> <StatusBadge status={regra.procedencia.status} /></p> : <p>Regra: sem correspondência na base.</p>}
-            <p>Fontes: {d.fontesIds.length ? d.fontesIds.map(nomeFonte).join(" · ") : "Fonte oficial ainda não cadastrada."}</p>
+            <div>
+              <p>Fontes:</p>
+              {d.fontesIds.length ? (
+                <ul className="list-disc pl-5">
+                  {d.fontesIds.map((id) => {
+                    const f = fonteById.get(id);
+                    return (
+                      <li key={id}>
+                        {f?.referencia ? (
+                          <a href={f.referencia} target="_blank" rel="noreferrer" className="text-primary underline">{nomeFonte(id)}</a>
+                        ) : nomeFonte(id)}
+                        {f?.observacao && <span className="text-muted-foreground"> — {f.observacao}</span>}
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : <p>Nenhuma fonte citada pela IA.</p>}
+            </div>
           </div>
           {d.pendencias.length > 0 && (
             <div className="text-xs"><p className="font-semibold">Pendente de validação</p><ul className="list-disc pl-5">{d.pendencias.map((p, i) => <li key={i}>{p}</li>)}</ul></div>
