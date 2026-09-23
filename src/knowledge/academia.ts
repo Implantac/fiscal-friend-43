@@ -328,4 +328,47 @@ export const desafios: DesafioFiscal[] = [
     explicacao: "CPF com todos os dígitos iguais não passa na verificação dos dígitos verificadores.",
     correcao: "Corrigir o CPF no cadastro do motorista e validar no cadastro, não na emissão.",
   },
+  {
+    id: "d4",
+    titulo: "A venda no caixa não fecha.",
+    enunciado:
+      "NFC-e de 150,00 recusada. Os pagamentos somam menos que o total. Encontre campo, regra e família de rejeição.",
+    xml: `<total><ICMSTot><vNF>150.00</vNF></ICMSTot></total>
+<pag>
+  <detPag><tPag>01</tPag><vPag>100.00</vPag></detPag>
+  <detPag><tPag>03</tPag><vPag>30.00</vPag></detPag>
+</pag>`,
+    campoCorreto: "nfce.pag",
+    regraCorreta: "REGRA-PAG-SOMA",
+    cstatCorreto: "cstat.pendente.pagamento",
+    explicacao: "100,00 + 30,00 = 130,00, abaixo dos 150,00 do documento (exemplo didático).",
+    correcao: "Bloquear o fechamento do caixa enquanto a soma dos pagamentos for menor que o total.",
+  },
+  {
+    id: "d5",
+    titulo: "Quem paga o frete?",
+    enunciado:
+      "CT-e recusado: o tomador do serviço não foi identificado. Descubra o campo e a regra.",
+    xml: `<ide><toma3><toma></toma></toma3></ide>
+<rem><xNome>Aurora Distribuidora (fictício)</xNome></rem>
+<dest><xNome>Cliente Exemplo (fictício)</xNome></dest>`,
+    campoCorreto: "cte.tomador",
+    regraCorreta: "REGRA-CTE-TOMADOR",
+    cstatCorreto: "cstat.pendente.cte",
+    explicacao: "O indicador de tomador está vazio; o ERP precisa saber quem paga pela prestação.",
+    correcao: "Tornar o tomador obrigatório na tela e derivá-lo do tipo de frete quando possível.",
+  },
+  {
+    id: "d6",
+    titulo: "A nota de serviço voltou.",
+    enunciado:
+      "NFS-e recusada com descrição de serviço muito curta. Identifique o campo e a regra.",
+    xml: `<Servico><Discriminacao>Serv.</Discriminacao><Valores><ValorServicos>800.00</ValorServicos></Valores></Servico>`,
+    campoCorreto: "nfse.servico",
+    regraCorreta: "REGRA-NFSE-DESCRICAO",
+    cstatCorreto: "cstat.pendente.nfse",
+    explicacao:
+      "A descrição não identifica o serviço prestado. O limite mínimo usado aqui é ilustrativo; cada município pode ter regra própria.",
+    correcao: "Exigir descrição mínima na tela e parametrizar o limite por município.",
+  },
 ];
