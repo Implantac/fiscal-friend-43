@@ -53,7 +53,7 @@ export function ExportarDocumento({
         </div>
         <p className="text-xs text-muted-foreground">
           XML no leiaute oficial vigente, em ambiente de homologação, sem assinatura digital e sem
-          protocolo. Os tributos não são calculados (Pendente de validação) e a conferência contra
+          protocolo. Os tributos são calculados com percentuais de cenário do simulador (não oficiais) e a conferência contra
           os schemas oficiais ainda está pendente.
         </p>
         {previa ? (
