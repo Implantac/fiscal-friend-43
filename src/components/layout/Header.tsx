@@ -5,6 +5,7 @@ import { empresaSimulada } from "@/simulation/mock-data";
 import { formatCnpj } from "@/lib/format";
 import { useSimulator } from "@/blueprint/SimulatorProvider";
 import { Documented } from "@/components/blueprint/Documented";
+import { GlobalSearch } from "@/components/knowledge/GlobalSearch";
 
 export function Header() {
   const { devMode, setDevMode } = useSimulator();
