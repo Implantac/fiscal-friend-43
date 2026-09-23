@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AcademiaRouteImport } from './routes/academia'
 import { Route as CenariosRouteImport } from './routes/cenarios'
 import { Route as ConhecimentoRouteImport } from './routes/conhecimento'
 import { Route as CstatRouteImport } from './routes/cstat'
@@ -27,6 +28,11 @@ import { Route as XmlLabRouteImport } from './routes/xml-lab'
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AcademiaRoute = AcademiaRouteImport.update({
+  id: '/academia',
+  path: '/academia',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CenariosRoute = CenariosRouteImport.update({
@@ -97,6 +103,7 @@ const XmlLabRoute = XmlLabRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/academia': typeof AcademiaRoute
   '/cenarios': typeof CenariosRoute
   '/conhecimento': typeof ConhecimentoRoute
   '/cstat': typeof CstatRoute
@@ -113,6 +120,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/academia': typeof AcademiaRoute
   '/cenarios': typeof CenariosRoute
   '/conhecimento': typeof ConhecimentoRoute
   '/cstat': typeof CstatRoute
@@ -130,6 +138,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/academia': typeof AcademiaRoute
   '/cenarios': typeof CenariosRoute
   '/conhecimento': typeof ConhecimentoRoute
   '/cstat': typeof CstatRoute
@@ -148,6 +157,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/academia'
     | '/cenarios'
     | '/conhecimento'
     | '/cstat'
@@ -164,6 +174,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/academia'
     | '/cenarios'
     | '/conhecimento'
     | '/cstat'
@@ -180,6 +191,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/academia'
     | '/cenarios'
     | '/conhecimento'
     | '/cstat'
@@ -197,6 +209,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AcademiaRoute: typeof AcademiaRoute
   CenariosRoute: typeof CenariosRoute
   ConhecimentoRoute: typeof ConhecimentoRoute
   CstatRoute: typeof CstatRoute
@@ -219,6 +232,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/academia': {
+      id: '/academia'
+      path: '/academia'
+      fullPath: '/academia'
+      preLoaderRoute: typeof AcademiaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/cenarios': {
@@ -317,6 +337,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AcademiaRoute: AcademiaRoute,
   CenariosRoute: CenariosRoute,
   ConhecimentoRoute: ConhecimentoRoute,
   CstatRoute: CstatRoute,

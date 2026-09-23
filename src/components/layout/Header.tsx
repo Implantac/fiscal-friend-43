@@ -23,6 +23,8 @@ export function Header() {
       </div>
 
       <div className="flex items-center gap-4">
+        <GlobalSearch />
+
         <Documented docId="global.ambiente" inline>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-sim-surface px-3 py-1 text-xs font-semibold text-sim-foreground">
             <FlaskConical className="size-3.5" aria-hidden />
