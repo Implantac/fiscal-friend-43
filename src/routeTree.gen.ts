@@ -21,6 +21,7 @@ import { Route as DebuggerRouteImport } from './routes/debugger'
 import { Route as FontesRouteImport } from './routes/fontes'
 import { Route as MapaRouteImport } from './routes/mapa'
 import { Route as MathLabRouteImport } from './routes/math-lab'
+import { Route as MatrizRouteImport } from './routes/matriz'
 import { Route as MdfeRouteImport } from './routes/mdfe'
 import { Route as NfceRouteImport } from './routes/nfce'
 import { Route as NfeRouteImport } from './routes/nfe'
@@ -91,6 +92,11 @@ const MathLabRoute = MathLabRouteImport.update({
   path: '/math-lab',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MatrizRoute = MatrizRouteImport.update({
+  id: '/matriz',
+  path: '/matriz',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MdfeRoute = MdfeRouteImport.update({
   id: '/mdfe',
   path: '/mdfe',
@@ -150,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/fontes': typeof FontesRoute
   '/mapa': typeof MapaRoute
   '/math-lab': typeof MathLabRoute
+  '/matriz': typeof MatrizRoute
   '/mdfe': typeof MdfeRoute
   '/nfce': typeof NfceRoute
   '/nfe': typeof NfeRoute
@@ -173,6 +180,7 @@ export interface FileRoutesByTo {
   '/fontes': typeof FontesRoute
   '/mapa': typeof MapaRoute
   '/math-lab': typeof MathLabRoute
+  '/matriz': typeof MatrizRoute
   '/mdfe': typeof MdfeRoute
   '/nfce': typeof NfceRoute
   '/nfe': typeof NfeRoute
@@ -197,6 +205,7 @@ export interface FileRoutesById {
   '/fontes': typeof FontesRoute
   '/mapa': typeof MapaRoute
   '/math-lab': typeof MathLabRoute
+  '/matriz': typeof MatrizRoute
   '/mdfe': typeof MdfeRoute
   '/nfce': typeof NfceRoute
   '/nfe': typeof NfeRoute
@@ -222,6 +231,7 @@ export interface FileRouteTypes {
     | '/fontes'
     | '/mapa'
     | '/math-lab'
+    | '/matriz'
     | '/mdfe'
     | '/nfce'
     | '/nfe'
@@ -245,6 +255,7 @@ export interface FileRouteTypes {
     | '/fontes'
     | '/mapa'
     | '/math-lab'
+    | '/matriz'
     | '/mdfe'
     | '/nfce'
     | '/nfe'
@@ -268,6 +279,7 @@ export interface FileRouteTypes {
     | '/fontes'
     | '/mapa'
     | '/math-lab'
+    | '/matriz'
     | '/mdfe'
     | '/nfce'
     | '/nfe'
@@ -292,6 +304,7 @@ export interface RootRouteChildren {
   FontesRoute: typeof FontesRoute
   MapaRoute: typeof MapaRoute
   MathLabRoute: typeof MathLabRoute
+  MatrizRoute: typeof MatrizRoute
   MdfeRoute: typeof MdfeRoute
   NfceRoute: typeof NfceRoute
   NfeRoute: typeof NfeRoute
@@ -389,6 +402,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MathLabRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/matriz': {
+      id: '/matriz'
+      path: '/matriz'
+      fullPath: '/matriz'
+      preLoaderRoute: typeof MatrizRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/mdfe': {
       id: '/mdfe'
       path: '/mdfe'
@@ -468,6 +488,7 @@ const rootRouteChildren: RootRouteChildren = {
   FontesRoute: FontesRoute,
   MapaRoute: MapaRoute,
   MathLabRoute: MathLabRoute,
+  MatrizRoute: MatrizRoute,
   MdfeRoute: MdfeRoute,
   NfceRoute: NfceRoute,
   NfeRoute: NfeRoute,
