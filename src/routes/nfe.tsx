@@ -231,7 +231,9 @@ function EmissaoNfe() {
                               }}
                             >
                               <SelectTrigger>
-                                <SelectValue />
+                                <SelectValue>
+                                  {prod.codigo} — {prod.descricao}
+                                </SelectValue>
                               </SelectTrigger>
                               <SelectContent>
                                 {produtos.map((p) => (

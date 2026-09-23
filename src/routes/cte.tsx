@@ -297,7 +297,7 @@ function EmissaoCte() {
               <Label htmlFor="uf-inicio">UF de início</Label>
               <Select value={ufInicio} onValueChange={setUfInicio}>
                 <SelectTrigger id="uf-inicio">
-                  <SelectValue />
+                  <SelectValue>{ufInicio}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {ufs.map((u) => (
@@ -312,7 +312,7 @@ function EmissaoCte() {
               <Label htmlFor="uf-fim">UF de término</Label>
               <Select value={ufFim} onValueChange={setUfFim}>
                 <SelectTrigger id="uf-fim">
-                  <SelectValue />
+                  <SelectValue>{ufFim}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {ufs.map((u) => (

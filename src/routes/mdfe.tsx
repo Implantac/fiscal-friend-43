@@ -249,7 +249,7 @@ function EmissaoMdfe() {
               <Label htmlFor="uf-ini-mdfe">UF de carregamento</Label>
               <Select value={ufInicio} onValueChange={setUfInicio}>
                 <SelectTrigger id="uf-ini-mdfe">
-                  <SelectValue />
+                  <SelectValue>{ufInicio}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {ufs.map((u) => (
@@ -264,7 +264,7 @@ function EmissaoMdfe() {
               <Label htmlFor="uf-fim-mdfe">UF de descarregamento</Label>
               <Select value={ufFim} onValueChange={setUfFim}>
                 <SelectTrigger id="uf-fim-mdfe">
-                  <SelectValue />
+                  <SelectValue>{ufFim}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {ufs.map((u) => (

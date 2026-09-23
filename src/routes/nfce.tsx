@@ -168,7 +168,9 @@ function Pdv() {
                   <Label htmlFor="produto">Produto (fictício)</Label>
                   <Select value={produtoId} onValueChange={setProdutoId}>
                     <SelectTrigger id="produto">
-                      <SelectValue />
+                      <SelectValue>
+                        {produtos.find((p) => p.id === produtoId)?.descricao}
+                      </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
                       {produtos.map((p) => (
@@ -302,7 +304,7 @@ function Pdv() {
                 <Label htmlFor="pagamento">Forma de pagamento</Label>
                 <Select value={pagamento} onValueChange={setPagamento}>
                   <SelectTrigger id="pagamento">
-                    <SelectValue />
+                    <SelectValue>{pagamento}</SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {formasPagamento.map((f) => (
