@@ -695,7 +695,7 @@ ${e.veiculo ? `          <veic><placa>${e.veiculo.placa}</placa><UF>${e.veiculo.
         : {}),
       totais: [
         [e.modalidade === "pessoas" ? "Passageiros" : "Malotes", String(qtd)],
-        ["Tributos", "Pendente de validação"],
+        [`ICMS ${d2(PC.icmsPercentual)}% (cenário)`, brl(impOs.v)],
         ["Valor total da prestação", brl(e.valorPrestacao)],
       ],
       observacao: OBS,
