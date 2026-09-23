@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import {
   Inbox,
+  FileSearch,
   ShieldCheck,
   FileText,
   ShoppingCart,
@@ -56,6 +57,7 @@ const secoes = [
     itens: [
       { to: "/debugger", label: "Debugger", desc: "Regras e diagnóstico", icon: Bug },
       { to: "/cstat", label: "Rejeições", desc: "Causa e correção", icon: ShieldAlert },
+      { to: "/conferir-xml", label: "Conferir XML", desc: "Carregar NF-e com erro", icon: FileSearch },
       { to: "/xml-lab", label: "XML Lab", desc: "Tag → campo → regra", icon: Code2 },
       { to: "/regressao", label: "Regressão", desc: "Casos de teste", icon: FlaskConical },
       { to: "/suporte", label: "Modo suporte", desc: "Roteiro do analista", icon: LifeBuoy },
