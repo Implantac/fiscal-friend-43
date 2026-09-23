@@ -199,3 +199,7 @@
   box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--color-primary) 45%, transparent);
   border-radius: var(--radius-md);
 }
+
+#lovable-badge {
+  display: none !important;
+}
