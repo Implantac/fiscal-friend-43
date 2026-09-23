@@ -10,33 +10,94 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CteRouteImport } from './routes/cte'
+import { Route as CteOsRouteImport } from './routes/cte-os'
+import { Route as MdfeRouteImport } from './routes/mdfe'
+import { Route as NfceRouteImport } from './routes/nfce'
+import { Route as NfeRouteImport } from './routes/nfe'
+import { Route as NfseRouteImport } from './routes/nfse'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CteRoute = CteRouteImport.update({
+  id: '/cte',
+  path: '/cte',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CteOsRoute = CteOsRouteImport.update({
+  id: '/cte-os',
+  path: '/cte-os',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MdfeRoute = MdfeRouteImport.update({
+  id: '/mdfe',
+  path: '/mdfe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NfceRoute = NfceRouteImport.update({
+  id: '/nfce',
+  path: '/nfce',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NfeRoute = NfeRouteImport.update({
+  id: '/nfe',
+  path: '/nfe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NfseRoute = NfseRouteImport.update({
+  id: '/nfse',
+  path: '/nfse',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/cte': typeof CteRoute
+  '/cte-os': typeof CteOsRoute
+  '/mdfe': typeof MdfeRoute
+  '/nfce': typeof NfceRoute
+  '/nfe': typeof NfeRoute
+  '/nfse': typeof NfseRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/cte': typeof CteRoute
+  '/cte-os': typeof CteOsRoute
+  '/mdfe': typeof MdfeRoute
+  '/nfce': typeof NfceRoute
+  '/nfe': typeof NfeRoute
+  '/nfse': typeof NfseRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/cte': typeof CteRoute
+  '/cte-os': typeof CteOsRoute
+  '/mdfe': typeof MdfeRoute
+  '/nfce': typeof NfceRoute
+  '/nfe': typeof NfeRoute
+  '/nfse': typeof NfseRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/cte' | '/cte-os' | '/mdfe' | '/nfce' | '/nfe' | '/nfse'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/cte' | '/cte-os' | '/mdfe' | '/nfce' | '/nfe' | '/nfse'
+  id:
+    '__root__' | '/' | '/cte' | '/cte-os' | '/mdfe' | '/nfce' | '/nfe' | '/nfse'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CteRoute: typeof CteRoute
+  CteOsRoute: typeof CteOsRoute
+  MdfeRoute: typeof MdfeRoute
+  NfceRoute: typeof NfceRoute
+  NfeRoute: typeof NfeRoute
+  NfseRoute: typeof NfseRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +109,59 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cte': {
+      id: '/cte'
+      path: '/cte'
+      fullPath: '/cte'
+      preLoaderRoute: typeof CteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cte-os': {
+      id: '/cte-os'
+      path: '/cte-os'
+      fullPath: '/cte-os'
+      preLoaderRoute: typeof CteOsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mdfe': {
+      id: '/mdfe'
+      path: '/mdfe'
+      fullPath: '/mdfe'
+      preLoaderRoute: typeof MdfeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/nfce': {
+      id: '/nfce'
+      path: '/nfce'
+      fullPath: '/nfce'
+      preLoaderRoute: typeof NfceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/nfe': {
+      id: '/nfe'
+      path: '/nfe'
+      fullPath: '/nfe'
+      preLoaderRoute: typeof NfeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/nfse': {
+      id: '/nfse'
+      path: '/nfse'
+      fullPath: '/nfse'
+      preLoaderRoute: typeof NfseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CteRoute: CteRoute,
+  CteOsRoute: CteOsRoute,
+  MdfeRoute: MdfeRoute,
+  NfceRoute: NfceRoute,
+  NfeRoute: NfeRoute,
+  NfseRoute: NfseRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
