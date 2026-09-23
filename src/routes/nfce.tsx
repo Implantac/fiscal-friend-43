@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Loader2, Plus, Send, Trash2, Wifi, WifiOff } from "lucide-react";
 
+import { ExportarDocumento } from "@/components/blueprint/ExportarDocumento";
+import { gerarNfe } from "@/simulation/documento-saida";
 import { PageHeader } from "@/components/layout/AppShell";
 import { Documented } from "@/components/blueprint/Documented";
 import { ResultadoAlert } from "@/components/blueprint/ResultadoAlert";
@@ -153,6 +155,8 @@ function Pdv() {
           </Documented>
         }
       />
+
+      <ExportarDocumento rotuloPdf="DANFE NFC-e" gerar={() => gerarNfe({ modelo: "65", natureza: "Venda ao consumidor (fictícia)", itens: itens.map((i) => { const p = produtos.find((x) => x.id === i.produtoId)!; return { produto: p, quantidade: i.quantidade, preco: p.preco, desconto: 0 }; }), frete: 0, pagamento: { tPag: ({ Dinheiro: "01", "Cartão de crédito": "03", "Cartão de débito": "04", Pix: "17" } as Record<string, string>)[pagamento] ?? "99", descricao: pagamento, valor: pagamento === "Dinheiro" ? Math.max(recebido, total) : total } })} />
 
       {resultado ? <ResultadoAlert resultado={resultado} onFechar={limpar} /> : null}
 
