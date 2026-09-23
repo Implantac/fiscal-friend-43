@@ -15,6 +15,8 @@ import {
   Route as RouteIcon,
   Scale,
   GraduationCap,
+  Map,
+  Library,
 } from "lucide-react";
 
 const secoes = [
@@ -33,9 +35,11 @@ const secoes = [
   {
     titulo: "Conhecimento",
     itens: [
+      { to: "/mapa", label: "Mapa fiscal", desc: "Do documento aos eventos", icon: Map },
       { to: "/conhecimento", label: "Base fiscal", desc: "Campos, regras, XML", icon: BookOpen },
       { to: "/cenarios", label: "Cenários", desc: "Operação passo a passo", icon: RouteIcon },
       { to: "/reforma", label: "Reforma", desc: "IBS, CBS e IS", icon: Scale },
+      { to: "/fontes", label: "Fontes", desc: "Manuais e legislação", icon: Library },
     ],
   },
   {

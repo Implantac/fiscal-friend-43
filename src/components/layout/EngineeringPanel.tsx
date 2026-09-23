@@ -3,6 +3,10 @@ import { catalogById, estadoLabel, type EstadoConfianca } from "@/blueprint/cata
 import { useSimulator } from "@/blueprint/SimulatorProvider";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
+import { Link } from "@tanstack/react-router";
+import { campoPorDocId } from "@/knowledge/campos";
+import { StatusBadge } from "@/components/knowledge/StatusBadge";
+import { VersionTimeline } from "@/components/knowledge/VersionTimeline";
 
 const corEstado: Record<EstadoConfianca, string> = {
   validado: "bg-[var(--auto-surface)] text-[var(--auto-foreground)]",
@@ -36,6 +40,7 @@ export function EngineeringPanel() {
   if (!devMode) return null;
 
   const entry = docId ? catalogById.get(docId) : undefined;
+  const campo = docId ? campoPorDocId.get(docId) : undefined;
 
   return (
     <aside
@@ -159,6 +164,54 @@ export function EngineeringPanel() {
                   ))}
                 </ul>
               </Bloco>
+            )}
+
+            {campo && (
+              <div className="space-y-4 border-t pt-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-primary">Base fiscal</p>
+                  <StatusBadge status={campo.procedencia.status} />
+                </div>
+                <Bloco titulo="Identificação">
+                  <code className="font-mono text-xs">{campo.grupoXml} / {campo.tagXml}</code>
+                  <p className="text-xs text-muted-foreground">{campo.tipo} · {campo.obrigatoriedade}</p>
+                </Bloco>
+                <Bloco titulo="Conceito">
+                  <p>{campo.conceito}</p>
+                  <p className="text-muted-foreground">{campo.porQueExiste}</p>
+                </Bloco>
+                <Bloco titulo="Origem do dado">
+                  <p>{campo.quemInforma}</p>
+                  <p className="text-muted-foreground">{campo.origemDado}</p>
+                </Bloco>
+                {campo.calculoId && (
+                  <Bloco titulo="Cálculo">
+                    <Link to="/math-lab" className="text-primary hover:underline">Abrir no laboratório de cálculos</Link>
+                  </Bloco>
+                )}
+                <Bloco titulo="XML (ilustrativo)">
+                  <pre className="overflow-x-auto rounded-md bg-muted p-2 font-mono text-[11px]">{campo.exemploXml}</pre>
+                </Bloco>
+                <Bloco titulo="Regras e rejeições">
+                  <div className="flex flex-wrap gap-1">
+                    {campo.regras.map((r) => (
+                      <Link key={r} to="/debugger" search={{ regra: r }} className="rounded border px-1.5 py-0.5 font-mono text-[11px] hover:bg-accent">{r}</Link>
+                    ))}
+                    {campo.cstats.map((c) => (
+                      <Link key={c} to="/cstat" search={{ codigo: c }} className="rounded border px-1.5 py-0.5 font-mono text-[11px] hover:bg-accent">{c}</Link>
+                    ))}
+                  </div>
+                </Bloco>
+                <Bloco titulo="Implementação no ERP">
+                  <ul className="list-disc space-y-1 pl-4">{campo.implementacaoErp.map((i) => <li key={i}>{i}</li>)}</ul>
+                </Bloco>
+                <Bloco titulo="Testes">
+                  <ul className="list-disc space-y-1 pl-4">{campo.testes.map((i) => <li key={i}>{i}</li>)}</ul>
+                </Bloco>
+                <Bloco titulo="Versão e vigência">
+                  <VersionTimeline procedencia={campo.procedencia} />
+                </Bloco>
+              </div>
             )}
           </div>
         )}
