@@ -43,7 +43,7 @@ function GovernancaPage() {
 
   const cadastrar = () => {
     const erro = validarRegistroOficial(f);
-    if (erro) return toast.error(erro);
+    if (erro) { toast.error(erro); return; }
     setOficiais(baseOficialRepo.salvar({ ...f, id: `OF-${Date.now()}`, data: new Date().toISOString() }));
     setF(vazio);
     toast.success("Item oficial cadastrado neste navegador.");

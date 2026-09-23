@@ -24,10 +24,10 @@ export function HistoricoRevisao({ itemId, procedencia, compacto = false }: { it
   const h = historico(itemId, todas);
 
   const registrar = () => {
-    if (!f.para) return toast.error("Escolha o novo status.");
+    if (!f.para) { toast.error("Escolha o novo status."); return; }
     const r = { ...f, para: f.para, itemId, de: atual };
     const erro = validarTransicao(r);
-    if (erro) return toast.error(erro);
+    if (erro) { toast.error(erro); return; }
     setTodas(revisoesRepo.salvar({ ...r, id: `REV-${Date.now()}`, data: new Date().toISOString() }));
     setAberto(false);
     toast.success(`Status alterado para ${governancaLabel[f.para]} (salvo neste navegador).`);
