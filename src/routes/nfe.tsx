@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Loader2, Plus, Save, Send, Trash2 } from "lucide-react";
 
+import { ExportarDocumento } from "@/components/blueprint/ExportarDocumento";
+import { gerarNfe } from "@/simulation/documento-saida";
 import { PageHeader } from "@/components/layout/AppShell";
 import { Documented } from "@/components/blueprint/Documented";
 import { ResultadoAlert } from "@/components/blueprint/ResultadoAlert";
@@ -137,6 +139,8 @@ function EmissaoNfe() {
           </div>
         }
       />
+
+      <ExportarDocumento rotuloPdf="DANFE" gerar={() => gerarNfe({ modelo: "55", natureza, cliente, cfop: cfop?.codigo, itens: itens.map((i) => ({ produto: produtos.find((p) => p.id === i.produtoId)!, quantidade: i.quantidade, preco: i.preco, desconto: i.desconto })), frete })} />
 
       {resultado ? <ResultadoAlert resultado={resultado} onFechar={limpar} /> : null}
 

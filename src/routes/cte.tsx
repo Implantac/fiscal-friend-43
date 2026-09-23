@@ -2,6 +2,8 @@ import { useState, type DragEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { FileUp, Loader2, Send, Trash2 } from "lucide-react";
 
+import { ExportarDocumento } from "@/components/blueprint/ExportarDocumento";
+import { gerarCte } from "@/simulation/documento-saida";
 import { PageHeader } from "@/components/layout/AppShell";
 import { Documented } from "@/components/blueprint/Documented";
 import { ResultadoAlert } from "@/components/blueprint/ResultadoAlert";
@@ -168,6 +170,8 @@ function EmissaoCte() {
           </Button>
         }
       />
+
+      <ExportarDocumento rotuloPdf="DACTE" gerar={() => gerarCte({ remetente: clientes.find((c) => c.id === remetenteId), destinatario: clientes.find((c) => c.id === destinatarioId), ufInicio, ufFim, valorFrete, pedagio, notas, observacao })} />
 
       {resultado ? <ResultadoAlert resultado={resultado} onFechar={limpar} /> : null}
 

@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Loader2, Send } from "lucide-react";
 
+import { ExportarDocumento } from "@/components/blueprint/ExportarDocumento";
+import { gerarMdfe } from "@/simulation/documento-saida";
 import { PageHeader } from "@/components/layout/AppShell";
 import { Documented } from "@/components/blueprint/Documented";
 import { ResultadoAlert } from "@/components/blueprint/ResultadoAlert";
@@ -124,6 +126,8 @@ function EmissaoMdfe() {
           </Button>
         }
       />
+
+      <ExportarDocumento rotuloPdf="DAMDFE" gerar={() => gerarMdfe({ documentos: documentosDisponiveis.filter((d) => selecionados.includes(d.id)), motorista: motoristas.find((m) => m.id === motoristaId), veiculo: veiculos.find((v) => v.id === veiculoId), reboques: (veiculos.find((v) => v.id === veiculoId)?.reboques ?? []).filter((r) => reboquesAtivos.includes(r.placa)), ufInicio, ufFim, percurso })} />
 
       {resultado ? <ResultadoAlert resultado={resultado} onFechar={limpar} /> : null}
 

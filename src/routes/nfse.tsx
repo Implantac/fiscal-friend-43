@@ -2,6 +2,8 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Loader2, Save, Send } from "lucide-react";
 
+import { ExportarDocumento } from "@/components/blueprint/ExportarDocumento";
+import { gerarNfse } from "@/simulation/documento-saida";
 import { PageHeader } from "@/components/layout/AppShell";
 import { Documented } from "@/components/blueprint/Documented";
 import { ResultadoAlert } from "@/components/blueprint/ResultadoAlert";
@@ -105,6 +107,8 @@ function EmissaoNfse() {
           </div>
         }
       />
+
+      <ExportarDocumento rotuloPdf="DANFSe" gerar={() => gerarNfse({ cliente: clientes.find((c) => c.id === clienteId), servico: servicos.find((s) => s.id === servicoId), descricao, valor, deducoes, aliquotaIss, issRetido })} />
 
       {resultado ? <ResultadoAlert resultado={resultado} onFechar={limpar} /> : null}
 

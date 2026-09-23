@@ -2,6 +2,8 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Loader2, Plus, Send, Trash2 } from "lucide-react";
 
+import { ExportarDocumento } from "@/components/blueprint/ExportarDocumento";
+import { gerarCteOs } from "@/simulation/documento-saida";
 import { PageHeader } from "@/components/layout/AppShell";
 import { Documented } from "@/components/blueprint/Documented";
 import { ResultadoAlert } from "@/components/blueprint/ResultadoAlert";
@@ -127,6 +129,8 @@ function EmissaoCteOs() {
           </Button>
         }
       />
+
+      <ExportarDocumento rotuloPdf="DACTE OS" gerar={() => gerarCteOs({ modalidade, tomador: clientes.find((c) => c.id === tomadorId), motorista: motoristas.find((m) => m.id === motoristaId), veiculo: veiculos.find((v) => v.id === veiculoId), ufInicio, ufFim, passageiros, valorPrestacao, malotes })} />
 
       {resultado ? <ResultadoAlert resultado={resultado} onFechar={limpar} /> : null}
 
