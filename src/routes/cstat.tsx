@@ -12,7 +12,7 @@ import { documentoById } from "@/knowledge/documentos";
 
 export const Route = createFileRoute("/cstat")({
   validateSearch: (s: Record<string, unknown>) => ({
-    codigo: typeof s.codigo === "string" ? s.codigo : undefined,
+    codigo: typeof s["codigo"] === "string" ? s["codigo"] : undefined,
   }),
   head: () => ({
     meta: [

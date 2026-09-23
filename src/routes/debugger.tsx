@@ -21,7 +21,7 @@ import { brl } from "@/lib/format";
 
 export const Route = createFileRoute("/debugger")({
   validateSearch: (s: Record<string, unknown>) => ({
-    regra: typeof s.regra === "string" ? s.regra : undefined,
+    regra: typeof s["regra"] === "string" ? s["regra"] : undefined,
   }),
   head: () => ({
     meta: [

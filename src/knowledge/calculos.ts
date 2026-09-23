@@ -31,11 +31,11 @@ export const calculos: CalculoFiscal[] = [
     xml: "<prod><vProd>…</vProd><vDesc>…</vDesc><vFrete>…</vFrete><vSeg>…</vSeg><vOutro>…</vOutro></prod>",
     calcular: (v) =>
       r2(
-        (v.quantidade ?? 0) * (v.valorUnitario ?? 0) -
-          (v.desconto ?? 0) +
-          (v.frete ?? 0) +
-          (v.seguro ?? 0) +
-          (v.outrasDespesas ?? 0),
+        (v["quantidade"] ?? 0) * (v["valorUnitario"] ?? 0) -
+          (v["desconto"] ?? 0) +
+          (v["frete"] ?? 0) +
+          (v["seguro"] ?? 0) +
+          (v["outrasDespesas"] ?? 0),
       ),
     padrao: { quantidade: 10, valorUnitario: 250, desconto: 100, frete: 80, seguro: 20, outrasDespesas: 0 },
     procedencia: didatico,
@@ -52,7 +52,7 @@ export const calculos: CalculoFiscal[] = [
     ],
     arredondamento: "Duas casas decimais.",
     xml: "<ICMS00><vBC>…</vBC><pICMS>…</pICMS><vICMS>…</vICMS></ICMS00>",
-    calcular: (v) => r2(((v.base ?? 0) * (1 - (v.reducao ?? 0) / 100) * (v.aliquota ?? 0)) / 100),
+    calcular: (v) => r2(((v["base"] ?? 0) * (1 - (v["reducao"] ?? 0) / 100) * (v["aliquota"] ?? 0)) / 100),
     padrao: { base: 2400, reducao: 0, aliquota: 12 },
     procedencia: didatico,
   },
@@ -67,7 +67,7 @@ export const calculos: CalculoFiscal[] = [
     ],
     arredondamento: "Duas casas decimais.",
     xml: "<IPITrib><vBC>…</vBC><pIPI>…</pIPI><vIPI>…</vIPI></IPITrib>",
-    calcular: (v) => r2(((v.base ?? 0) * (v.aliquota ?? 0)) / 100),
+    calcular: (v) => r2(((v["base"] ?? 0) * (v["aliquota"] ?? 0)) / 100),
     padrao: { base: 2400, aliquota: 5 },
     procedencia: didatico,
   },
@@ -84,7 +84,7 @@ export const calculos: CalculoFiscal[] = [
     arredondamento: "Duas casas decimais em cada contribuição.",
     xml: "<PISAliq><vBC>…</vBC><pPIS>…</pPIS><vPIS>…</vPIS></PISAliq>",
     calcular: (v) =>
-      r2(((v.base ?? 0) * (v.pPIS ?? 0)) / 100) + r2(((v.base ?? 0) * (v.pCOFINS ?? 0)) / 100),
+      r2(((v["base"] ?? 0) * (v["pPIS"] ?? 0)) / 100) + r2(((v["base"] ?? 0) * (v["pCOFINS"] ?? 0)) / 100),
     padrao: { base: 2400, pPIS: 1.65, pCOFINS: 7.6 },
     procedencia: didatico,
   },
@@ -103,8 +103,8 @@ export const calculos: CalculoFiscal[] = [
     arredondamento: "Duas casas decimais; não permitir resultado negativo.",
     xml: "<ICMS10><vBCST>…</vBCST><pICMSST>…</pICMSST><vICMSST>…</vICMSST></ICMS10>",
     calcular: (v) => {
-      const baseST = (v.base ?? 0) * (1 + (v.mva ?? 0) / 100);
-      return r2(Math.max(0, (baseST * (v.aliqInterna ?? 0)) / 100 - (v.vICMSProprio ?? 0)));
+      const baseST = (v["base"] ?? 0) * (1 + (v["mva"] ?? 0) / 100);
+      return r2(Math.max(0, (baseST * (v["aliqInterna"] ?? 0)) / 100 - (v["vICMSProprio"] ?? 0)));
     },
     padrao: { base: 2400, mva: 40, aliqInterna: 18, vICMSProprio: 288 },
     procedencia: didatico,
@@ -120,7 +120,7 @@ export const calculos: CalculoFiscal[] = [
     ],
     arredondamento: "Duas casas decimais.",
     xml: "<ICMS><vBCFCP>…</vBCFCP><pFCP>…</pFCP><vFCP>…</vFCP></ICMS>",
-    calcular: (v) => r2(((v.base ?? 0) * (v.pFCP ?? 0)) / 100),
+    calcular: (v) => r2(((v["base"] ?? 0) * (v["pFCP"] ?? 0)) / 100),
     padrao: { base: 2400, pFCP: 2 },
     procedencia: didatico,
   },
@@ -136,7 +136,7 @@ export const calculos: CalculoFiscal[] = [
     ],
     arredondamento: "Duas casas decimais; resultado negativo indica parametrização incorreta.",
     xml: "<ICMSUFDest><vBCUFDest>…</vBCUFDest><pICMSUFDest>…</pICMSUFDest><vICMSUFDest>…</vICMSUFDest></ICMSUFDest>",
-    calcular: (v) => r2(((v.base ?? 0) * ((v.aliqInterna ?? 0) - (v.aliqInter ?? 0))) / 100),
+    calcular: (v) => r2(((v["base"] ?? 0) * ((v["aliqInterna"] ?? 0) - (v["aliqInter"] ?? 0))) / 100),
     padrao: { base: 2400, aliqInterna: 18, aliqInter: 12 },
     procedencia: didatico,
   },
@@ -153,7 +153,7 @@ export const calculos: CalculoFiscal[] = [
     arredondamento: "Duas casas decimais.",
     xml: "<servico><valores><vServicos>…</vServicos><vDeducoes>…</vDeducoes><vIss>…</vIss></valores></servico>",
     calcular: (v) =>
-      r2((Math.max(0, (v.valorServico ?? 0) - (v.deducoes ?? 0)) * (v.aliquota ?? 0)) / 100),
+      r2((Math.max(0, (v["valorServico"] ?? 0) - (v["deducoes"] ?? 0)) * (v["aliquota"] ?? 0)) / 100),
     padrao: { valorServico: 5000, deducoes: 0, aliquota: 3 },
     procedencia: didatico,
   },
@@ -170,7 +170,7 @@ export const calculos: CalculoFiscal[] = [
     arredondamento: "Duas casas decimais.",
     xml: "<IBSCBS><gIBSCBS><vBC>…</vBC><gIBS>…</gIBS><gCBS>…</gCBS></gIBSCBS></IBSCBS>",
     calcular: (v) =>
-      r2(((v.base ?? 0) * (v.pIBS ?? 0)) / 100) + r2(((v.base ?? 0) * (v.pCBS ?? 0)) / 100),
+      r2(((v["base"] ?? 0) * (v["pIBS"] ?? 0)) / 100) + r2(((v["base"] ?? 0) * (v["pCBS"] ?? 0)) / 100),
     padrao: { base: 2400, pIBS: 0, pCBS: 0 },
     procedencia: {
       status: "pendente",

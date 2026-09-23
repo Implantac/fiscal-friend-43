@@ -11,7 +11,7 @@ import { cstatByCodigo } from "@/knowledge/cstats";
 
 export const Route = createFileRoute("/cenarios")({
   validateSearch: (s: Record<string, unknown>) => ({
-    id: typeof s.id === "string" ? s.id : undefined,
+    id: typeof s["id"] === "string" ? s["id"] : undefined,
   }),
   head: () => ({
     meta: [

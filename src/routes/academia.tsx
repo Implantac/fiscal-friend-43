@@ -20,8 +20,8 @@ import { cstats, cstatByCodigo } from "@/knowledge/cstats";
 
 export const Route = createFileRoute("/academia")({
   validateSearch: (s: Record<string, unknown>) => ({
-    trilha: typeof s.trilha === "string" ? s.trilha : undefined,
-    desafio: typeof s.desafio === "string" ? s.desafio : undefined,
+    trilha: typeof s["trilha"] === "string" ? s["trilha"] : undefined,
+    desafio: typeof s["desafio"] === "string" ? s["desafio"] : undefined,
   }),
   head: () => ({
     meta: [

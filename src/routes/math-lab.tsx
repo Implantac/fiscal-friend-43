@@ -12,7 +12,7 @@ import { brl, num } from "@/lib/format";
 
 export const Route = createFileRoute("/math-lab")({
   validateSearch: (s: Record<string, unknown>) => ({
-    calc: typeof s.calc === "string" ? s.calc : undefined,
+    calc: typeof s["calc"] === "string" ? s["calc"] : undefined,
   }),
   head: () => ({
     meta: [

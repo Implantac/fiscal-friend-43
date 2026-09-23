@@ -14,7 +14,7 @@ import { cstatByCodigo } from "@/knowledge/cstats";
 
 export const Route = createFileRoute("/xml-lab")({
   validateSearch: (s: Record<string, unknown>) => ({
-    campo: typeof s.campo === "string" ? s.campo : undefined,
+    campo: typeof s["campo"] === "string" ? s["campo"] : undefined,
   }),
   head: () => ({
     meta: [

@@ -15,8 +15,8 @@ import { calculoById } from "@/knowledge/calculos";
 
 export const Route = createFileRoute("/conhecimento")({
   validateSearch: (s: Record<string, unknown>) => ({
-    doc: typeof s.doc === "string" ? s.doc : undefined,
-    campo: typeof s.campo === "string" ? s.campo : undefined,
+    doc: typeof s["doc"] === "string" ? s["doc"] : undefined,
+    campo: typeof s["campo"] === "string" ? s["campo"] : undefined,
   }),
   head: () => ({
     meta: [
