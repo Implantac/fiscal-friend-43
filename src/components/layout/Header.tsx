@@ -5,6 +5,7 @@ import { empresaSimulada } from "@/simulation/mock-data";
 import { formatCnpj } from "@/lib/format";
 import { useSimulator } from "@/blueprint/SimulatorProvider";
 import { Documented } from "@/components/blueprint/Documented";
+import { GlobalSearch } from "@/components/knowledge/GlobalSearch";
 
 export function Header() {
   const { devMode, setDevMode } = useSimulator();
@@ -23,6 +24,8 @@ export function Header() {
       </div>
 
       <div className="flex items-center gap-4">
+        <GlobalSearch />
+
         <Documented docId="global.ambiente" inline>
           <span className="inline-flex items-center gap-1.5 rounded-full bg-sim-surface px-3 py-1 text-xs font-semibold text-sim-foreground">
             <FlaskConical className="size-3.5" aria-hidden />
