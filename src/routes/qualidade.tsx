@@ -4,6 +4,7 @@ import { Check, X } from "lucide-react";
 import { PageHeader } from "@/components/layout/AppShell";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { completude, detectarLacunas, indicadores } from "@/knowledge/qualidade";
+import { coberturaFichas } from "@/knowledge/rastreabilidade";
 import { executarTestes } from "@/knowledge/testes";
 
 export const Route = createFileRoute("/qualidade")({
@@ -25,6 +26,7 @@ function QualidadePage() {
   const exec = executarTestes();
   const lacunas = useMemo(() => detectarLacunas(), []);
   const comp = useMemo(() => completude(), []);
+  const fichas = useMemo(() => coberturaFichas(), []);
   const tipos = [...new Set(lacunas.map((l) => l.tipo))];
   const [tipo, setTipo] = useState("");
 
@@ -56,6 +58,7 @@ function QualidadePage() {
         <TabsList>
           <TabsTrigger value="lacunas">Lacunas ({lacunas.length})</TabsTrigger>
           <TabsTrigger value="completude">Completude por item</TabsTrigger>
+          <TabsTrigger value="rastreabilidade">Rastreabilidade</TabsTrigger>
         </TabsList>
         <TabsContent value="lacunas" className="space-y-3 pt-3">
           <div className="flex flex-wrap gap-1">
@@ -91,6 +94,26 @@ function QualidadePage() {
                         </span>
                       </td>
                     ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </TabsContent>
+        <TabsContent value="rastreabilidade" className="space-y-2 pt-3">
+          <p className="text-sm text-muted-foreground">
+            Cada item deve responder: de onde veio, versão/vigência, campos afetados, XML, erro evitado, teste e implementação no ERP.
+            Respondem tudo: {fichas.filter((f) => f.respondidas === f.total).length} de {fichas.length}.
+          </p>
+          <div className="overflow-x-auto rounded-lg border">
+            <table className="w-full text-xs">
+              <tbody>
+                {fichas.map((f) => (
+                  <tr key={f.id} className="border-b last:border-0">
+                    <td className="px-3 py-1.5 text-muted-foreground">{f.tipo}</td>
+                    <td className="px-3 py-1.5 font-mono">{f.id}</td>
+                    <td className="px-3 py-1.5">{f.respondidas}/{f.total}</td>
+                    <td className="px-3 py-1.5 text-muted-foreground">{f.ficha.filter((x) => !x.ok).map((x) => x.pergunta).join(" · ") || "Completo"}</td>
                   </tr>
                 ))}
               </tbody>
