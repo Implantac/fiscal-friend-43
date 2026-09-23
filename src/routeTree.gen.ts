@@ -19,6 +19,7 @@ import { Route as CstatRouteImport } from './routes/cstat'
 import { Route as CteRouteImport } from './routes/cte'
 import { Route as CteOsRouteImport } from './routes/cte-os'
 import { Route as DebuggerRouteImport } from './routes/debugger'
+import { Route as DiagnosticoIaRouteImport } from './routes/diagnostico-ia'
 import { Route as FontesRouteImport } from './routes/fontes'
 import { Route as GovernancaRouteImport } from './routes/governanca'
 import { Route as IncidentesRouteImport } from './routes/incidentes'
@@ -83,6 +84,11 @@ const CteOsRoute = CteOsRouteImport.update({
 const DebuggerRoute = DebuggerRouteImport.update({
   id: '/debugger',
   path: '/debugger',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DiagnosticoIaRoute = DiagnosticoIaRouteImport.update({
+  id: '/diagnostico-ia',
+  path: '/diagnostico-ia',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FontesRoute = FontesRouteImport.update({
@@ -172,6 +178,7 @@ export interface FileRoutesByFullPath {
   '/cte': typeof CteRoute
   '/cte-os': typeof CteOsRoute
   '/debugger': typeof DebuggerRoute
+  '/diagnostico-ia': typeof DiagnosticoIaRoute
   '/fontes': typeof FontesRoute
   '/governanca': typeof GovernancaRoute
   '/incidentes': typeof IncidentesRoute
@@ -199,6 +206,7 @@ export interface FileRoutesByTo {
   '/cte': typeof CteRoute
   '/cte-os': typeof CteOsRoute
   '/debugger': typeof DebuggerRoute
+  '/diagnostico-ia': typeof DiagnosticoIaRoute
   '/fontes': typeof FontesRoute
   '/governanca': typeof GovernancaRoute
   '/incidentes': typeof IncidentesRoute
@@ -227,6 +235,7 @@ export interface FileRoutesById {
   '/cte': typeof CteRoute
   '/cte-os': typeof CteOsRoute
   '/debugger': typeof DebuggerRoute
+  '/diagnostico-ia': typeof DiagnosticoIaRoute
   '/fontes': typeof FontesRoute
   '/governanca': typeof GovernancaRoute
   '/incidentes': typeof IncidentesRoute
@@ -256,6 +265,7 @@ export interface FileRouteTypes {
     | '/cte'
     | '/cte-os'
     | '/debugger'
+    | '/diagnostico-ia'
     | '/fontes'
     | '/governanca'
     | '/incidentes'
@@ -283,6 +293,7 @@ export interface FileRouteTypes {
     | '/cte'
     | '/cte-os'
     | '/debugger'
+    | '/diagnostico-ia'
     | '/fontes'
     | '/governanca'
     | '/incidentes'
@@ -310,6 +321,7 @@ export interface FileRouteTypes {
     | '/cte'
     | '/cte-os'
     | '/debugger'
+    | '/diagnostico-ia'
     | '/fontes'
     | '/governanca'
     | '/incidentes'
@@ -338,6 +350,7 @@ export interface RootRouteChildren {
   CteRoute: typeof CteRoute
   CteOsRoute: typeof CteOsRoute
   DebuggerRoute: typeof DebuggerRoute
+  DiagnosticoIaRoute: typeof DiagnosticoIaRoute
   FontesRoute: typeof FontesRoute
   GovernancaRoute: typeof GovernancaRoute
   IncidentesRoute: typeof IncidentesRoute
@@ -425,6 +438,13 @@ declare module '@tanstack/react-router' {
       path: '/debugger'
       fullPath: '/debugger'
       preLoaderRoute: typeof DebuggerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/diagnostico-ia': {
+      id: '/diagnostico-ia'
+      path: '/diagnostico-ia'
+      fullPath: '/diagnostico-ia'
+      preLoaderRoute: typeof DiagnosticoIaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/fontes': {
@@ -546,6 +566,7 @@ const rootRouteChildren: RootRouteChildren = {
   CteRoute: CteRoute,
   CteOsRoute: CteOsRoute,
   DebuggerRoute: DebuggerRoute,
+  DiagnosticoIaRoute: DiagnosticoIaRoute,
   FontesRoute: FontesRoute,
   GovernancaRoute: GovernancaRoute,
   IncidentesRoute: IncidentesRoute,
