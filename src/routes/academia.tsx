@@ -74,7 +74,7 @@ function Academia() {
                   <Accordion
                     type="single"
                     collapsible
-                    defaultValue={trilha === t.id ? t.aulas[0]?.id : undefined}
+                    {...(trilha === t.id && t.aulas[0] ? { defaultValue: t.aulas[0].id } : {})}
                   >
                     {t.aulas.map((a) => (
                       <AccordionItem key={a.id} value={a.id}>

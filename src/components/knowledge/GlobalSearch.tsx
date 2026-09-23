@@ -64,7 +64,7 @@ export function GlobalSearch() {
         <kbd className="ml-2 rounded border px-1 text-[10px]">Ctrl K</kbd>
       </button>
 
-      <CommandDialog open={aberto} onOpenChange={setAberto} shouldFilter={false}>
+      <CommandDialog open={aberto} onOpenChange={setAberto}>
         <CommandInput
           placeholder="Ex.: CFOP, vICMS, DIFAL, tomador, REGRA-ICMS-VALOR"
           value={consulta}
@@ -77,7 +77,11 @@ export function GlobalSearch() {
           {grupos.map((g) => (
             <CommandGroup key={g.tipo} heading={g.tipo}>
               {g.itens.map((item) => (
-                <CommandItem key={item.id} value={item.id} onSelect={() => ir(item)}>
+                <CommandItem
+                  key={item.id}
+                  value={`${item.id} ${item.titulo} ${consulta}`}
+                  onSelect={() => ir(item)}
+                >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{item.titulo}</p>
                     <p className="truncate text-xs text-muted-foreground">{item.descricao}</p>

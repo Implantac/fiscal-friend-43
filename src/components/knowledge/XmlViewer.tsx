@@ -33,11 +33,11 @@ export function XmlViewer({
   className,
 }: {
   xml: string;
-  formatar?: boolean;
-  destaque?: string;
-  tagSelecionada?: string;
-  onSelecionarTag?: (tag: string) => void;
-  className?: string;
+  formatar?: boolean | undefined;
+  destaque?: string | undefined;
+  tagSelecionada?: string | undefined;
+  onSelecionarTag?: ((tag: string) => void) | undefined;
+  className?: string | undefined;
 }) {
   const linhas = useMemo(
     () => (formatar ? formatarXml(xml) : xml).split("\n"),
