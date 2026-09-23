@@ -85,6 +85,9 @@ export function GlobalSearch() {
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{item.titulo}</p>
                     <p className="truncate text-xs text-muted-foreground">{item.descricao}</p>
+                    {item.cadeia && (
+                      <p className="truncate font-mono text-[10px] text-primary">{item.cadeia}</p>
+                    )}
                   </div>
                 </CommandItem>
               ))}

@@ -22,6 +22,7 @@ import {
   LifeBuoy,
   Gauge,
   Rocket,
+  NotebookPen,
 } from "lucide-react";
 
 const secoes = [
@@ -57,6 +58,7 @@ const secoes = [
       { to: "/xml-lab", label: "XML Lab", desc: "Tag → campo → regra", icon: Code2 },
       { to: "/regressao", label: "Regressão", desc: "Casos de teste", icon: FlaskConical },
       { to: "/suporte", label: "Modo suporte", desc: "Roteiro do analista", icon: LifeBuoy },
+      { to: "/incidentes", label: "Incidentes", desc: "Caso → conhecimento", icon: NotebookPen },
       { to: "/qualidade", label: "Qualidade", desc: "Lacunas e completude", icon: Gauge },
       { to: "/math-lab", label: "Cálculos", desc: "Fórmula e resultado", icon: Calculator },
     ],

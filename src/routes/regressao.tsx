@@ -6,6 +6,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { executarTestes, type ExecucaoTeste } from "@/knowledge/testes";
 import { documentoById } from "@/knowledge/documentos";
+import { executarTestesCalculo } from "@/knowledge/testes-calculo";
+import { calculoById } from "@/knowledge/calculos";
+import { brl } from "@/lib/format";
 
 export const Route = createFileRoute("/regressao")({
   head: () => ({
@@ -26,6 +29,7 @@ function RegressaoPage() {
   const [doc, setDoc] = useState("");
   const [status, setStatus] = useState("");
   const [operacao, setOperacao] = useState("");
+  const [execCalc, setExecCalc] = useState(() => executarTestesCalculo());
 
   const lista = useMemo(
     () =>
@@ -57,7 +61,7 @@ function RegressaoPage() {
       <PageHeader
         titulo="Regressão fiscal"
         descricao="Cada caso aplica uma variação a um documento simulado e confere a regra. Se uma regra mudar, os casos mostram o que deixou de funcionar. Casos didáticos."
-        acoes={<Button onClick={() => setExecucao(executarTestes())}>Executar novamente</Button>}
+        acoes={<Button onClick={() => { setExecucao(executarTestes()); setExecCalc(executarTestesCalculo()); }}>Executar novamente</Button>}
       />
       <div className="grid grid-cols-3 gap-3">
         {[["Casos", execucao.length], ["Aprovados", aprovados], ["Falhas", falhas]].map(([t, n]) => (
@@ -97,6 +101,34 @@ function RegressaoPage() {
           ))}
         </TableBody>
       </Table>
+
+      <section className="space-y-2 pt-4">
+        <h2 className="text-base font-semibold">Casos de teste dos cálculos</h2>
+        <p className="text-sm text-muted-foreground">
+          Valor esperado feito à mão a partir da fórmula do laboratório de cálculos. Exemplo didático, não é apuração.
+          Aprovados: {execCalc.filter((e) => e.aprovado).length} de {execCalc.length}.
+        </p>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>ID</TableHead><TableHead>Cálculo</TableHead><TableHead>Caso</TableHead>
+              <TableHead className="text-right">Esperado</TableHead><TableHead className="text-right">Obtido</TableHead><TableHead>Resultado</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {execCalc.map(({ teste: t, obtido, aprovado }) => (
+              <TableRow key={t.id}>
+                <TableCell className="font-mono text-xs">{t.id}<div><StatusBadge status="ilustrativo" /></div></TableCell>
+                <TableCell><Link to="/math-lab" search={{ calc: t.calculoId } as never} className="text-sm text-primary hover:underline">{calculoById.get(t.calculoId)?.nome ?? t.calculoId}</Link></TableCell>
+                <TableCell className="text-sm">{t.descricao}</TableCell>
+                <TableCell className="text-right font-mono text-sm">{brl(t.esperado)}</TableCell>
+                <TableCell className="text-right font-mono text-sm">{obtido === null ? "—" : brl(obtido)}</TableCell>
+                <TableCell className={aprovado ? "text-validated font-semibold" : "text-destructive font-semibold"}>{aprovado ? "Aprovado" : "Falha"}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </section>
     </div>
   );
 }
