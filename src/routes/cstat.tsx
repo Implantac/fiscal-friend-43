@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/layout/AppShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { StatusBadge, ProcedenciaNota } from "@/components/knowledge/StatusBadge";
+import { naturezaCstat } from "@/knowledge/oficial";
 import { XmlViewer, XmlDiff } from "@/components/knowledge/XmlViewer";
 import { cstats } from "@/knowledge/cstats";
 import { campoById } from "@/knowledge/campos";
@@ -100,6 +101,9 @@ function CStatCenter() {
               <div className="flex items-center justify-between gap-2">
                 <CardTitle className="text-base">{atual.situacao}</CardTitle>
                 <StatusBadge status={atual.procedencia.status} />
+                <span className={`rounded border px-1.5 py-0.5 text-[11px] font-semibold ${naturezaCstat(atual) === "oficial" ? "border-validated text-validated" : "border-illustrative text-illustrative"}`}>
+                  {naturezaCstat(atual) === "oficial" ? "Código oficial" : "Identificador didático (não é código oficial)"}
+                </span>
               </div>
             </CardHeader>
             <CardContent className="space-y-4 text-sm">

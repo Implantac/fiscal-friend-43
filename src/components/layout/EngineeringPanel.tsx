@@ -7,6 +7,7 @@ import { Link } from "@tanstack/react-router";
 import { campoPorDocId } from "@/knowledge/campos";
 import { StatusBadge } from "@/components/knowledge/StatusBadge";
 import { VersionTimeline } from "@/components/knowledge/VersionTimeline";
+import { FichaRastreabilidade } from "@/components/knowledge/FichaRastreabilidade";
 
 const corEstado: Record<EstadoConfianca, string> = {
   validado: "bg-[var(--auto-surface)] text-[var(--auto-foreground)]",
@@ -211,6 +212,7 @@ export function EngineeringPanel() {
                 <Bloco titulo="Versão e vigência">
                   <VersionTimeline procedencia={campo.procedencia} />
                 </Bloco>
+                <FichaRastreabilidade tipo="campo" id={campo.id} />
               </div>
             )}
           </div>

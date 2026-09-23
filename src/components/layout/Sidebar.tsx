@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import {
   Inbox,
+  ShieldCheck,
   FileText,
   ShoppingCart,
   Briefcase,
@@ -60,6 +61,7 @@ const secoes = [
       { to: "/suporte", label: "Modo suporte", desc: "Roteiro do analista", icon: LifeBuoy },
       { to: "/incidentes", label: "Incidentes", desc: "Caso → conhecimento", icon: NotebookPen },
       { to: "/qualidade", label: "Qualidade", desc: "Lacunas e completude", icon: Gauge },
+      { to: "/governanca", label: "Governança", desc: "Revisão e base oficial", icon: ShieldCheck },
       { to: "/math-lab", label: "Cálculos", desc: "Fórmula e resultado", icon: Calculator },
     ],
   },
