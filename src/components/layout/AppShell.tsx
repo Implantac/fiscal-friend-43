@@ -5,6 +5,7 @@ import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { EngineeringPanel } from "./EngineeringPanel";
 import { useSimulator } from "@/blueprint/SimulatorProvider";
+import { AcademyStepper } from "@/components/knowledge/AcademyStepper";
 
 /** F9 e F10 executam apenas ações simuladas. Nunca disparam operação fiscal real. */
 function useAtalhosSimulados() {
@@ -41,7 +42,10 @@ export function AppShell({ children }: { children: ReactNode }) {
       <div className="flex min-w-0 flex-1 flex-col">
         <Header />
         <div className="flex min-h-0 flex-1">
-          <main className="min-w-0 flex-1 overflow-y-auto p-5">{children}</main>
+          <main className="min-w-0 flex-1 overflow-y-auto p-5">
+            <AcademyStepper />
+            {children}
+          </main>
           <EngineeringPanel />
         </div>
         <Footer />
