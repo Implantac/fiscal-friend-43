@@ -14,7 +14,7 @@ export async function baixarPdf(l: LayoutPdf, nome: string) {
     doc.saveGraphicsState();
     doc.setGState(new (doc as unknown as { GState: new (o: object) => unknown }).GState({ opacity: 0.12 }) as never);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(38);
+    doc.setFontSize(30);
     doc.setTextColor(200, 0, 0);
     doc.text("SEM VALOR FISCAL - SIMULAÇÃO", W / 2, 160, { angle: 35, align: "center" });
     doc.restoreGraphicsState();
