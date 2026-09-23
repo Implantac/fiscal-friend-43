@@ -104,6 +104,18 @@ const docTag = (doc: string) => (doc.length === 11 ? `<CPF>${doc}</CPF>` : `<CNP
 const cabecalho = (xml: string) =>
   `<?xml version="1.0" encoding="UTF-8"?>\n<!-- AMBIENTE DE SIMULAÇÃO — SEM VALOR FISCAL. Sem assinatura digital e sem protocolo. Validação contra XSD oficial: Pendente de validação. -->\n${xml}`;
 
+import { parametrosCenario as PC } from "@/simulation/parametros-cenario";
+const r2 = (n: number) => Math.round(n * 100) / 100;
+const AVISO_TRIB =
+  "Tributos calculados com percentuais de CENARIO do simulador (ICMS " +
+  PC.icmsPercentual + "%, IPI " + PC.ipiPercentual + "%, PIS " + PC.pisPercentual + "%, COFINS " + PC.cofinsPercentual +
+  "%). Nao sao aliquotas oficiais: a apuracao real depende de regras validadas no back-end.";
+const icmsCte = (ind: string, base: number) => {
+  const v = r2((base * PC.icmsPercentual) / 100);
+  return { v, xml: `${ind}<!-- ${AVISO_TRIB} -->
+${ind}<ICMS><ICMS00><CST>00</CST><vBC>${d2(base)}</vBC><pICMS>${d2(PC.icmsPercentual)}</pICMS><vICMS>${d2(v)}</vICMS></ICMS00></ICMS>
+${ind}<vTotTrib>${d2(v)}</vTotTrib>` };
+};
 const tributosPendentes = (ind: string) =>
   `${ind}<!-- Grupo de tributos (ICMS/IPI/PIS/COFINS ou IBS/CBS): Pendente de validação — não gerado sem regra oficial validada. -->`;
 
@@ -129,7 +141,7 @@ const blocoEmitente = (): LayoutPdf["blocos"][number] => ({
 });
 
 const OBS =
-  "EMITIDO EM AMBIENTE DE SIMULAÇÃO — SEM VALOR FISCAL. Documento sem assinatura digital e sem protocolo de autorização. Tributos não calculados (Pendente de validação).";
+  "EMITIDO EM AMBIENTE DE SIMULAÇÃO — SEM VALOR FISCAL. Documento sem assinatura digital e sem protocolo de autorização. Tributos calculados com percentuais de cenário do simulador, não com alíquotas oficiais.";
 
 /* ------------------------------------------------------------------ NF-e e NFC-e */
 
@@ -153,7 +165,21 @@ export function gerarNfe(e: EntradaNfe): DocumentoGerado {
   const cfop = e.cfop ?? (idDest === "1" ? "5102" : "6102");
   const vProd = e.itens.reduce((a, i) => a + i.quantidade * i.preco, 0);
   const vDesc = e.itens.reduce((a, i) => a + i.desconto, 0);
-  const vNF = vProd - vDesc + e.frete;
+  // Cálculo por item com percentuais de cenário (rateio proporcional do frete)
+  const calc = e.itens.map((i) => {
+    const vp = r2(i.quantidade * i.preco);
+    const frete = vProd > 0 ? r2((e.frete * vp) / vProd) : 0;
+    const bcIcms = r2(vp - i.desconto + frete);
+    const bcIpi = r2(vp - i.desconto);
+    const vIcms = r2((bcIcms * PC.icmsPercentual) / 100);
+    const vIpi = nfce ? 0 : r2((bcIpi * PC.ipiPercentual) / 100);
+    const vPis = r2((bcIpi * PC.pisPercentual) / 100);
+    const vCofins = r2((bcIpi * PC.cofinsPercentual) / 100);
+    return { vp, frete, bcIcms, bcIpi, vIcms, vIpi, vPis, vCofins, tot: r2(vIcms + vIpi + vPis + vCofins) };
+  });
+  const soma = (k: keyof (typeof calc)[number]) => r2(calc.reduce((a, c) => a + c[k], 0));
+  const vBC = soma("bcIcms"), vICMS = soma("vIcms"), vIPI = soma("vIpi"), vPIS = soma("vPis"), vCOFINS = soma("vCofins"), vTotTrib = soma("tot");
+  const vNF = r2(vProd - vDesc + e.frete + vIPI);
   const pag = e.pagamento ?? { tPag: "90", descricao: "Sem pagamento", valor: 0 };
 
   const dets = e.itens
@@ -176,7 +202,11 @@ export function gerarNfe(e: EntradaNfe): DocumentoGerado {
         <indTot>1</indTot>
       </prod>
       <imposto>
-${tributosPendentes("        ")}
+        <vTotTrib>${d2(calc[k]!.tot)}</vTotTrib>
+        <ICMS><ICMS00><orig>0</orig><CST>00</CST><modBC>3</modBC><vBC>${d2(calc[k]!.bcIcms)}</vBC><pICMS>${d4(PC.icmsPercentual)}</pICMS><vICMS>${d2(calc[k]!.vIcms)}</vICMS></ICMS00></ICMS>${nfce ? "" : `
+        <IPI><cEnq>999</cEnq><IPITrib><CST>50</CST><vBC>${d2(calc[k]!.bcIpi)}</vBC><pIPI>${d4(PC.ipiPercentual)}</pIPI><vIPI>${d2(calc[k]!.vIpi)}</vIPI></IPITrib></IPI>`}
+        <PIS><PISAliq><CST>01</CST><vBC>${d2(calc[k]!.bcIpi)}</vBC><pPIS>${d4(PC.pisPercentual)}</pPIS><vPIS>${d2(calc[k]!.vPis)}</vPIS></PISAliq></PIS>
+        <COFINS><COFINSAliq><CST>01</CST><vBC>${d2(calc[k]!.bcIpi)}</vBC><pCOFINS>${d4(PC.cofinsPercentual)}</pCOFINS><vCOFINS>${d2(calc[k]!.vCofins)}</vCOFINS></COFINSAliq></COFINS>
       </imposto>
     </det>`,
     )
@@ -221,15 +251,16 @@ ${emitXml("    ")}
 ${dest}${dets}
     <total>
       <ICMSTot>
-        <vBC>0.00</vBC><vICMS>0.00</vICMS><vICMSDeson>0.00</vICMSDeson><vFCP>0.00</vFCP>
+        <vBC>${d2(vBC)}</vBC><vICMS>${d2(vICMS)}</vICMS><vICMSDeson>0.00</vICMSDeson><vFCP>0.00</vFCP>
         <vBCST>0.00</vBCST><vST>0.00</vST><vFCPST>0.00</vFCPST><vFCPSTRet>0.00</vFCPSTRet>
         <vProd>${d2(vProd)}</vProd>
         <vFrete>${d2(e.frete)}</vFrete>
         <vSeg>0.00</vSeg>
         <vDesc>${d2(vDesc)}</vDesc>
-        <vII>0.00</vII><vIPI>0.00</vIPI><vIPIDevol>0.00</vIPIDevol><vPIS>0.00</vPIS><vCOFINS>0.00</vCOFINS>
+        <vII>0.00</vII><vIPI>${d2(vIPI)}</vIPI><vIPIDevol>0.00</vIPIDevol><vPIS>${d2(vPIS)}</vPIS><vCOFINS>${d2(vCOFINS)}</vCOFINS>
         <vOutro>0.00</vOutro>
         <vNF>${d2(vNF)}</vNF>
+        <vTotTrib>${d2(vTotTrib)}</vTotTrib>
       </ICMSTot>
     </total>
     <transp>
@@ -242,7 +273,7 @@ ${dest}${dets}
       </detPag>${pag.valor > vNF ? `\n      <vTroco>${d2(pag.valor - vNF)}</vTroco>` : ""}
     </pag>
     <infAdic>
-      <infCpl>${OBS}</infCpl>
+      <infCpl>${OBS} ${AVISO_TRIB}</infCpl>
     </infAdic>
   </infNFe>${nfce ? `\n  <infNFeSupl>\n    <!-- qrCode e urlChave dependem do CSC e da URL da UF: Pendente de validação. -->\n  </infNFeSupl>` : ""}
   <!-- Signature: não gerada (sem certificado digital no ambiente de simulação). -->
@@ -274,26 +305,33 @@ ${dest}${dets}
     ],
     tabela: {
       titulo: "Dados dos produtos",
-      colunas: ["Código", "Descrição", "NCM", "CFOP", "Un", "Qtd", "V. unit.", "V. total"],
-      linhas: e.itens.map((i) => [
+      colunas: ["Código", "Descrição", "NCM", "CFOP", "Qtd", "V. unit.", "V. total", "BC ICMS", "V. ICMS", "V. IPI"],
+      linhas: e.itens.map((i, k) => [
         i.produto.codigo,
         i.produto.descricao,
         i.produto.ncm,
         cfop,
-        i.produto.unidade,
-        String(i.quantidade),
+        `${i.quantidade} ${i.produto.unidade}`,
         brl(i.preco),
         brl(i.quantidade * i.preco - i.desconto),
+        brl(calc[k]!.bcIcms),
+        brl(calc[k]!.vIcms),
+        brl(calc[k]!.vIpi),
       ]),
     },
     totais: [
       ["Valor dos produtos", brl(vProd)],
       ["Desconto", brl(vDesc)],
       ["Frete", brl(e.frete)],
-      ["Tributos", "Pendente de validação"],
+      ["Base de cálculo ICMS", brl(vBC)],
+      ["Valor do ICMS", brl(vICMS)],
+      ["Valor do IPI", brl(vIPI)],
+      ["Valor do PIS", brl(vPIS)],
+      ["Valor da COFINS", brl(vCOFINS)],
+      ["Tributos aprox.", brl(vTotTrib)],
       ["Valor total da nota", brl(vNF)],
     ],
-    observacao: OBS,
+    observacao: `${OBS} ${AVISO_TRIB}`,
   };
   return { xml, pdf, nomeBase: `${nfce ? "NFCe" : "NFe"}${chave}` };
 }
@@ -439,6 +477,7 @@ export function gerarCte(e: EntradaCte): DocumentoGerado {
   const ini = munDe(e.remetente, e.ufInicio);
   const fim = munDe(e.destinatario, e.ufFim);
   const cfop = e.ufInicio === e.ufFim ? "5353" : "6353";
+  const imp = icmsCte("      ", vPrest);
   const part = (tag: string, c?: Cliente) =>
     c
       ? `    <${tag}>
@@ -485,7 +524,7 @@ ${part("rem", e.remetente)}${part("dest", e.destinatario)}    <vPrest>
       <Comp><xNome>FRETE VALOR</xNome><vComp>${d2(e.valorFrete)}</vComp></Comp>${e.pedagio ? `\n      <Comp><xNome>PEDAGIO</xNome><vComp>${d2(e.pedagio)}</vComp></Comp>` : ""}
     </vPrest>
     <imp>
-${tributosPendentes("      ")}
+${imp.xml}
     </imp>
     <infCTeNorm>
       <infCarga>
@@ -530,7 +569,8 @@ ${e.notas.map((x) => `        <infNFe><chave>${x.chave || "".padStart(44, "0")}<
         ["Valor da carga", brl(vCarga)],
         ["Frete", brl(e.valorFrete)],
         ["Pedágio", brl(e.pedagio)],
-        ["Tributos", "Pendente de validação"],
+        ["Base ICMS", brl(vPrest)],
+        [`ICMS ${d2(PC.icmsPercentual)}% (cenário)`, brl(imp.v)],
         ["Valor total da prestação", brl(vPrest)],
       ],
       observacao: OBS,
@@ -558,6 +598,7 @@ export function gerarCteOs(e: EntradaCteOs): DocumentoGerado {
   const serie = "1";
   const { chave, cNF, dv } = montarChave(empresaSimulada.uf, t.aamm, "67", serie, n);
   const tpServ = e.modalidade === "pessoas" ? "6" : "7";
+  const impOs = icmsCte("      ", e.valorPrestacao);
   const cfop = e.ufInicio === e.ufFim ? "5357" : "6357";
   const qtd = e.modalidade === "pessoas" ? e.passageiros : e.malotes.reduce((a, m) => a + m.quantidade, 0);
 
@@ -600,7 +641,7 @@ ${
       <vRec>${d2(e.valorPrestacao)}</vRec>
     </vPrest>
     <imp>
-${tributosPendentes("      ")}
+${impOs.xml}
     </imp>
     <infCTeNorm>
       <infServico>
@@ -747,7 +788,7 @@ ${descargas}
       <cUnid>01</cUnid>
       <qCarga>${d4(peso)}</qCarga>
     </tot>
-    <infAdic><infCpl>${OBS}</infCpl></infAdic>
+    <infAdic><infCpl>${OBS} ${AVISO_TRIB}</infCpl></infAdic>
   </infMDFe>
   <!-- infMDFeSupl (QR Code) e Signature: não gerados no ambiente de simulação. -->
 </MDFe>`);
