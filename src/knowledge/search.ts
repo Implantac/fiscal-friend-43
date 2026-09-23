@@ -24,7 +24,12 @@ export interface ItemBusca {
   descricao: string;
   rota: string;
   termos: string;
+  /** Cadeia fiscal resumida: rejeição → regra → campo → XML → aula. */
+  cadeia?: string;
 }
+
+const cadeia = (partes: (string | number | false)[]) =>
+  partes.filter((p): p is string => typeof p === "string" && p.length > 0).join(" → ");
 
 const norm = (s: string) =>
   s
@@ -48,6 +53,7 @@ export const indiceBusca: ItemBusca[] = [
     descricao: c.conceito,
     rota: `/conhecimento?campo=${c.id}`,
     termos: `${c.nome} ${c.tagXml} ${c.grupoXml} ${c.conceito} ${c.id}`,
+    cadeia: cadeia([c.regras.length && `${c.regras.length} regra(s)`, `XML <${c.tagXml}>`, c.cstats.length && `${c.cstats.length} rejeição(ões)`]),
   })),
   ...campos.map<ItemBusca>((c) => ({
     id: `tag:${c.id}`,
@@ -64,6 +70,7 @@ export const indiceBusca: ItemBusca[] = [
     descricao: r.explicacaoSimples,
     rota: `/debugger?regra=${r.id}`,
     termos: `${r.id} ${r.titulo} ${r.explicacaoSimples} ${r.condicaoTecnica}`,
+    cadeia: cadeia([`campos: ${r.campos.join(", ") || "—"}`, `rejeições: ${r.cstats.join(", ") || "—"}`]),
   })),
   ...cstats.map<ItemBusca>((c) => ({
     id: `cstat:${c.codigo}`,
@@ -72,6 +79,7 @@ export const indiceBusca: ItemBusca[] = [
     descricao: c.causaProvavel,
     rota: `/cstat?codigo=${c.codigo}`,
     termos: `${c.codigo} ${c.situacao} ${c.causaProvavel} ${c.campos.join(" ")}`,
+    cadeia: cadeia([`regras: ${c.regras.join(", ") || "—"}`, `campos: ${c.campos.join(", ") || "—"}`, "correção", "teste"]),
   })),
   ...calculos.map<ItemBusca>((c) => ({
     id: `calc:${c.id}`,
