@@ -19,6 +19,7 @@ import { Route as CteRouteImport } from './routes/cte'
 import { Route as CteOsRouteImport } from './routes/cte-os'
 import { Route as DebuggerRouteImport } from './routes/debugger'
 import { Route as FontesRouteImport } from './routes/fontes'
+import { Route as GovernancaRouteImport } from './routes/governanca'
 import { Route as IncidentesRouteImport } from './routes/incidentes'
 import { Route as MapaRouteImport } from './routes/mapa'
 import { Route as MathLabRouteImport } from './routes/math-lab'
@@ -81,6 +82,11 @@ const DebuggerRoute = DebuggerRouteImport.update({
 const FontesRoute = FontesRouteImport.update({
   id: '/fontes',
   path: '/fontes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GovernancaRoute = GovernancaRouteImport.update({
+  id: '/governanca',
+  path: '/governanca',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IncidentesRoute = IncidentesRouteImport.update({
@@ -160,6 +166,7 @@ export interface FileRoutesByFullPath {
   '/cte-os': typeof CteOsRoute
   '/debugger': typeof DebuggerRoute
   '/fontes': typeof FontesRoute
+  '/governanca': typeof GovernancaRoute
   '/incidentes': typeof IncidentesRoute
   '/mapa': typeof MapaRoute
   '/math-lab': typeof MathLabRoute
@@ -185,6 +192,7 @@ export interface FileRoutesByTo {
   '/cte-os': typeof CteOsRoute
   '/debugger': typeof DebuggerRoute
   '/fontes': typeof FontesRoute
+  '/governanca': typeof GovernancaRoute
   '/incidentes': typeof IncidentesRoute
   '/mapa': typeof MapaRoute
   '/math-lab': typeof MathLabRoute
@@ -211,6 +219,7 @@ export interface FileRoutesById {
   '/cte-os': typeof CteOsRoute
   '/debugger': typeof DebuggerRoute
   '/fontes': typeof FontesRoute
+  '/governanca': typeof GovernancaRoute
   '/incidentes': typeof IncidentesRoute
   '/mapa': typeof MapaRoute
   '/math-lab': typeof MathLabRoute
@@ -238,6 +247,7 @@ export interface FileRouteTypes {
     | '/cte-os'
     | '/debugger'
     | '/fontes'
+    | '/governanca'
     | '/incidentes'
     | '/mapa'
     | '/math-lab'
@@ -263,6 +273,7 @@ export interface FileRouteTypes {
     | '/cte-os'
     | '/debugger'
     | '/fontes'
+    | '/governanca'
     | '/incidentes'
     | '/mapa'
     | '/math-lab'
@@ -288,6 +299,7 @@ export interface FileRouteTypes {
     | '/cte-os'
     | '/debugger'
     | '/fontes'
+    | '/governanca'
     | '/incidentes'
     | '/mapa'
     | '/math-lab'
@@ -314,6 +326,7 @@ export interface RootRouteChildren {
   CteOsRoute: typeof CteOsRoute
   DebuggerRoute: typeof DebuggerRoute
   FontesRoute: typeof FontesRoute
+  GovernancaRoute: typeof GovernancaRoute
   IncidentesRoute: typeof IncidentesRoute
   MapaRoute: typeof MapaRoute
   MathLabRoute: typeof MathLabRoute
@@ -399,6 +412,13 @@ declare module '@tanstack/react-router' {
       path: '/fontes'
       fullPath: '/fontes'
       preLoaderRoute: typeof FontesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/governanca': {
+      id: '/governanca'
+      path: '/governanca'
+      fullPath: '/governanca'
+      preLoaderRoute: typeof GovernancaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/incidentes': {
@@ -506,6 +526,7 @@ const rootRouteChildren: RootRouteChildren = {
   CteOsRoute: CteOsRoute,
   DebuggerRoute: DebuggerRoute,
   FontesRoute: FontesRoute,
+  GovernancaRoute: GovernancaRoute,
   IncidentesRoute: IncidentesRoute,
   MapaRoute: MapaRoute,
   MathLabRoute: MathLabRoute,
