@@ -1,29 +1,54 @@
-# Welcome to your Lovable project
+# Simulador Fiscal + Blueprint de Integração (ERP brasileiro)
 
-This project was built with [Lovable](https://lovable.dev).
+Protótipo de interface e **blueprint técnico** para os documentos fiscais eletrônicos de um ERP
+brasileiro. O sistema roda inteiramente em **Ambiente de Simulação**: nenhuma requisição é feita à
+SEFAZ, à TecnoSpeed ou ao PlugNotas, e nenhum certificado, token, senha ou CNPJ real é utilizado.
 
-## Build with Lovable
+## O que este projeto é
 
-Open your project in the [Lovable editor](https://lovable.dev) and keep building.
+- Uma interface operacional completa dos sete módulos fiscais previstos.
+- Um catálogo de metadados de engenharia acoplado à interface (Modo Desenvolvedor).
+- Um registro honesto do que é **fato verificado**, do que é **ilustrativo** e do que está
+  **pendente de validação**.
 
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: connect the project to GitHub and every change made in Lovable is committed straight to your repository.
-- **Full ownership**: this code is yours. Push to your repository and your changes sync back into Lovable, ready for your next prompt.
+## O que este projeto não é
 
-## Development
+- Não é um emissor fiscal. Não emite, transmite, cancela nem consulta documentos reais.
+- Não é fonte de alíquotas, códigos de rejeição ou leiautes oficiais.
+- Não define regra fiscal: toda regra pertence ao back-end Python, versionada e datada.
 
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+## Módulos
 
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
-```
+| # | Módulo | Rota |
+|---|--------|------|
+| 1 | Central de Manifestação de Notas | `/` |
+| 2 | NF-e de Produtos — modelo 55 | `/nfe` |
+| 3 | PDV NFC-e — modelo 65 | `/nfce` |
+| 4 | NFS-e (fluxo PlugNotas) | `/nfse` |
+| 5 | CT-e de carga — modelo 57 | `/cte` |
+| 6 | CT-e OS — modelo 67 | `/cte-os` |
+| 7 | MDF-e — modelo 58 | `/mdfe` |
 
-## Built with
+## Modo Desenvolvedor
 
-- TanStack Start
-- TypeScript
-- React
-- Tailwind CSS
+A alternância no cabeçalho liga, em tempo de execução, a camada de blueprint. Elementos
+documentados recebem uma marca discreta; ao clicar (ou focar pelo teclado), o painel lateral
+direito mostra identificação, mapeamento, tipo e obrigatoriedade, validações de interface,
+responsabilidades do back-end, exemplo de payload interno, falhas previstas e rastreabilidade.
+
+## Atalhos
+
+- `F9` — salvar rascunho simulado
+- `F10` — transmitir (simulado)
+- `Tab` — navegação por teclado com foco visível
+
+## Documentação
+
+- [docs/architecture.md](docs/architecture.md) — estrutura do front-end e fronteiras
+- [docs/integration-map.md](docs/integration-map.md) — mapa de integração TecnoSpeed / PlugNotas
+- [docs/fiscal-assumptions.md](docs/fiscal-assumptions.md) — premissas, o que é fato e o que é suposição
+- [docs/test-scenarios.md](docs/test-scenarios.md) — cenários de teste manual
+
+## Stack
+
+React + TypeScript + Vite, TanStack Router, Tailwind CSS, shadcn/ui, Lucide Icons.

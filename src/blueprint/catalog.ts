@@ -50,6 +50,9 @@ const SEM_FONTE = {
   condicoes: "Confirmar na documentação da versão utilizada antes de implementar.",
 };
 
+// Entradas dos módulos 2 a 7 ficam em arquivo separado apenas por tamanho.
+import { catalogModulos } from "./catalog-modulos";
+
 export const catalog: DocEntry[] = [
   /* ---------------- Global ---------------- */
   {
@@ -346,6 +349,7 @@ export const catalog: DocEntry[] = [
     estado: "ilustrativo",
     rastreabilidade: SEM_FONTE,
   },
+  ...catalogModulos,
 ];
 
 export const catalogById = new Map(catalog.map((e) => [e.id, e]));
