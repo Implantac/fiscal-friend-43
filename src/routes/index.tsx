@@ -170,10 +170,10 @@ function Manifestacao() {
           <TableHeader>
             <TableRow>
               <TableHead className="w-[100px]">Emissão</TableHead>
-              <TableHead>Emitente</TableHead>
+              <TableHead className="min-w-[220px]">Emitente</TableHead>
               <TableHead className="w-[170px]">CNPJ (fictício)</TableHead>
               <TableHead className="w-[130px] text-right">Valor</TableHead>
-              <TableHead className="w-[260px]">Chave de acesso</TableHead>
+              <TableHead className="w-[250px]">Chave de acesso</TableHead>
               <TableHead className="w-[150px]">Status</TableHead>
               <TableHead className="w-[300px] text-right">Ações</TableHead>
             </TableRow>
@@ -191,7 +191,7 @@ function Manifestacao() {
                 <TableCell>
                   <Documented docId="m1.chave" inline>
                     <span className="flex items-center gap-1">
-                      <code className="font-mono text-[11px] leading-tight text-muted-foreground">
+                      <code className="whitespace-nowrap font-mono text-[10px] leading-tight text-muted-foreground">
                         {formatChave(nota.chave)}
                       </code>
                       <Button
