@@ -57,7 +57,7 @@ export function AcademyStepper() {
                 {e === "Aprender" ? (
                   <button className={cls} onClick={() => setAberto((a) => !a)}>{e}</button>
                 ) : d ? (
-                  <Link to={d.to} className={cls}>{e}</Link>
+                  <Link to={d.to} search={{} as never} className={cls}>{e}</Link>
                 ) : (
                   <span className={`${cls} bg-accent`}>{e} (esta tela)</span>
                 )}

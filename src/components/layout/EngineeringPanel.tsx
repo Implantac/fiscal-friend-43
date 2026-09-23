@@ -186,7 +186,7 @@ export function EngineeringPanel() {
                 </Bloco>
                 {campo.calculoId && (
                   <Bloco titulo="Cálculo">
-                    <Link to="/math-lab" className="text-primary hover:underline">Abrir no laboratório de cálculos</Link>
+                    <Link to="/math-lab" search={{} as never} className="text-primary hover:underline">Abrir no laboratório de cálculos</Link>
                   </Bloco>
                 )}
                 <Bloco titulo="XML (ilustrativo)">
