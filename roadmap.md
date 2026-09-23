@@ -15,3 +15,8 @@
 ## Depende de validação externa
 - Códigos oficiais de rejeição, versões de leiaute, vigências e alíquotas reais
 - Leiaute e classificação do novo modelo de tributos
+
+## Consolidação (fases A–E) — concluído
+- Ficha de rastreabilidade (regra/campo), impacto no ERP, governança com revisão, base oficial × didática, matriz universal, incidente → caso de regressão, camada única de persistência
+## Aguardando conteúdo oficial
+- Preencher base oficial (códigos, regras, cálculos) somente com fonte, versão e vigência conferidas

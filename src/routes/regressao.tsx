@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { testesRascunhoRepo, type TesteRascunho } from "@/knowledge/testes-rascunho";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageHeader } from "@/components/layout/AppShell";
 import { StatusBadge } from "@/components/knowledge/StatusBadge";
@@ -129,6 +130,47 @@ function RegressaoPage() {
           </TableBody>
         </Table>
       </section>
+      <RascunhosIncidentes />
     </div>
+  );
+}
+
+function RascunhosIncidentes() {
+  const [itens, setItens] = useState<TesteRascunho[]>([]);
+  useEffect(() => setItens(testesRascunhoRepo.listar()), []);
+  const mudar = (t: TesteRascunho, status: TesteRascunho["status"]) =>
+    setItens(testesRascunhoRepo.salvar({ ...t, status }));
+  const rot = { pendente_aprovacao: "Pendente de aprovação", aprovado: "Aprovado", descartado: "Descartado" };
+  return (
+    <section className="space-y-2 pt-4">
+      <h2 className="text-base font-semibold">Casos vindos de incidentes</h2>
+      <p className="text-sm text-muted-foreground">
+        Problema do ERP → incidente → conhecimento → caso de regressão. Salvos neste navegador.{" "}
+        <Link to="/incidentes" className="text-primary hover:underline">Registrar incidente</Link>
+      </p>
+      {itens.length === 0 ? (
+        <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">Nenhum caso gerado a partir de incidentes ainda.</p>
+      ) : (
+        <ul className="divide-y rounded-lg border">
+          {itens.map((t) => (
+            <li key={t.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2 text-xs">
+              <div className="min-w-0">
+                <p className="font-medium"><span className="font-mono">{t.id}</span> · {t.cenario}</p>
+                <p className="text-muted-foreground">Regras: {t.regras.join(", ") || "—"} · Esperado: {t.esperado}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="rounded border px-1.5 py-0.5 font-semibold">{rot[t.status]}</span>
+                {t.status === "pendente_aprovacao" && (
+                  <>
+                    <Button size="sm" variant="outline" className="h-6 text-xs" onClick={() => mudar(t, "aprovado")}>Aprovar</Button>
+                    <Button size="sm" variant="ghost" className="h-6 text-xs" onClick={() => mudar(t, "descartado")}>Descartar</Button>
+                  </>
+                )}
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
   );
 }

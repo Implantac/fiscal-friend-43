@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { documentos } from "@/knowledge/documentos";
 import { cstats, cstatByCodigo } from "@/knowledge/cstats";
 import { dateBR } from "@/lib/format";
+import { repositorioLocal } from "@/knowledge/storage";
+import { testesRascunhoRepo } from "@/knowledge/testes-rascunho";
 
 export const Route = createFileRoute("/incidentes")({
   head: () => ({
@@ -34,7 +36,7 @@ interface Incidente {
   prevencao: string;
 }
 
-const CHAVE = "simulador-fiscal:incidentes";
+const incidentesRepo = repositorioLocal<Incidente>("simulador-fiscal:incidentes");
 const vazio: Omit<Incidente, "id" | "data"> = { titulo: "", documento: "nfe55", cstat: "", sintoma: "", causa: "", correcao: "", prevencao: "" };
 
 function paraConhecimento(i: Incidente): string {
@@ -62,16 +64,28 @@ function IncidentesPage() {
   const [selecionado, setSelecionado] = useState<string | null>(null);
 
   useEffect(() => {
-    try {
-      setLista(JSON.parse(localStorage.getItem(CHAVE) ?? "[]") as Incidente[]);
-    } catch {
-      setLista([]);
-    }
+    setLista(incidentesRepo.listar());
   }, []);
 
   const salvar = (nova: Incidente[]) => {
-    setLista(nova);
-    localStorage.setItem(CHAVE, JSON.stringify(nova));
+    setLista(incidentesRepo.substituir(nova));
+  };
+
+  const gerarTeste = (i: Incidente) => {
+    const c = cstatByCodigo.get(i.cstat);
+    testesRascunhoRepo.salvar({
+      id: `TR-${i.id}`,
+      incidenteId: i.id,
+      documento: i.documento,
+      cenario: i.titulo,
+      cstat: i.cstat,
+      regras: c?.regras ?? [],
+      passos: i.sintoma,
+      esperado: c ? `A regra deve apontar a falha antes do envio (${c.situacao}).` : "Reproduzir e confirmar a correção.",
+      status: "pendente_aprovacao",
+      data: new Date().toISOString(),
+    });
+    toast.success(`Caso TR-${i.id} criado como pendente de aprovação.`);
   };
 
   const registrar = () => {
@@ -158,10 +172,12 @@ function IncidentesPage() {
                 </p>
               )}
               <pre className="max-h-96 overflow-auto rounded-md bg-muted p-3 font-mono text-xs whitespace-pre-wrap">{paraConhecimento(atual)}</pre>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button variant="outline" onClick={() => { void navigator.clipboard.writeText(paraConhecimento(atual)); toast.success("Rascunho copiado."); }}>Copiar rascunho</Button>
+                <Button variant="outline" onClick={() => gerarTeste(atual)}>Gerar caso de regressão</Button>
                 <Button variant="ghost" onClick={() => { salvar(lista.filter((i) => i.id !== atual.id)); setSelecionado(null); }}>Excluir</Button>
               </div>
+              <p className="text-[11px] text-muted-foreground">O caso gerado aparece na Regressão como "pendente de aprovação". <Link to="/regressao" className="text-primary hover:underline">Abrir regressão</Link></p>
             </div>
           )}
         </div>

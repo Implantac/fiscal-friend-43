@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { StatusBadge, ProcedenciaNota, EtiquetaDidatica } from "@/components/knowledge/StatusBadge";
+import { FichaRastreabilidade } from "@/components/knowledge/FichaRastreabilidade";
 import { XmlViewer } from "@/components/knowledge/XmlViewer";
 import {
   documentoSimuladoPadrao,
@@ -263,6 +264,7 @@ function DebuggerPage() {
                 )}
 
                 <ProcedenciaNota p={detalhe.regra.procedencia} />
+                <FichaRastreabilidade tipo="regra" id={detalhe.regra.id} />
               </CardContent>
             </Card>
           )}
