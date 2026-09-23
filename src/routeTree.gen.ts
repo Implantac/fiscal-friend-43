@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AcademiaRouteImport } from './routes/academia'
 import { Route as CenariosRouteImport } from './routes/cenarios'
+import { Route as ComeceAquiRouteImport } from './routes/comece-aqui'
 import { Route as ConhecimentoRouteImport } from './routes/conhecimento'
 import { Route as CstatRouteImport } from './routes/cstat'
 import { Route as CteRouteImport } from './routes/cte'
@@ -20,11 +21,15 @@ import { Route as DebuggerRouteImport } from './routes/debugger'
 import { Route as FontesRouteImport } from './routes/fontes'
 import { Route as MapaRouteImport } from './routes/mapa'
 import { Route as MathLabRouteImport } from './routes/math-lab'
+import { Route as MatrizRouteImport } from './routes/matriz'
 import { Route as MdfeRouteImport } from './routes/mdfe'
 import { Route as NfceRouteImport } from './routes/nfce'
 import { Route as NfeRouteImport } from './routes/nfe'
 import { Route as NfseRouteImport } from './routes/nfse'
+import { Route as QualidadeRouteImport } from './routes/qualidade'
 import { Route as ReformaRouteImport } from './routes/reforma'
+import { Route as RegressaoRouteImport } from './routes/regressao'
+import { Route as SuporteRouteImport } from './routes/suporte'
 import { Route as XmlLabRouteImport } from './routes/xml-lab'
 
 const IndexRoute = IndexRouteImport.update({
@@ -40,6 +45,11 @@ const AcademiaRoute = AcademiaRouteImport.update({
 const CenariosRoute = CenariosRouteImport.update({
   id: '/cenarios',
   path: '/cenarios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ComeceAquiRoute = ComeceAquiRouteImport.update({
+  id: '/comece-aqui',
+  path: '/comece-aqui',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ConhecimentoRoute = ConhecimentoRouteImport.update({
@@ -82,6 +92,11 @@ const MathLabRoute = MathLabRouteImport.update({
   path: '/math-lab',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MatrizRoute = MatrizRouteImport.update({
+  id: '/matriz',
+  path: '/matriz',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MdfeRoute = MdfeRouteImport.update({
   id: '/mdfe',
   path: '/mdfe',
@@ -102,9 +117,24 @@ const NfseRoute = NfseRouteImport.update({
   path: '/nfse',
   getParentRoute: () => rootRouteImport,
 } as any)
+const QualidadeRoute = QualidadeRouteImport.update({
+  id: '/qualidade',
+  path: '/qualidade',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ReformaRoute = ReformaRouteImport.update({
   id: '/reforma',
   path: '/reforma',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegressaoRoute = RegressaoRouteImport.update({
+  id: '/regressao',
+  path: '/regressao',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SuporteRoute = SuporteRouteImport.update({
+  id: '/suporte',
+  path: '/suporte',
   getParentRoute: () => rootRouteImport,
 } as any)
 const XmlLabRoute = XmlLabRouteImport.update({
@@ -117,6 +147,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/academia': typeof AcademiaRoute
   '/cenarios': typeof CenariosRoute
+  '/comece-aqui': typeof ComeceAquiRoute
   '/conhecimento': typeof ConhecimentoRoute
   '/cstat': typeof CstatRoute
   '/cte': typeof CteRoute
@@ -125,17 +156,22 @@ export interface FileRoutesByFullPath {
   '/fontes': typeof FontesRoute
   '/mapa': typeof MapaRoute
   '/math-lab': typeof MathLabRoute
+  '/matriz': typeof MatrizRoute
   '/mdfe': typeof MdfeRoute
   '/nfce': typeof NfceRoute
   '/nfe': typeof NfeRoute
   '/nfse': typeof NfseRoute
+  '/qualidade': typeof QualidadeRoute
   '/reforma': typeof ReformaRoute
+  '/regressao': typeof RegressaoRoute
+  '/suporte': typeof SuporteRoute
   '/xml-lab': typeof XmlLabRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/academia': typeof AcademiaRoute
   '/cenarios': typeof CenariosRoute
+  '/comece-aqui': typeof ComeceAquiRoute
   '/conhecimento': typeof ConhecimentoRoute
   '/cstat': typeof CstatRoute
   '/cte': typeof CteRoute
@@ -144,11 +180,15 @@ export interface FileRoutesByTo {
   '/fontes': typeof FontesRoute
   '/mapa': typeof MapaRoute
   '/math-lab': typeof MathLabRoute
+  '/matriz': typeof MatrizRoute
   '/mdfe': typeof MdfeRoute
   '/nfce': typeof NfceRoute
   '/nfe': typeof NfeRoute
   '/nfse': typeof NfseRoute
+  '/qualidade': typeof QualidadeRoute
   '/reforma': typeof ReformaRoute
+  '/regressao': typeof RegressaoRoute
+  '/suporte': typeof SuporteRoute
   '/xml-lab': typeof XmlLabRoute
 }
 export interface FileRoutesById {
@@ -156,6 +196,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/academia': typeof AcademiaRoute
   '/cenarios': typeof CenariosRoute
+  '/comece-aqui': typeof ComeceAquiRoute
   '/conhecimento': typeof ConhecimentoRoute
   '/cstat': typeof CstatRoute
   '/cte': typeof CteRoute
@@ -164,11 +205,15 @@ export interface FileRoutesById {
   '/fontes': typeof FontesRoute
   '/mapa': typeof MapaRoute
   '/math-lab': typeof MathLabRoute
+  '/matriz': typeof MatrizRoute
   '/mdfe': typeof MdfeRoute
   '/nfce': typeof NfceRoute
   '/nfe': typeof NfeRoute
   '/nfse': typeof NfseRoute
+  '/qualidade': typeof QualidadeRoute
   '/reforma': typeof ReformaRoute
+  '/regressao': typeof RegressaoRoute
+  '/suporte': typeof SuporteRoute
   '/xml-lab': typeof XmlLabRoute
 }
 export interface FileRouteTypes {
@@ -177,6 +222,7 @@ export interface FileRouteTypes {
     | '/'
     | '/academia'
     | '/cenarios'
+    | '/comece-aqui'
     | '/conhecimento'
     | '/cstat'
     | '/cte'
@@ -185,17 +231,22 @@ export interface FileRouteTypes {
     | '/fontes'
     | '/mapa'
     | '/math-lab'
+    | '/matriz'
     | '/mdfe'
     | '/nfce'
     | '/nfe'
     | '/nfse'
+    | '/qualidade'
     | '/reforma'
+    | '/regressao'
+    | '/suporte'
     | '/xml-lab'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/academia'
     | '/cenarios'
+    | '/comece-aqui'
     | '/conhecimento'
     | '/cstat'
     | '/cte'
@@ -204,17 +255,22 @@ export interface FileRouteTypes {
     | '/fontes'
     | '/mapa'
     | '/math-lab'
+    | '/matriz'
     | '/mdfe'
     | '/nfce'
     | '/nfe'
     | '/nfse'
+    | '/qualidade'
     | '/reforma'
+    | '/regressao'
+    | '/suporte'
     | '/xml-lab'
   id:
     | '__root__'
     | '/'
     | '/academia'
     | '/cenarios'
+    | '/comece-aqui'
     | '/conhecimento'
     | '/cstat'
     | '/cte'
@@ -223,11 +279,15 @@ export interface FileRouteTypes {
     | '/fontes'
     | '/mapa'
     | '/math-lab'
+    | '/matriz'
     | '/mdfe'
     | '/nfce'
     | '/nfe'
     | '/nfse'
+    | '/qualidade'
     | '/reforma'
+    | '/regressao'
+    | '/suporte'
     | '/xml-lab'
   fileRoutesById: FileRoutesById
 }
@@ -235,6 +295,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AcademiaRoute: typeof AcademiaRoute
   CenariosRoute: typeof CenariosRoute
+  ComeceAquiRoute: typeof ComeceAquiRoute
   ConhecimentoRoute: typeof ConhecimentoRoute
   CstatRoute: typeof CstatRoute
   CteRoute: typeof CteRoute
@@ -243,11 +304,15 @@ export interface RootRouteChildren {
   FontesRoute: typeof FontesRoute
   MapaRoute: typeof MapaRoute
   MathLabRoute: typeof MathLabRoute
+  MatrizRoute: typeof MatrizRoute
   MdfeRoute: typeof MdfeRoute
   NfceRoute: typeof NfceRoute
   NfeRoute: typeof NfeRoute
   NfseRoute: typeof NfseRoute
+  QualidadeRoute: typeof QualidadeRoute
   ReformaRoute: typeof ReformaRoute
+  RegressaoRoute: typeof RegressaoRoute
+  SuporteRoute: typeof SuporteRoute
   XmlLabRoute: typeof XmlLabRoute
 }
 
@@ -272,6 +337,13 @@ declare module '@tanstack/react-router' {
       path: '/cenarios'
       fullPath: '/cenarios'
       preLoaderRoute: typeof CenariosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/comece-aqui': {
+      id: '/comece-aqui'
+      path: '/comece-aqui'
+      fullPath: '/comece-aqui'
+      preLoaderRoute: typeof ComeceAquiRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/conhecimento': {
@@ -330,6 +402,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MathLabRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/matriz': {
+      id: '/matriz'
+      path: '/matriz'
+      fullPath: '/matriz'
+      preLoaderRoute: typeof MatrizRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/mdfe': {
       id: '/mdfe'
       path: '/mdfe'
@@ -358,11 +437,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof NfseRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/qualidade': {
+      id: '/qualidade'
+      path: '/qualidade'
+      fullPath: '/qualidade'
+      preLoaderRoute: typeof QualidadeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reforma': {
       id: '/reforma'
       path: '/reforma'
       fullPath: '/reforma'
       preLoaderRoute: typeof ReformaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/regressao': {
+      id: '/regressao'
+      path: '/regressao'
+      fullPath: '/regressao'
+      preLoaderRoute: typeof RegressaoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/suporte': {
+      id: '/suporte'
+      path: '/suporte'
+      fullPath: '/suporte'
+      preLoaderRoute: typeof SuporteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/xml-lab': {
@@ -379,6 +479,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AcademiaRoute: AcademiaRoute,
   CenariosRoute: CenariosRoute,
+  ComeceAquiRoute: ComeceAquiRoute,
   ConhecimentoRoute: ConhecimentoRoute,
   CstatRoute: CstatRoute,
   CteRoute: CteRoute,
@@ -387,11 +488,15 @@ const rootRouteChildren: RootRouteChildren = {
   FontesRoute: FontesRoute,
   MapaRoute: MapaRoute,
   MathLabRoute: MathLabRoute,
+  MatrizRoute: MatrizRoute,
   MdfeRoute: MdfeRoute,
   NfceRoute: NfceRoute,
   NfeRoute: NfeRoute,
   NfseRoute: NfseRoute,
+  QualidadeRoute: QualidadeRoute,
   ReformaRoute: ReformaRoute,
+  RegressaoRoute: RegressaoRoute,
+  SuporteRoute: SuporteRoute,
   XmlLabRoute: XmlLabRoute,
 }
 export const routeTree = rootRouteImport

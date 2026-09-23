@@ -1,0 +1,102 @@
+import { useMemo, useState } from "react";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { PageHeader } from "@/components/layout/AppShell";
+import { StatusBadge } from "@/components/knowledge/StatusBadge";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { executarTestes, type ExecucaoTeste } from "@/knowledge/testes";
+import { documentoById } from "@/knowledge/documentos";
+
+export const Route = createFileRoute("/regressao")({
+  head: () => ({
+    meta: [
+      { title: "Regressão fiscal — Simulador Fiscal" },
+      { name: "description", content: "Casos de teste didáticos executados contra as regras do simulador para detectar o que quebra quando uma regra muda." },
+      { property: "og:title", content: "Regressão fiscal — Simulador Fiscal" },
+      { property: "og:description", content: "Casos de teste por documento, regra, UF e operação, com resultado esperado e obtido." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
+  component: RegressaoPage,
+});
+
+function RegressaoPage() {
+  const [execucao, setExecucao] = useState<ExecucaoTeste[]>(() => executarTestes());
+  const [doc, setDoc] = useState("");
+  const [status, setStatus] = useState("");
+  const [operacao, setOperacao] = useState("");
+
+  const lista = useMemo(
+    () =>
+      execucao.filter(
+        (e) =>
+          (!doc || e.teste.documento === doc) &&
+          (!status || e.resultado === status) &&
+          (!operacao || e.teste.operacao === operacao),
+      ),
+    [execucao, doc, status, operacao],
+  );
+  const aprovados = execucao.filter((e) => e.resultado === "aprovado").length;
+  const falhas = execucao.length - aprovados;
+  const docs = [...new Set(execucao.map((e) => e.teste.documento))];
+  const ops = [...new Set(execucao.map((e) => e.teste.operacao))];
+
+  const Filtro = ({ v, set, opcoes, rotulo }: { v: string; set: (s: string) => void; opcoes: [string, string][]; rotulo: string }) => (
+    <label className="space-y-1 text-xs">
+      <span className="font-medium">{rotulo}</span>
+      <select value={v} onChange={(e) => set(e.target.value)} className="block w-44 rounded-md border bg-background px-2 py-1.5 text-sm">
+        <option value="">Todos</option>
+        {opcoes.map(([k, t]) => <option key={k} value={k}>{t}</option>)}
+      </select>
+    </label>
+  );
+
+  return (
+    <div className="space-y-5">
+      <PageHeader
+        titulo="Regressão fiscal"
+        descricao="Cada caso aplica uma variação a um documento simulado e confere a regra. Se uma regra mudar, os casos mostram o que deixou de funcionar. Casos didáticos."
+        acoes={<Button onClick={() => setExecucao(executarTestes())}>Executar novamente</Button>}
+      />
+      <div className="grid grid-cols-3 gap-3">
+        {[["Casos", execucao.length], ["Aprovados", aprovados], ["Falhas", falhas]].map(([t, n]) => (
+          <div key={t} className="rounded-lg border bg-surface p-3">
+            <p className="text-xs text-muted-foreground">{t}</p>
+            <p className="font-mono text-2xl font-semibold">{n}</p>
+          </div>
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-3">
+        <Filtro rotulo="Documento" v={doc} set={setDoc} opcoes={docs.map((d) => [d, documentoById.get(d)?.sigla ?? d])} />
+        <Filtro rotulo="Operação" v={operacao} set={setOperacao} opcoes={ops.map((o) => [o, o])} />
+        <Filtro rotulo="Resultado" v={status} set={setStatus} opcoes={[["aprovado", "Aprovado"], ["falha", "Falha"]]} />
+      </div>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>ID</TableHead><TableHead>Documento</TableHead><TableHead>Cenário</TableHead><TableHead>UF</TableHead>
+            <TableHead>Regra</TableHead><TableHead>Esperado</TableHead><TableHead>Obtido</TableHead><TableHead>Rejeição esperada</TableHead><TableHead>Resultado</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {lista.map(({ teste: t, resultado, regraAtendida }) => (
+            <TableRow key={t.id}>
+              <TableCell className="font-mono text-xs">{t.id}<div><StatusBadge status={t.status} /></div></TableCell>
+              <TableCell>{documentoById.get(t.documento)?.sigla}</TableCell>
+              <TableCell className="text-sm">{t.cenario}</TableCell>
+              <TableCell className="text-xs">{t.uf}</TableCell>
+              <TableCell><Link to="/debugger" search={{ regra: t.regraId }} className="font-mono text-xs text-primary hover:underline">{t.regraId}</Link></TableCell>
+              <TableCell className="text-xs">{t.esperaAtender ? "Regra atendida" : "Regra aponta falha"}</TableCell>
+              <TableCell className="text-xs">{regraAtendida === undefined ? "—" : regraAtendida ? "Regra atendida" : "Regra aponta falha"}</TableCell>
+              <TableCell>{t.cstatEsperado ? <Link to="/cstat" search={{ codigo: t.cstatEsperado }} className="font-mono text-xs text-primary hover:underline">{t.cstatEsperado}</Link> : "—"}</TableCell>
+              <TableCell className={resultado === "aprovado" ? "text-validated font-semibold" : "text-destructive font-semibold"}>
+                {resultado === "aprovado" ? "Aprovado" : resultado === "falha" ? "Falha" : "Regra ausente"}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
