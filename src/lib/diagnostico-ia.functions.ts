@@ -54,7 +54,7 @@ const entrada = z.object({
 });
 
 export const diagnosticarNfe = createServerFn({ method: "POST" })
-  .inputValidator((d: unknown) => entrada.parse(d))
+  .validator((d: unknown) => entrada.parse(d))
   .handler(async ({ data }): Promise<{ ok: true; diagnostico: DiagnosticoIA } | { ok: false; erro: string }> => {
     const key = process.env["LOVABLE_API_KEY"];
     if (!key) return { ok: false, erro: "Chave do serviço de IA não configurada." };
