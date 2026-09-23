@@ -89,6 +89,33 @@ export const fontes: FonteFiscal[] = [
     referencia: "https://www.planalto.gov.br/ccivil_03/constituicao/emendas/emc/emc132.htm",
   },
   {
+    id: "ajuste-sinief-09-07",
+    categoria: "Ajuste SINIEF",
+    nome: "Ajuste SINIEF 09/2007 — institui o CT-e e o CT-e OS",
+    referencia: "https://www.confaz.fazenda.gov.br/legislacao/ajustes/2007/AJ_009_07",
+    observacao: "Base legal do CT-e (modelo 57) e do CT-e OS (modelo 67).",
+  },
+  {
+    id: "ajuste-sinief-21-10",
+    categoria: "Ajuste SINIEF",
+    nome: "Ajuste SINIEF 21/2010 — institui o MDF-e",
+    referencia: "https://www.confaz.fazenda.gov.br/legislacao/ajustes/2010/AJ_021_10",
+    observacao: "Base legal do MDF-e (modelo 58).",
+  },
+  {
+    id: "lc-116",
+    categoria: "Legislação",
+    nome: "Lei Complementar 116/2003 — ISS (lista de serviços)",
+    referencia: "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp116.htm",
+    observacao: "Base do ISS na NFS-e; alíquotas e regras variam por município.",
+  },
+  {
+    id: "nfse-doc-tecnica",
+    categoria: "Receita Federal",
+    nome: "NFS-e Nacional — documentação técnica (leiautes, esquemas, manuais)",
+    referencia: "https://www.gov.br/nfse/pt-br/biblioteca/documentacao-tecnica",
+  },
+  {
     id: "provedores",
     categoria: "Documentação de provedor",
     nome: "Documentação TecnoSpeed / PlugNotas",
