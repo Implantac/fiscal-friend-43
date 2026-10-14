@@ -3,6 +3,31 @@
 Todas as mudanças relevantes deste repositório são registradas aqui.
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [Não publicado] — 2026-10-14 (continuação)
+
+### Adicionado — Etapa 2: fundação de produção
+
+- `src/fiscal/tenancy.ts` — modelo multi-tenant (Tenant, Empresa,
+  Estabelecimento, CertificadoDigital), validação estrutural de CNPJ/CPF,
+  `assertMesmoTenant`, `filtrarPorTenant` e `verificarHabilitacaoTecnica`.
+  Um CNPJ válido estruturalmente **não** afirma habilitação fiscal.
+- `src/fiscal/seguranca.ts` — 5 papéis, 11 permissões, `ContextoUsuario`,
+  `assertAutorizado` (permissão + tenant + estabelecimento) e separação de funções.
+- `src/fiscal/ciclo-vida.ts` — máquina de estados com 11 estados e transições
+  bloqueadas por regra de integridade; histórico de eventos congelado.
+- `src/fiscal/numeracao.ts` — numeração sequencial atômica, idempotência
+  obrigatória e inutilização com justificativa.
+- `src/fiscal/auditoria.ts` — trilha append-only + sanitização de credenciais.
+- `src/fiscal/persistencia.ts` — portas de repositório e unidade de trabalho com
+  staging, commit, rollback e concorrência otimista.
+- `docs/modelo-dados.md` e `docs/seguranca-multiempresa.md`.
+- 75 novos testes para a camada fiscal.
+
+### Corrigido
+
+- Nenhum. A Etapa 2 é exclusivamente aditiva — nenhum comportamento existente
+  foi alterado.
+
 ## [Não publicado] — 2026-10-14
 
 ### Adicionado

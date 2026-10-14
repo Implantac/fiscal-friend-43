@@ -11,6 +11,27 @@ SEFAZ, à TecnoSpeed ou ao PlugNotas, e nenhum certificado, token, senha ou CNPJ
 - Um registro honesto do que é **fato verificado**, do que é **ilustrativo** e do que está
   **pendente de validação**.
 
+## Fundação de plataforma (2026-10-14)
+
+Além do simulador, o repositório contém a camada de fundação para a plataforma
+fiscal, toda testada:
+
+- **Multi-tenant estrutural** — `tenantId` em toda entidade, isolamento aplicado
+  na consulta e acesso cross-tenant negado com erro ruidoso e auditado.
+- **Papéis e permissões** — administrador, fiscal, operador, suporte e auditor,
+  com autorização por papel, tenant e estabelecimento.
+- **Ciclo de vida do documento** — 11 estados e transições bloqueadas:
+  `autorizado` exige protocolo oficial, `rejeitado` exige cStat, `transmitido`
+  exige chave de idempotência, e `pendente_consulta` **não** pode virar novo
+  documento (timeout não autoriza reemitir).
+- **Numeração e idempotência** — reserva sequencial atômica; a mesma chave
+  devolve o mesmo número, sem consumir a sequência.
+- **Trilha de auditoria append-only** — registros congelados, com sanitização
+  de credenciais, CPF e blocos PEM.
+
+Detalhes: [`docs/modelo-dados.md`](docs/modelo-dados.md) ·
+[`docs/seguranca-multiempresa.md`](docs/seguranca-multiempresa.md).
+
 ## O que este projeto não é
 
 - Não é um emissor fiscal. Não emite, transmite, cancela nem consulta documentos reais.

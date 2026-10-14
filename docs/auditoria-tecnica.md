@@ -130,7 +130,7 @@ Risco: **alto** (erro fiscal/segurança) · **médio** · **baixo**.
 
 | # | Lacuna | Prio | Risco | Arquivos afetados | Critério de aceite | Dependência externa |
 |---|---|---|---|---|---|---|
-| L1 | Sem back-end, banco, auth e multi-tenant | P0 | alto | todo `src/routes`, `src/simulation` | CRUD de empresas/estabelecimentos com isolamento por tenant testado; login com papéis; migração versionada | decisão de hospedagem |
+| L1 | Sem back-end, banco, auth e multi-tenant | P0 | alto | todo `src/routes`, `src/simulation` | CRUD de empresas/estabelecimentos com isolamento por tenant testado; login com papéis; migração versionada | decisão de hospedagem — **parcialmente endereçada na Etapa 2**: isolamento, papéis, ciclo de vida, numeração e auditoria implementados e testados; banco, migração e login seguem pendentes |
 | L2 | Motor monetário em `number`/`toFixed` | P0 | alto | `documento-saida.ts`, rotas, `knowledge/*` | cálculo em decimal exato, teste de regressão com valores extremos; rateio fecha total | nenhuma — **feito na Etapa 1** |
 | L3 | Sem testes automatizados | P0 | alto | repositório | runner + testes de cálculo, XML, registro de regras; `npm run verify` verde | nenhuma — **feito na Etapa 1** |
 | L4 | Alíquotas de cenário aplicadas sem bloqueio | P1 | alto | `parametros-cenario.ts`, rotas | toda prévia devolve `Pendencia` bloqueante explicando o que falta | nenhuma — **feito na Etapa 1** |
@@ -138,12 +138,12 @@ Risco: **alto** (erro fiscal/segurança) · **médio** · **baixo**.
 | L6 | Sem registro formal de regras fiscais | P1 | alto | `src/fiscal/` (novo) | regra sem fonte/vigência/teste não é utilizável em cálculo | manuais e atos oficiais |
 | L7 | Sem XSD oficial versionado | P1 | alto | `src/simulation/documento-saida.ts` | XML validado contra XSD da versão antes de qualquer transmissão | pacotes XSD oficiais |
 | L8 | Sem assinatura digital | P1 | alto | idem | assinatura no back-end com chave protegida; XML original preservado | certificado + credenciamento |
-| L9 | Sem numeração transacional/idempotência | P1 | médio | novo serviço de emissão | numeração por série/estabelecimento à prova de concorrência; retentativa não duplica | banco transacional |
-| L10 | Sem máquina de estados do documento | P1 | médio | novo domínio | transições inválidas bloqueadas; histórico imutável | idem |
+| L9 | Sem numeração transacional/idempotência | P1 | médio | `src/fiscal/numeracao.ts` | numeração por série/estabelecimento à prova de concorrência; retentativa não duplica | banco transacional — **endereçada na Etapa 2** com implementação em memória testada (50 reservas concorrentes → números únicos); falta a versão transacional em banco |
+| L10 | Sem máquina de estados do documento | P1 | médio | `src/fiscal/ciclo-vida.ts` | transições inválidas bloqueadas; histórico imutável | — **endereçada na Etapa 2** |
 | L11 | Sem importação/conferência de XML recebido | P2 | médio | `conferir-xml.tsx`, `conferir-nfe.ts` | parser validado (não regex), detecção de duplicidade, relatório de divergências | manuais de leiaute |
 | L12 | Sem cobertura NFS-e por município | P2 | médio | `nfse.tsx` | matriz município × provedor implementada e testada | documentação de cada município |
 | L13 | Sem EFD/obrigações acessórias | P3 | médio | — | matriz de cobertura documento a documento | SPED/CONFAZ |
-| L14 | Sem observabilidade, backup, LGPD | P2 | alto | infraestrutura | logs sem segredo, métricas, alertas, política de retenção | decisão de hospedagem |
+| L14 | Sem observabilidade, backup, LGPD | P2 | alto | infraestrutura | logs sem segredo, métricas, alertas, política de retenção | decisão de hospedagem — **parcialmente endereçada na Etapa 2**: trilha de auditoria append-only com sanitização de credenciais; faltam logs estruturados, métricas, backup e retenção |
 | L15 | Node ≥ 22.12.0 exigido por dependência | P3 | baixo | `package.json` | CI fixa Node 22 | nenhuma |
 | L16 | Diagnóstico por IA sem teste de guardrail | P2 | médio | `diagnostico-ia.functions.ts` | suite que falha se o modelo citar cStat/alíquota fora da base | chave de API |
 
@@ -260,3 +260,45 @@ de `docs/test-scenarios.md` replicados + matriz de lacunas atualizada.
 4. **Preview externo:** foi necessário liberar `server.allowedHosts` e
    `preview.allowedHosts` em `vite.config.ts`, porque o proxy de preview usa um
    host próprio e o Vite bloqueia por padrão (403).
+
+
+---
+
+## 9. Etapa 2 — Fundação de produção (entregue em 2026-10-14)
+
+### 9.1 Implementado
+
+| Módulo | Conteúdo | Testes |
+|---|---|---|
+| `src/fiscal/tenancy.ts` | Tenant/Empresa/Estabelecimento/Certificado; validação estrutural de CNPJ e CPF; `assertMesmoTenant`, `filtrarPorTenant`; `verificarHabilitacaoTecnica` | 14 |
+| `src/fiscal/seguranca.ts` | 5 papéis, 11 permissões, `ContextoUsuario`, `assertAutorizado` (permissão + tenant + estabelecimento), separação de funções | 11 |
+| `src/fiscal/ciclo-vida.ts` | 11 estados, tabela de transições por família, regras de integridade (`autorizado` exige protocolo oficial, `rejeitado` exige cStat, `transmitido` exige idempotência), histórico congelado | 15 |
+| `src/fiscal/numeracao.ts` | reserva sequencial atômica, idempotência obrigatória, inutilização com justificativa | 11 |
+| `src/fiscal/auditoria.ts` | porta append-only, implementação congelada, sanitização de credenciais/CPF/PEM | (em persistencia.test) |
+| `src/fiscal/persistencia.ts` | portas + unidade de trabalho em memória com staging, commit, rollback e concorrência otimista | 12 |
+
+Documentação: `docs/modelo-dados.md`, `docs/seguranca-multiempresa.md`.
+
+### 9.2 Evidência
+
+```
+npm run verify -> typecheck 0 erros | lint 0 erros
+npm run test   -> 6 arquivos em src/fiscal, 75 testes, 75 passaram
+```
+
+### 9.3 Decisões de arquitetura (reversíveis)
+
+1. **Não foi criado um segundo backend.** O repositório já executa funções de
+   servidor (TanStack Start); o domínio fiscal entra como camada independente de
+   framework, chamável por essas funções.
+2. **Persistência em memória com porta estável.** Não há banco provisionado;
+   inventar conexão fictícia seria justamente o que o produto proíbe.
+3. **Autorização como contrato, não como tela.** Login/sessão ficam para a
+   Etapa 2.5, mas a regra de acesso já está definida e testada.
+
+### 9.4 Pendente para a Etapa 2.5
+
+- Postgres + migrações versionadas;
+- autenticação, sessão, MFA e rate limiting;
+- implementação transacional da numeração em banco;
+- exposição das portas via funções de servidor com o contexto do usuário.

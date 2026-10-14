@@ -125,3 +125,35 @@ necessária para sair da simulação.
 configuração isolada em `vitest.config.ts`). Testes cobrem o motor monetário, o
 registro de regras, a prévia/CFOP e a geração de XML (selo de simulação,
 `tpAmb=2`, ausência de `<Signature>`, casas decimais e fechamento de totais).
+
+
+---
+
+## Camada de fundação (adicionada em 2026-10-14, Etapa 2)
+
+```text
+src/fiscal/
+  tenancy.ts        Tenant, Empresa, Estabelecimento, CertificadoDigital
+                    + validação estrutural de CNPJ/CPF + assertMesmoTenant
+  seguranca.ts      Papel, Permissao, ContextoUsuario, assertAutorizado
+  ciclo-vida.ts     máquina de estados do documento fiscal
+  numeracao.ts      numeração transacional + idempotência
+  auditoria.ts      trilha append-only + sanitização
+  persistencia.ts   portas (UnidadeTrabalho) + implementação em memória
+```
+
+Regras de fronteira desta camada:
+
+1. **Nenhuma entidade de negócio sem `tenantId`** — isolamento estrutural.
+2. **Nenhuma consulta sem `tenantId`** — o filtro é aplicado na query.
+3. **Nenhum estado de sucesso por atalho** — `autorizado` exige protocolo com
+   origem oficial; `rejeitado` exige `cStat`; `transmitido` exige idempotência.
+4. **Nenhuma escrita sem trilha** — a auditoria é append-only e congelada.
+5. **Autorização no servidor** — `assertAutorizado(ctx, permissao, recurso)`
+   antes de qualquer operação.
+
+A implementação em memória existe para desenvolvimento e teste. A porta
+(`UnidadeTrabalho`) é o contrato estável: entrar com Postgres não altera uma
+linha do domínio. Documentação completa em
+[`docs/modelo-dados.md`](modelo-dados.md) e
+[`docs/seguranca-multiempresa.md`](seguranca-multiempresa.md).
