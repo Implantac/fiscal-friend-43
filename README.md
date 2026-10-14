@@ -32,6 +32,19 @@ fiscal, toda testada:
 Detalhes: [`docs/modelo-dados.md`](docs/modelo-dados.md) ·
 [`docs/seguranca-multiempresa.md`](docs/seguranca-multiempresa.md).
 
+### Persistência e autenticação
+
+- **Schema Postgres com Row-Level Security** (`db/migrations/001_fundacao.sql`):
+  mesmo que uma query esqueça o filtro de empresa, o banco devolve zero linhas.
+- **Senha e token de sessão nunca em texto** — PBKDF2 (210.000 iterações, salt
+  por senha), comparação em tempo constante, bloqueio após 5 falhas.
+- **Repositório real** (`src/fiscal/persistencia-postgres.ts`) com numeração
+  atômica em uma única instrução e zero interpolação de SQL.
+- **Módulos de servidor são fechados ao cliente** por regra de lint: build
+  quebra se uma rota tentar importá-los.
+
+Detalhes: [`docs/banco-de-dados.md`](docs/banco-de-dados.md).
+
 ## O que este projeto não é
 
 - Não é um emissor fiscal. Não emite, transmite, cancela nem consulta documentos reais.

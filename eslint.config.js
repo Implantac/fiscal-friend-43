@@ -36,5 +36,36 @@ export default tseslint.config(
       "@typescript-eslint/no-unused-vars": "off",
     },
   },
+  // ------------------------------------------------------------------------
+  // MÓDULOS EXCLUSIVOS DE SERVIDOR
+  // ------------------------------------------------------------------------
+  // `autenticacao.ts` e `persistencia-postgres.ts` lidam com hash de senha,
+  // token de sessão e SQL. Se qualquer um deles for importado por código de
+  // rota (que roda no cliente), o material de credencial e a string de conexão
+  // entrariam no bundle do navegador. A regra abaixo transforma esse erro de
+  // arquitetura em falha de build.
+  // ------------------------------------------------------------------------
+  {
+    files: ["src/routes/**/*.{ts,tsx}", "src/components/**/*.{ts,tsx}", "src/hooks/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: [
+                "**/fiscal/autenticacao",
+                "@/fiscal/autenticacao",
+                "**/fiscal/persistencia-postgres",
+                "@/fiscal/persistencia-postgres",
+              ],
+              message:
+                "Módulo exclusivo de servidor (hash de senha, token de sessão e SQL). Importe apenas de funções de servidor (`*.server.ts` / createServerFn).",
+            },
+          ],
+        },
+      ],
+    },
+  },
   eslintPluginPrettier,
 );

@@ -130,7 +130,7 @@ Risco: **alto** (erro fiscal/segurança) · **médio** · **baixo**.
 
 | # | Lacuna | Prio | Risco | Arquivos afetados | Critério de aceite | Dependência externa |
 |---|---|---|---|---|---|---|
-| L1 | Sem back-end, banco, auth e multi-tenant | P0 | alto | todo `src/routes`, `src/simulation` | CRUD de empresas/estabelecimentos com isolamento por tenant testado; login com papéis; migração versionada | decisão de hospedagem — **parcialmente endereçada na Etapa 2**: isolamento, papéis, ciclo de vida, numeração e auditoria implementados e testados; banco, migração e login seguem pendentes |
+| L1 | Sem back-end, banco, auth e multi-tenant | P0 | alto | todo `src/routes`, `src/simulation` | CRUD de empresas/estabelecimentos com isolamento por tenant testado; login com papéis; migração versionada | **endereçada nas Etapas 2 e 2.5**: isolamento, papéis, ciclo de vida, numeração, auditoria, schema com RLS, hash de senha e repositório Postgres implementados e testados. Falta provisionar o banco, o driver de conexão e a camada HTTP de login |
 | L2 | Motor monetário em `number`/`toFixed` | P0 | alto | `documento-saida.ts`, rotas, `knowledge/*` | cálculo em decimal exato, teste de regressão com valores extremos; rateio fecha total | nenhuma — **feito na Etapa 1** |
 | L3 | Sem testes automatizados | P0 | alto | repositório | runner + testes de cálculo, XML, registro de regras; `npm run verify` verde | nenhuma — **feito na Etapa 1** |
 | L4 | Alíquotas de cenário aplicadas sem bloqueio | P1 | alto | `parametros-cenario.ts`, rotas | toda prévia devolve `Pendencia` bloqueante explicando o que falta | nenhuma — **feito na Etapa 1** |
@@ -296,9 +296,26 @@ npm run test   -> 6 arquivos em src/fiscal, 75 testes, 75 passaram
 3. **Autorização como contrato, não como tela.** Login/sessão ficam para a
    Etapa 2.5, mas a regra de acesso já está definida e testada.
 
-### 9.4 Pendente para a Etapa 2.5
+### 9.5 Etapa 2.5 — entregue em 2026-10-14
 
-- Postgres + migrações versionadas;
-- autenticação, sessão, MFA e rate limiting;
-- implementação transacional da numeração em banco;
-- exposição das portas via funções de servidor com o contexto do usuário.
+| Item | Arquivo | Situação |
+|---|---|---|
+| Schema Postgres com RLS, constraints e triggers de imutabilidade | `db/migrations/001_fundacao.sql` | implementado |
+| Hash de senha (PBKDF2, 210k iterações), comparação em tempo constante, token de sessão com hash, bloqueio progressivo | `src/fiscal/autenticacao.ts` | implementado + 14 testes |
+| Repositório Postgres das portas do domínio, numeração atômica em uma instrução, zero interpolação de SQL | `src/fiscal/persistencia-postgres.ts` | implementado + 15 testes |
+| Regra de lint que impede importação de módulo de servidor pelo cliente | `eslint.config.js` | implementado e verificado |
+| Documentação de banco e deploy | `docs/banco-de-dados.md` | implementado |
+
+Evidência: `npm run verify` verde (typecheck, lint, **154 testes**) e
+`npm run build` concluído.
+
+Decisão de hospedagem **não** foi informada; o schema é Postgres genérico e a
+conexão entra por injeção de dependência, então trocar de provedor de banco não
+altera o domínio.
+
+### 9.6 Pendente
+
+- provisionar Postgres e aplicar migração no start;
+- driver de conexão e pool;
+- camada HTTP de login, cookie HttpOnly, sessão e MFA (Etapa 2.6);
+- backup, retenção, TLS e criptografia em repouso (Etapa 7).

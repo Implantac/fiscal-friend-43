@@ -157,3 +157,29 @@ A implementação em memória existe para desenvolvimento e teste. A porta
 linha do domínio. Documentação completa em
 [`docs/modelo-dados.md`](modelo-dados.md) e
 [`docs/seguranca-multiempresa.md`](seguranca-multiempresa.md).
+
+
+---
+
+## Persistência e servidor (adicionada em 2026-10-14, Etapa 2.5)
+
+```text
+db/migrations/001_fundacao.sql    schema + RLS + triggers de imutabilidade
+src/fiscal/autenticacao.ts        hash de senha, sessão, bloqueio (SÓ servidor)
+src/fiscal/persistencia-postgres.ts  repositório Postgres das mesmas portas
+```
+
+Regras:
+
+1. **RLS em toda tabela de negócio.** `SET LOCAL app.tenant_id` por transação;
+   a política é restritiva. Query sem filtro de tenant devolve zero linhas.
+2. **Nada de segredo em texto.** Senha e token de sessão são hash; certificado
+   guarda só metadados.
+3. **Nada de interpolação no SQL.** Todos os valores entram como parâmetro
+   vinculado; há teste que falha se dado aparecer no texto da query.
+4. **Numeração em uma instrução.** `INSERT … ON CONFLICT DO UPDATE … RETURNING`.
+5. **Módulos de servidor são fechados ao cliente** por regra de lint em
+   `eslint.config.js`: `src/routes`, `src/components` e `src/hooks` não podem
+   importar `fiscal/autenticacao` nem `fiscal/persistencia-postgres`.
+
+Documentação: [`docs/banco-de-dados.md`](banco-de-dados.md).

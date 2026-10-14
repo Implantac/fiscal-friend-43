@@ -3,6 +3,27 @@
 Todas as mudanças relevantes deste repositório são registradas aqui.
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [Não publicado] — 2026-10-14 (Etapa 2.5)
+
+### Adicionado
+
+- `db/migrations/001_fundacao.sql` — schema Postgres completo com Row-Level
+  Security em toda tabela de negócio, constraints de unicidade (idempotência,
+  número, CNPJ por tenant), triggers que tornam `eventos_documento` e
+  `auditoria` append-only, e trigger de consistência de tenant.
+- `src/fiscal/autenticacao.ts` — hash de senha PBKDF2-SHA256 (210.000 iterações,
+  salt por senha), verificação em tempo constante, token de sessão opaco com
+  apenas o hash persistido, bloqueio progressivo após 5 falhas.
+- `src/fiscal/persistencia-postgres.ts` — implementação Postgres das portas do
+  domínio: numeração atômica em uma única instrução
+  (`INSERT … ON CONFLICT DO UPDATE … RETURNING`), zero interpolação de SQL,
+  concorrência otimista.
+- Regra de lint que proíbe `src/routes`, `src/components` e `src/hooks` de
+  importar módulos exclusivos de servidor — evita vazamento de credencial para
+  o bundle do cliente.
+- `docs/banco-de-dados.md`.
+- 29 novos testes (154 no total).
+
 ## [Não publicado] — 2026-10-14 (continuação)
 
 ### Adicionado — Etapa 2: fundação de produção
