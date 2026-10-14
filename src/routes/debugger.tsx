@@ -128,7 +128,10 @@ function DebuggerPage() {
                 Consumidor final
               </label>
               <label className="flex items-center gap-2 text-xs">
-                <Switch checked={doc.contribuinte} onCheckedChange={(v) => set("contribuinte", v)} />
+                <Switch
+                  checked={doc.contribuinte}
+                  onCheckedChange={(v) => set("contribuinte", v)}
+                />
                 Contribuinte
               </label>
               <label className="flex items-center gap-2 text-xs">
@@ -150,9 +153,7 @@ function DebuggerPage() {
         <div className="space-y-4">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm">
-                {resultados.length} regras executadas
-              </CardTitle>
+              <CardTitle className="text-sm">{resultados.length} regras executadas</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="flex flex-wrap gap-2 text-xs font-semibold">
@@ -178,7 +179,10 @@ function DebuggerPage() {
                       }`}
                     >
                       {r.ok ? (
-                        <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-[var(--auto)]" aria-hidden />
+                        <CheckCircle2
+                          className="mt-0.5 size-4 shrink-0 text-[var(--auto)]"
+                          aria-hidden
+                        />
                       ) : r.regra.severidade === "erro" ? (
                         <XCircle className="mt-0.5 size-4 shrink-0 text-destructive" aria-hidden />
                       ) : (

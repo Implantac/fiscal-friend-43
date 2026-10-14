@@ -26,7 +26,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export const Route = createFileRoute("/cte-os")({
   head: () => ({
@@ -40,7 +47,8 @@ export const Route = createFileRoute("/cte-os")({
       { property: "og:title", content: "CT-e OS modelo 67 — Simulador Fiscal" },
       {
         property: "og:description",
-        content: "Transporte de pessoas e de valores simulados, com blueprint técnico de integração.",
+        content:
+          "Transporte de pessoas e de valores simulados, com blueprint técnico de integração.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -85,7 +93,11 @@ function EmissaoCteOs() {
 
   const problemas: ProblemaCampo[] = [];
   if (!tomadorId)
-    problemas.push({ campo: "Tomador", mensagem: "Selecione o tomador do serviço.", docId: "m6.tomador" });
+    problemas.push({
+      campo: "Tomador",
+      mensagem: "Selecione o tomador do serviço.",
+      docId: "m6.tomador",
+    });
   if (valorPrestacao <= 0)
     problemas.push({
       campo: "Valor da prestação",
@@ -130,7 +142,22 @@ function EmissaoCteOs() {
         }
       />
 
-      <ExportarDocumento rotuloPdf="DACTE OS" gerar={() => gerarCteOs({ modalidade, tomador: clientes.find((c) => c.id === tomadorId), motorista: motoristas.find((m) => m.id === motoristaId), veiculo: veiculos.find((v) => v.id === veiculoId), ufInicio, ufFim, passageiros, valorPrestacao, malotes })} />
+      <ExportarDocumento
+        rotuloPdf="DACTE OS"
+        gerar={() =>
+          gerarCteOs({
+            modalidade,
+            tomador: clientes.find((c) => c.id === tomadorId),
+            motorista: motoristas.find((m) => m.id === motoristaId),
+            veiculo: veiculos.find((v) => v.id === veiculoId),
+            ufInicio,
+            ufFim,
+            passageiros,
+            valorPrestacao,
+            malotes,
+          })
+        }
+      />
 
       {resultado ? <ResultadoAlert resultado={resultado} onFechar={limpar} /> : null}
 
@@ -222,7 +249,9 @@ function EmissaoCteOs() {
                               type="number"
                               min={1}
                               value={m.quantidade}
-                              onChange={(e) => atualizar(m.id, { quantidade: Number(e.target.value) })}
+                              onChange={(e) =>
+                                atualizar(m.id, { quantidade: Number(e.target.value) })
+                              }
                             />
                           </TableCell>
                           <TableCell>

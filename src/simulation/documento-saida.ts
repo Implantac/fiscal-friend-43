@@ -38,26 +38,49 @@ export interface DocumentoGerado {
 /* ------------------------------------------------------------------ utilitários */
 
 const cUF: Record<string, string> = {
-  RO: "11", AC: "12", AM: "13", RR: "14", PA: "15", AP: "16", TO: "17", MA: "21", PI: "22",
-  CE: "23", RN: "24", PB: "25", PE: "26", AL: "27", SE: "28", BA: "29", MG: "31", ES: "32",
-  RJ: "33", SP: "35", PR: "41", SC: "42", RS: "43", MS: "50", MT: "51", GO: "52", DF: "53",
+  RO: "11",
+  AC: "12",
+  AM: "13",
+  RR: "14",
+  PA: "15",
+  AP: "16",
+  TO: "17",
+  MA: "21",
+  PI: "22",
+  CE: "23",
+  RN: "24",
+  PB: "25",
+  PE: "26",
+  AL: "27",
+  SE: "28",
+  BA: "29",
+  MG: "31",
+  ES: "32",
+  RJ: "33",
+  SP: "35",
+  PR: "41",
+  SC: "42",
+  RS: "43",
+  MS: "50",
+  MT: "51",
+  GO: "52",
+  DF: "53",
 };
 
 /** Códigos IBGE dos municípios usados nos cadastros fictícios. */
 const ibge: Record<string, string> = {
   Campinas: "3509502",
   Sorocaba: "3552205",
-  "Uberlândia": "3170206",
+  Uberlândia: "3170206",
   Londrina: "4113700",
 };
 const codMun = (m: string) => ibge[m] ?? "9999999";
 
 const esc = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-const d2 = (n: number) => (Number.isFinite(n) ? n : 0).toFixed(2);
-const d4 = (n: number) => (Number.isFinite(n) ? n : 0).toFixed(4);
-const brl = (n: number) =>
-  n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const brl = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+/** Formata um valor já exato (`Money`) em Real, sem passar por float. */
+const brlM = (m: Money) => brl(paraNumero(m));
 
 function agora() {
   const d = new Date(Date.now() - 3 * 3600_000);
@@ -83,7 +106,14 @@ export function dvModulo11(base: string) {
 }
 
 /** Chave de acesso de 44 dígitos: cUF AAMM CNPJ mod serie nNF tpEmis cNF DV. */
-function montarChave(uf: string, aamm: string, mod: string, serie: string, n: string, tpEmis = "1") {
+function montarChave(
+  uf: string,
+  aamm: string,
+  mod: string,
+  serie: string,
+  n: string,
+  tpEmis = "1",
+) {
   const cNF = String(Math.floor(Math.random() * 1e8)).padStart(8, "0");
   const base =
     (cUF[uf] ?? "35") +
@@ -105,16 +135,48 @@ const cabecalho = (xml: string) =>
   `<?xml version="1.0" encoding="UTF-8"?>\n<!-- AMBIENTE DE SIMULAÇÃO — SEM VALOR FISCAL. Sem assinatura digital e sem protocolo. Validação contra XSD oficial: Pendente de validação. -->\n${xml}`;
 
 import { parametrosCenario as PC } from "@/simulation/parametros-cenario";
-const r2 = (n: number) => Math.round(n * 100) / 100;
+import {
+  aplicarPercentual,
+  deNumero,
+  formatarXml,
+  multiplicarDecimalPorMoney,
+  parseDecimal,
+  paraNumero,
+  ratear,
+  somar,
+  type Money,
+} from "@/lib/money";
+
+/**
+ * Formatação monetária via motor decimal (`src/lib/money`): sem `toFixed`,
+ * sem `Math.round`, sem ponto flutuante. `d2`/`d4` continuam recebendo
+ * `number` apenas porque os formulários ainda digitam em `number`; a
+ * aritmética interna já é exata em `bigint`.
+ */
+const d2 = (n: number) => formatarXml(deNumero(n), 2);
+const d4 = (n: number) => formatarXml(deNumero(n), 4);
+/** Serializa um valor já exato (`Money`) direto no XML. */
+const m2 = (m: Money) => formatarXml(m, 2);
 const AVISO_TRIB =
   "Tributos calculados com percentuais de CENARIO do simulador (ICMS " +
-  PC.icmsPercentual + "%, IPI " + PC.ipiPercentual + "%, PIS " + PC.pisPercentual + "%, COFINS " + PC.cofinsPercentual +
+  PC.icmsPercentual +
+  "%, IPI " +
+  PC.ipiPercentual +
+  "%, PIS " +
+  PC.pisPercentual +
+  "%, COFINS " +
+  PC.cofinsPercentual +
   "%). Nao sao aliquotas oficiais: a apuracao real depende de regras validadas no back-end.";
 const icmsCte = (ind: string, base: number) => {
-  const v = r2((base * PC.icmsPercentual) / 100);
-  return { v, xml: `${ind}<!-- ${AVISO_TRIB} -->
-${ind}<ICMS><ICMS00><CST>00</CST><vBC>${d2(base)}</vBC><pICMS>${d2(PC.icmsPercentual)}</pICMS><vICMS>${d2(v)}</vICMS></ICMS00></ICMS>
-${ind}<vTotTrib>${d2(v)}</vTotTrib>` };
+  // Cálculo exato: base (centavos) x percentual (decimal) / 100, um único
+  // arredondamento no fim, critério half_up explícito.
+  const v = aplicarPercentual(deNumero(base), PC.icmsPercentual.toString());
+  return {
+    v: paraNumero(v),
+    xml: `${ind}<!-- ${AVISO_TRIB} -->
+${ind}<ICMS><ICMS00><CST>00</CST><vBC>${d2(base)}</vBC><pICMS>${d2(PC.icmsPercentual)}</pICMS><vICMS>${m2(v)}</vICMS></ICMS00></ICMS>
+${ind}<vTotTrib>${m2(v)}</vTotTrib>`,
+  };
 };
 const tributosPendentes = (ind: string) =>
   `${ind}<!-- Grupo de tributos (ICMS/IPI/PIS/COFINS ou IBS/CBS): Pendente de validação — não gerado sem regra oficial validada. -->`;
@@ -163,23 +225,59 @@ export function gerarNfe(e: EntradaNfe): DocumentoGerado {
   const nfce = e.modelo === "65";
   const idDest = !e.cliente || e.cliente.uf === empresaSimulada.uf ? "1" : "2";
   const cfop = e.cfop ?? (idDest === "1" ? "5102" : "6102");
-  const vProd = e.itens.reduce((a, i) => a + i.quantidade * i.preco, 0);
-  const vDesc = e.itens.reduce((a, i) => a + i.desconto, 0);
-  // Cálculo por item com percentuais de cenário (rateio proporcional do frete)
-  const calc = e.itens.map((i) => {
-    const vp = r2(i.quantidade * i.preco);
-    const frete = vProd > 0 ? r2((e.frete * vp) / vProd) : 0;
-    const bcIcms = r2(vp - i.desconto + frete);
-    const bcIpi = r2(vp - i.desconto);
-    const vIcms = r2((bcIcms * PC.icmsPercentual) / 100);
-    const vIpi = nfce ? 0 : r2((bcIpi * PC.ipiPercentual) / 100);
-    const vPis = r2((bcIpi * PC.pisPercentual) / 100);
-    const vCofins = r2((bcIpi * PC.cofinsPercentual) / 100);
-    return { vp, frete, bcIcms, bcIpi, vIcms, vIpi, vPis, vCofins, tot: r2(vIcms + vIpi + vPis + vCofins) };
+  // ------------------------------------------------------------------
+  // Cálculo em decimal exato (centavos em bigint).
+  //
+  // Duas correções estruturais em relação ao cálculo anterior:
+  //  1. rateio do frete por maior resto (`ratear`): a soma dos rateios é
+  //     EXATAMENTE igual ao frete informado. Antes, cada item era arredondado
+  //     isoladamente e o total podia fechar 1 centavo diferente — o tipo de
+  //     divergência que os validadores oficiais comparam.
+  //  2. um único arredondamento por tributo, no fim, com critério explícito.
+  // ------------------------------------------------------------------
+  // Quantidade é decimal de escala própria (4 casas), NÃO valor monetário:
+  // multiplicar dois `Money` produziria resultado 100x maior.
+  const itensM = e.itens.map((i) => ({
+    quantidade: parseDecimal(i.quantidade.toString()),
+    preco: deNumero(i.preco),
+    desconto: deNumero(i.desconto),
+  }));
+  const vProd = somar(itensM.map((i) => multiplicarDecimalPorMoney(i.quantidade, i.preco)));
+  const vDesc = somar(itensM.map((i) => i.desconto));
+  const freteM = deNumero(e.frete);
+  const rateioFrete = ratear(
+    freteM,
+    itensM.map((i) => paraNumero(multiplicarDecimalPorMoney(i.quantidade, i.preco))),
+  );
+  const calc = itensM.map((i, k) => {
+    const vp = multiplicarDecimalPorMoney(i.quantidade, i.preco);
+    const frete = rateioFrete[k]!;
+    const bcIcms = vp - i.desconto + frete;
+    const bcIpi = vp - i.desconto;
+    const vIcms = aplicarPercentual(bcIcms, PC.icmsPercentual.toString());
+    const vIpi = nfce ? 0n : aplicarPercentual(bcIpi, PC.ipiPercentual.toString());
+    const vPis = aplicarPercentual(bcIpi, PC.pisPercentual.toString());
+    const vCofins = aplicarPercentual(bcIpi, PC.cofinsPercentual.toString());
+    return {
+      vp,
+      frete,
+      bcIcms,
+      bcIpi,
+      vIcms,
+      vIpi,
+      vPis,
+      vCofins,
+      tot: vIcms + vIpi + vPis + vCofins,
+    };
   });
-  const soma = (k: keyof (typeof calc)[number]) => r2(calc.reduce((a, c) => a + c[k], 0));
-  const vBC = soma("bcIcms"), vICMS = soma("vIcms"), vIPI = soma("vIpi"), vPIS = soma("vPis"), vCOFINS = soma("vCofins"), vTotTrib = soma("tot");
-  const vNF = r2(vProd - vDesc + e.frete + vIPI);
+  const soma = (k: keyof (typeof calc)[number]) => calc.reduce((a, c) => a + c[k], 0n);
+  const vBC = soma("bcIcms"),
+    vICMS = soma("vIcms"),
+    vIPI = soma("vIpi"),
+    vPIS = soma("vPis"),
+    vCOFINS = soma("vCofins"),
+    vTotTrib = soma("tot");
+  const vNF = vProd - vDesc + freteM + vIPI;
   const pag = e.pagamento ?? { tPag: "90", descricao: "Sem pagamento", valor: 0 };
 
   const dets = e.itens
@@ -202,11 +300,15 @@ export function gerarNfe(e: EntradaNfe): DocumentoGerado {
         <indTot>1</indTot>
       </prod>
       <imposto>
-        <vTotTrib>${d2(calc[k]!.tot)}</vTotTrib>
-        <ICMS><ICMS00><orig>0</orig><CST>00</CST><modBC>3</modBC><vBC>${d2(calc[k]!.bcIcms)}</vBC><pICMS>${d4(PC.icmsPercentual)}</pICMS><vICMS>${d2(calc[k]!.vIcms)}</vICMS></ICMS00></ICMS>${nfce ? "" : `
-        <IPI><cEnq>999</cEnq><IPITrib><CST>50</CST><vBC>${d2(calc[k]!.bcIpi)}</vBC><pIPI>${d4(PC.ipiPercentual)}</pIPI><vIPI>${d2(calc[k]!.vIpi)}</vIPI></IPITrib></IPI>`}
-        <PIS><PISAliq><CST>01</CST><vBC>${d2(calc[k]!.bcIpi)}</vBC><pPIS>${d4(PC.pisPercentual)}</pPIS><vPIS>${d2(calc[k]!.vPis)}</vPIS></PISAliq></PIS>
-        <COFINS><COFINSAliq><CST>01</CST><vBC>${d2(calc[k]!.bcIpi)}</vBC><pCOFINS>${d4(PC.cofinsPercentual)}</pCOFINS><vCOFINS>${d2(calc[k]!.vCofins)}</vCOFINS></COFINSAliq></COFINS>
+        <vTotTrib>${m2(calc[k]!.tot)}</vTotTrib>
+        <ICMS><ICMS00><orig>0</orig><CST>00</CST><modBC>3</modBC><vBC>${m2(calc[k]!.bcIcms)}</vBC><pICMS>${d4(PC.icmsPercentual)}</pICMS><vICMS>${m2(calc[k]!.vIcms)}</vICMS></ICMS00></ICMS>${
+          nfce
+            ? ""
+            : `
+        <IPI><cEnq>999</cEnq><IPITrib><CST>50</CST><vBC>${m2(calc[k]!.bcIpi)}</vBC><pIPI>${d4(PC.ipiPercentual)}</pIPI><vIPI>${m2(calc[k]!.vIpi)}</vIPI></IPITrib></IPI>`
+        }
+        <PIS><PISAliq><CST>01</CST><vBC>${m2(calc[k]!.bcIpi)}</vBC><pPIS>${d4(PC.pisPercentual)}</pPIS><vPIS>${m2(calc[k]!.vPis)}</vPIS></PISAliq></PIS>
+        <COFINS><COFINSAliq><CST>01</CST><vBC>${m2(calc[k]!.bcIpi)}</vBC><pCOFINS>${d4(PC.cofinsPercentual)}</pCOFINS><vCOFINS>${m2(calc[k]!.vCofins)}</vCOFINS></COFINSAliq></COFINS>
       </imposto>
     </det>`,
     )
@@ -251,16 +353,16 @@ ${emitXml("    ")}
 ${dest}${dets}
     <total>
       <ICMSTot>
-        <vBC>${d2(vBC)}</vBC><vICMS>${d2(vICMS)}</vICMS><vICMSDeson>0.00</vICMSDeson><vFCP>0.00</vFCP>
+        <vBC>${m2(vBC)}</vBC><vICMS>${m2(vICMS)}</vICMS><vICMSDeson>0.00</vICMSDeson><vFCP>0.00</vFCP>
         <vBCST>0.00</vBCST><vST>0.00</vST><vFCPST>0.00</vFCPST><vFCPSTRet>0.00</vFCPSTRet>
-        <vProd>${d2(vProd)}</vProd>
+        <vProd>${m2(vProd)}</vProd>
         <vFrete>${d2(e.frete)}</vFrete>
         <vSeg>0.00</vSeg>
-        <vDesc>${d2(vDesc)}</vDesc>
-        <vII>0.00</vII><vIPI>${d2(vIPI)}</vIPI><vIPIDevol>0.00</vIPIDevol><vPIS>${d2(vPIS)}</vPIS><vCOFINS>${d2(vCOFINS)}</vCOFINS>
+        <vDesc>${m2(vDesc)}</vDesc>
+        <vII>0.00</vII><vIPI>${m2(vIPI)}</vIPI><vIPIDevol>0.00</vIPIDevol><vPIS>${m2(vPIS)}</vPIS><vCOFINS>${m2(vCOFINS)}</vCOFINS>
         <vOutro>0.00</vOutro>
-        <vNF>${d2(vNF)}</vNF>
-        <vTotTrib>${d2(vTotTrib)}</vTotTrib>
+        <vNF>${m2(vNF)}</vNF>
+        <vTotTrib>${m2(vTotTrib)}</vTotTrib>
       </ICMSTot>
     </total>
     <transp>
@@ -269,8 +371,8 @@ ${dest}${dets}
     <pag>
       <detPag>
         <tPag>${pag.tPag}</tPag>
-        <vPag>${d2(pag.tPag === "90" ? 0 : pag.valor || vNF)}</vPag>
-      </detPag>${pag.valor > vNF ? `\n      <vTroco>${d2(pag.valor - vNF)}</vTroco>` : ""}
+        <vPag>${m2(pag.tPag === "90" ? 0n : deNumero(pag.valor || paraNumero(vNF)))}</vPag>
+      </detPag>${pag.valor > paraNumero(vNF) ? `\n      <vTroco>${d2(pag.valor - paraNumero(vNF))}</vTroco>` : ""}
     </pag>
     <infAdic>
       <infCpl>${OBS} ${AVISO_TRIB}</infCpl>
@@ -301,11 +403,29 @@ ${dest}${dets}
             ]
           : [["Consumidor", "CONSUMIDOR NÃO IDENTIFICADO"]],
       },
-      { titulo: "Operação", campos: [["Natureza", e.natureza], ["CFOP", cfop], ["Pagamento", pag.descricao]] },
+      {
+        titulo: "Operação",
+        campos: [
+          ["Natureza", e.natureza],
+          ["CFOP", cfop],
+          ["Pagamento", pag.descricao],
+        ],
+      },
     ],
     tabela: {
       titulo: "Dados dos produtos",
-      colunas: ["Código", "Descrição", "NCM", "CFOP", "Qtd", "V. unit.", "V. total", "BC ICMS", "V. ICMS", "V. IPI"],
+      colunas: [
+        "Código",
+        "Descrição",
+        "NCM",
+        "CFOP",
+        "Qtd",
+        "V. unit.",
+        "V. total",
+        "BC ICMS",
+        "V. ICMS",
+        "V. IPI",
+      ],
       linhas: e.itens.map((i, k) => [
         i.produto.codigo,
         i.produto.descricao,
@@ -314,22 +434,22 @@ ${dest}${dets}
         `${i.quantidade} ${i.produto.unidade}`,
         brl(i.preco),
         brl(i.quantidade * i.preco - i.desconto),
-        brl(calc[k]!.bcIcms),
-        brl(calc[k]!.vIcms),
-        brl(calc[k]!.vIpi),
+        brlM(calc[k]!.bcIcms),
+        brlM(calc[k]!.vIcms),
+        brlM(calc[k]!.vIpi),
       ]),
     },
     totais: [
-      ["Valor dos produtos", brl(vProd)],
-      ["Desconto", brl(vDesc)],
+      ["Valor dos produtos", brlM(vProd)],
+      ["Desconto", brlM(vDesc)],
       ["Frete", brl(e.frete)],
-      ["Base de cálculo ICMS", brl(vBC)],
-      ["Valor do ICMS", brl(vICMS)],
-      ["Valor do IPI", brl(vIPI)],
-      ["Valor do PIS", brl(vPIS)],
-      ["Valor da COFINS", brl(vCOFINS)],
-      ["Tributos aprox.", brl(vTotTrib)],
-      ["Valor total da nota", brl(vNF)],
+      ["Base de cálculo ICMS", brlM(vBC)],
+      ["Valor do ICMS", brlM(vICMS)],
+      ["Valor do IPI", brlM(vIPI)],
+      ["Valor do PIS", brlM(vPIS)],
+      ["Valor da COFINS", brlM(vCOFINS)],
+      ["Tributos aprox.", brl(paraNumero(vTotTrib))],
+      ["Valor total da nota", brlM(vNF)],
     ],
     observacao: `${OBS} ${AVISO_TRIB}`,
   };
@@ -354,8 +474,13 @@ export function gerarNfse(e: EntradaNfse): DocumentoGerado {
   const serie = "1";
   const cMun = codMun(empresaSimulada.municipio);
   const id = `DPS${cMun}2${empresaSimulada.cnpj}${serie.padStart(5, "0")}${n.padStart(15, "0")}`;
-  const base = Math.max(0, e.valor - e.deducoes);
-  const iss = (base * e.aliquotaIss) / 100;
+  // Base e ISS em decimal exato; deduções nunca tornam a base negativa.
+  const valorM = deNumero(e.valor);
+  const deducoesM = deNumero(e.deducoes);
+  const baseM = valorM > deducoesM ? valorM - deducoesM : 0n;
+  const issM = aplicarPercentual(baseM, e.aliquotaIss.toString());
+  const base = paraNumero(baseM);
+  const iss = paraNumero(issM);
 
   const xml = cabecalho(`<DPS xmlns="http://www.sped.fazenda.gov.br/nfse" versao="1.00">
   <infDPS Id="${id}">
@@ -441,8 +566,8 @@ ${
       totais: [
         ["Valor do serviço", brl(e.valor)],
         ["Deduções", brl(e.deducoes)],
-        ["Base de cálculo (cenário)", brl(base)],
-        [`ISS ${d2(e.aliquotaIss)}% (cenário)`, brl(iss)],
+        ["Base de cálculo (cenário)", brlM(baseM)],
+        [`ISS ${d2(e.aliquotaIss)}% (cenário)`, brlM(issM)],
         ["ISS retido", e.issRetido ? "Sim" : "Não"],
       ],
       observacao: OBS,
@@ -464,7 +589,9 @@ export interface EntradaCte {
 }
 
 const munDe = (c: Cliente | undefined, uf: string) =>
-  c && c.uf === uf ? { c: codMun(c.municipio), x: c.municipio } : { c: "9999999", x: "Município não informado" };
+  c && c.uf === uf
+    ? { c: codMun(c.municipio), x: c.municipio }
+    : { c: "9999999", x: "Município não informado" };
 
 export function gerarCte(e: EntradaCte): DocumentoGerado {
   const t = agora();
@@ -472,8 +599,11 @@ export function gerarCte(e: EntradaCte): DocumentoGerado {
   const serie = "1";
   const { chave, cNF, dv } = montarChave(empresaSimulada.uf, t.aamm, "57", serie, n);
   const vPrest = e.valorFrete + e.pedagio;
-  const vCarga = e.notas.reduce((a, x) => a + x.valor, 0);
-  const peso = e.notas.reduce((a, x) => a + x.peso, 0);
+  // Soma exata: `reduce` com `number` acumula erro de ponto flutuante.
+  const vCargaM = somar(e.notas.map((x) => deNumero(x.valor)));
+  const pesoM = somar(e.notas.map((x) => deNumero(x.peso)));
+  const vCarga = paraNumero(vCargaM);
+  const peso = paraNumero(pesoM);
   const ini = munDe(e.remetente, e.ufInicio);
   const fim = munDe(e.destinatario, e.ufFim);
   const cfop = e.ufInicio === e.ufFim ? "5353" : "6353";
@@ -528,9 +658,9 @@ ${imp.xml}
     </imp>
     <infCTeNorm>
       <infCarga>
-        <vCarga>${d2(vCarga)}</vCarga>
+        <vCarga>${m2(vCargaM)}</vCarga>
         <proPred>Mercadorias diversas (fictício)</proPred>
-        <infQ><cUnid>01</cUnid><tpMed>PESO BRUTO</tpMed><qCarga>${d4(peso)}</qCarga></infQ>
+        <infQ><cUnid>01</cUnid><tpMed>PESO BRUTO</tpMed><qCarga>${formatarXml(pesoM, 4)}</qCarga></infQ>
       </infCarga>
       <infDoc>
 ${e.notas.map((x) => `        <infNFe><chave>${x.chave || "".padStart(44, "0")}</chave></infNFe>`).join("\n")}
@@ -556,21 +686,47 @@ ${e.notas.map((x) => `        <infNFe><chave>${x.chave || "".padStart(44, "0")}<
       chave,
       blocos: [
         blocoEmitente(),
-        { titulo: "Remetente", campos: [["Nome", e.remetente?.nome ?? "—"], ["Documento", e.remetente?.documento ?? "—"]] },
-        { titulo: "Destinatário", campos: [["Nome", e.destinatario?.nome ?? "—"], ["Documento", e.destinatario?.documento ?? "—"]] },
-        { titulo: "Prestação", campos: [["CFOP", cfop], ["Início", `${ini.x}/${e.ufInicio}`], ["Término", `${fim.x}/${e.ufFim}`], ["Modal", "Rodoviário"]] },
+        {
+          titulo: "Remetente",
+          campos: [
+            ["Nome", e.remetente?.nome ?? "—"],
+            ["Documento", e.remetente?.documento ?? "—"],
+          ],
+        },
+        {
+          titulo: "Destinatário",
+          campos: [
+            ["Nome", e.destinatario?.nome ?? "—"],
+            ["Documento", e.destinatario?.documento ?? "—"],
+          ],
+        },
+        {
+          titulo: "Prestação",
+          campos: [
+            ["CFOP", cfop],
+            ["Início", `${ini.x}/${e.ufInicio}`],
+            ["Término", `${fim.x}/${e.ufFim}`],
+            ["Modal", "Rodoviário"],
+          ],
+        },
       ],
       tabela: {
         titulo: "Documentos originários",
         colunas: ["Tipo", "Chave", "Emitente", "Valor", "Peso (kg)"],
-        linhas: e.notas.map((x) => ["NF-e", x.chave || "—", x.emitente, brl(x.valor), String(x.peso)]),
+        linhas: e.notas.map((x) => [
+          "NF-e",
+          x.chave || "—",
+          x.emitente,
+          brl(x.valor),
+          String(x.peso),
+        ]),
       },
       totais: [
-        ["Valor da carga", brl(vCarga)],
+        ["Valor da carga", brlM(vCargaM)],
         ["Frete", brl(e.valorFrete)],
         ["Pedágio", brl(e.pedagio)],
         ["Base ICMS", brl(vPrest)],
-        [`ICMS ${d2(PC.icmsPercentual)}% (cenário)`, brl(imp.v)],
+        [`ICMS ${d2(PC.icmsPercentual)}% (cenário)`, brlM(deNumero(imp.v))],
         ["Valor total da prestação", brl(vPrest)],
       ],
       observacao: OBS,
@@ -600,7 +756,8 @@ export function gerarCteOs(e: EntradaCteOs): DocumentoGerado {
   const tpServ = e.modalidade === "pessoas" ? "6" : "7";
   const impOs = icmsCte("      ", e.valorPrestacao);
   const cfop = e.ufInicio === e.ufFim ? "5357" : "6357";
-  const qtd = e.modalidade === "pessoas" ? e.passageiros : e.malotes.reduce((a, m) => a + m.quantidade, 0);
+  const qtd =
+    e.modalidade === "pessoas" ? e.passageiros : e.malotes.reduce((a, m) => a + m.quantidade, 0);
 
   const xml = cabecalho(`<CTeOS xmlns="http://www.portalfiscal.inf.br/cte" versao="4.00">
   <infCte versao="4.00" Id="CTe${chave}">
@@ -672,11 +829,20 @@ ${e.veiculo ? `          <veic><placa>${e.veiculo.placa}</placa><UF>${e.veiculo.
       chave,
       blocos: [
         blocoEmitente(),
-        { titulo: "Tomador", campos: [["Nome", e.tomador?.nome ?? "—"], ["Documento", e.tomador?.documento ?? "—"]] },
+        {
+          titulo: "Tomador",
+          campos: [
+            ["Nome", e.tomador?.nome ?? "—"],
+            ["Documento", e.tomador?.documento ?? "—"],
+          ],
+        },
         {
           titulo: "Prestação",
           campos: [
-            ["Tipo de serviço", e.modalidade === "pessoas" ? "Transporte de pessoas" : "Transporte de valores"],
+            [
+              "Tipo de serviço",
+              e.modalidade === "pessoas" ? "Transporte de pessoas" : "Transporte de valores",
+            ],
             ["CFOP", cfop],
             ["Percurso", `${e.ufInicio} → ${e.ufFim}`],
             ["Motorista", e.motorista ? `${e.motorista.nome} (CPF ${e.motorista.cpf})` : "—"],
@@ -689,7 +855,12 @@ ${e.veiculo ? `          <veic><placa>${e.veiculo.placa}</placa><UF>${e.veiculo.
             tabela: {
               titulo: "Malotes",
               colunas: ["Número", "Descrição", "Qtd", "Valor declarado"],
-              linhas: e.malotes.map((m) => [m.numero || "—", m.descricao, String(m.quantidade), brl(m.valor)]),
+              linhas: e.malotes.map((m) => [
+                m.numero || "—",
+                m.descricao,
+                String(m.quantidade),
+                brl(m.valor),
+              ]),
             },
           }
         : {}),
@@ -706,7 +877,13 @@ ${e.veiculo ? `          <veic><placa>${e.veiculo.placa}</placa><UF>${e.veiculo.
 /* ------------------------------------------------------------------ MDF-e 58 */
 
 export interface EntradaMdfe {
-  documentos: { tipo: "CT-e" | "NF-e"; chave: string; destino: string; valor: number; peso: number }[];
+  documentos: {
+    tipo: "CT-e" | "NF-e";
+    chave: string;
+    destino: string;
+    valor: number;
+    peso: number;
+  }[];
   motorista?: Motorista | undefined;
   veiculo?: Veiculo | undefined;
   reboques: { placa: string; uf: string }[];
@@ -720,8 +897,10 @@ export function gerarMdfe(e: EntradaMdfe): DocumentoGerado {
   const n = numeroSeq();
   const serie = "1";
   const { chave, cNF, dv } = montarChave(empresaSimulada.uf, t.aamm, "58", serie, n);
-  const vCarga = e.documentos.reduce((a, d) => a + d.valor, 0);
-  const peso = e.documentos.reduce((a, d) => a + d.peso, 0);
+  const vCargaM = somar(e.documentos.map((d) => deNumero(d.valor)));
+  const pesoM = somar(e.documentos.map((d) => deNumero(d.peso)));
+  const vCarga = paraNumero(vCargaM);
+  const peso = paraNumero(pesoM);
   const porDestino = new Map<string, typeof e.documentos>();
   e.documentos.forEach((d) => porDestino.set(d.destino, [...(porDestino.get(d.destino) ?? []), d]));
   const tpEmit = e.documentos.some((d) => d.tipo === "CT-e") ? "1" : "2";
@@ -784,9 +963,9 @@ ${descargas}
     <tot>
       <qCTe>${e.documentos.filter((d) => d.tipo === "CT-e").length || ""}</qCTe>
       <qNFe>${e.documentos.filter((d) => d.tipo === "NF-e").length || ""}</qNFe>
-      <vCarga>${d2(vCarga)}</vCarga>
+      <vCarga>${m2(vCargaM)}</vCarga>
       <cUnid>01</cUnid>
-      <qCarga>${d4(peso)}</qCarga>
+      <qCarga>${formatarXml(pesoM, 4)}</qCarga>
     </tot>
     <infAdic><infCpl>${OBS} ${AVISO_TRIB}</infCpl></infAdic>
   </infMDFe>
@@ -809,12 +988,22 @@ ${descargas}
         {
           titulo: "Modal rodoviário",
           campos: [
-            ["Veículo", e.veiculo ? `${e.veiculo.placa}/${e.veiculo.uf} · tara ${e.veiculo.tara} kg` : "—"],
+            [
+              "Veículo",
+              e.veiculo ? `${e.veiculo.placa}/${e.veiculo.uf} · tara ${e.veiculo.tara} kg` : "—",
+            ],
             ["Reboques", e.reboques.map((r) => r.placa).join(", ") || "—"],
             ["Condutor", e.motorista ? `${e.motorista.nome} (CPF ${e.motorista.cpf})` : "—"],
           ],
         },
-        { titulo: "Percurso", campos: [["UF início", e.ufInicio], ["UFs de percurso", e.percurso.join(", ") || "—"], ["UF fim", e.ufFim]] },
+        {
+          titulo: "Percurso",
+          campos: [
+            ["UF início", e.ufInicio],
+            ["UFs de percurso", e.percurso.join(", ") || "—"],
+            ["UF fim", e.ufFim],
+          ],
+        },
       ],
       tabela: {
         titulo: "Documentos vinculados",
@@ -825,7 +1014,7 @@ ${descargas}
         ["Qtd. CT-e", String(e.documentos.filter((d) => d.tipo === "CT-e").length)],
         ["Qtd. NF-e", String(e.documentos.filter((d) => d.tipo === "NF-e").length)],
         ["Peso bruto (kg)", peso.toLocaleString("pt-BR")],
-        ["Valor total da carga", brl(vCarga)],
+        ["Valor total da carga", brlM(vCargaM)],
       ],
       observacao: OBS,
     },

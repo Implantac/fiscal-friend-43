@@ -37,7 +37,14 @@ export const calculos: CalculoFiscal[] = [
           (v["seguro"] ?? 0) +
           (v["outrasDespesas"] ?? 0),
       ),
-    padrao: { quantidade: 10, valorUnitario: 250, desconto: 100, frete: 80, seguro: 20, outrasDespesas: 0 },
+    padrao: {
+      quantidade: 10,
+      valorUnitario: 250,
+      desconto: 100,
+      frete: 80,
+      seguro: 20,
+      outrasDespesas: 0,
+    },
     procedencia: didatico,
   },
   {
@@ -52,7 +59,8 @@ export const calculos: CalculoFiscal[] = [
     ],
     arredondamento: "Duas casas decimais.",
     xml: "<ICMS00><vBC>…</vBC><pICMS>…</pICMS><vICMS>…</vICMS></ICMS00>",
-    calcular: (v) => r2(((v["base"] ?? 0) * (1 - (v["reducao"] ?? 0) / 100) * (v["aliquota"] ?? 0)) / 100),
+    calcular: (v) =>
+      r2(((v["base"] ?? 0) * (1 - (v["reducao"] ?? 0) / 100) * (v["aliquota"] ?? 0)) / 100),
     padrao: { base: 2400, reducao: 0, aliquota: 12 },
     procedencia: didatico,
   },
@@ -79,12 +87,17 @@ export const calculos: CalculoFiscal[] = [
     variaveis: [
       { simbolo: "base", nome: "Base", descricao: "Base das contribuições." },
       { simbolo: "pPIS", nome: "PIS (%)", descricao: "Alíquota de PIS do regime aplicável." },
-      { simbolo: "pCOFINS", nome: "COFINS (%)", descricao: "Alíquota de COFINS do regime aplicável." },
+      {
+        simbolo: "pCOFINS",
+        nome: "COFINS (%)",
+        descricao: "Alíquota de COFINS do regime aplicável.",
+      },
     ],
     arredondamento: "Duas casas decimais em cada contribuição.",
     xml: "<PISAliq><vBC>…</vBC><pPIS>…</pPIS><vPIS>…</vPIS></PISAliq>",
     calcular: (v) =>
-      r2(((v["base"] ?? 0) * (v["pPIS"] ?? 0)) / 100) + r2(((v["base"] ?? 0) * (v["pCOFINS"] ?? 0)) / 100),
+      r2(((v["base"] ?? 0) * (v["pPIS"] ?? 0)) / 100) +
+      r2(((v["base"] ?? 0) * (v["pCOFINS"] ?? 0)) / 100),
     padrao: { base: 2400, pPIS: 1.65, pCOFINS: 7.6 },
     procedencia: didatico,
   },
@@ -92,8 +105,7 @@ export const calculos: CalculoFiscal[] = [
     id: "calc.st",
     nome: "ICMS-ST com MVA",
     grupo: "ST e FCP",
-    formula:
-      "baseST = base × (1 + mva/100) · vST = baseST × aliqInterna/100 − vICMSProprio",
+    formula: "baseST = base × (1 + mva/100) · vST = baseST × aliqInterna/100 − vICMSProprio",
     variaveis: [
       { simbolo: "base", nome: "Base", descricao: "Base da operação própria." },
       { simbolo: "mva", nome: "MVA (%)", descricao: "Margem de valor agregado aplicável." },
@@ -131,12 +143,21 @@ export const calculos: CalculoFiscal[] = [
     formula: "vDifal = base × (aliqInterna − aliqInter)/100",
     variaveis: [
       { simbolo: "base", nome: "Base", descricao: "Base de cálculo no destino." },
-      { simbolo: "aliqInterna", nome: "Alíquota interna destino (%)", descricao: "Alíquota da UF de destino." },
-      { simbolo: "aliqInter", nome: "Alíquota interestadual (%)", descricao: "Alíquota da operação interestadual." },
+      {
+        simbolo: "aliqInterna",
+        nome: "Alíquota interna destino (%)",
+        descricao: "Alíquota da UF de destino.",
+      },
+      {
+        simbolo: "aliqInter",
+        nome: "Alíquota interestadual (%)",
+        descricao: "Alíquota da operação interestadual.",
+      },
     ],
     arredondamento: "Duas casas decimais; resultado negativo indica parametrização incorreta.",
     xml: "<ICMSUFDest><vBCUFDest>…</vBCUFDest><pICMSUFDest>…</pICMSUFDest><vICMSUFDest>…</vICMSUFDest></ICMSUFDest>",
-    calcular: (v) => r2(((v["base"] ?? 0) * ((v["aliqInterna"] ?? 0) - (v["aliqInter"] ?? 0))) / 100),
+    calcular: (v) =>
+      r2(((v["base"] ?? 0) * ((v["aliqInterna"] ?? 0) - (v["aliqInter"] ?? 0))) / 100),
     padrao: { base: 2400, aliqInterna: 18, aliqInter: 12 },
     procedencia: didatico,
   },
@@ -148,12 +169,18 @@ export const calculos: CalculoFiscal[] = [
     variaveis: [
       { simbolo: "valorServico", nome: "Valor do serviço", descricao: "Valor bruto da prestação." },
       { simbolo: "deducoes", nome: "Deduções", descricao: "Deduções admitidas pelo município." },
-      { simbolo: "aliquota", nome: "Alíquota ISS (%)", descricao: "Alíquota municipal do item da lista." },
+      {
+        simbolo: "aliquota",
+        nome: "Alíquota ISS (%)",
+        descricao: "Alíquota municipal do item da lista.",
+      },
     ],
     arredondamento: "Duas casas decimais.",
     xml: "<servico><valores><vServicos>…</vServicos><vDeducoes>…</vDeducoes><vIss>…</vIss></valores></servico>",
     calcular: (v) =>
-      r2((Math.max(0, (v["valorServico"] ?? 0) - (v["deducoes"] ?? 0)) * (v["aliquota"] ?? 0)) / 100),
+      r2(
+        (Math.max(0, (v["valorServico"] ?? 0) - (v["deducoes"] ?? 0)) * (v["aliquota"] ?? 0)) / 100,
+      ),
     padrao: { valorServico: 5000, deducoes: 0, aliquota: 3 },
     procedencia: didatico,
   },
@@ -164,18 +191,29 @@ export const calculos: CalculoFiscal[] = [
     formula: "vIBS = base × pIBS/100 · vCBS = base × pCBS/100",
     variaveis: [
       { simbolo: "base", nome: "Base", descricao: "Base da operação no novo modelo." },
-      { simbolo: "pIBS", nome: "IBS (%)", descricao: "Percentual de teste — não é alíquota oficial." },
-      { simbolo: "pCBS", nome: "CBS (%)", descricao: "Percentual de teste — não é alíquota oficial." },
+      {
+        simbolo: "pIBS",
+        nome: "IBS (%)",
+        descricao: "Percentual de teste — não é alíquota oficial.",
+      },
+      {
+        simbolo: "pCBS",
+        nome: "CBS (%)",
+        descricao: "Percentual de teste — não é alíquota oficial.",
+      },
     ],
     arredondamento: "Duas casas decimais.",
     xml: "<IBSCBS><gIBSCBS><vBC>…</vBC><gIBS>…</gIBS><gCBS>…</gCBS></gIBSCBS></IBSCBS>",
     calcular: (v) =>
-      r2(((v["base"] ?? 0) * (v["pIBS"] ?? 0)) / 100) + r2(((v["base"] ?? 0) * (v["pCBS"] ?? 0)) / 100),
+      r2(((v["base"] ?? 0) * (v["pIBS"] ?? 0)) / 100) +
+      r2(((v["base"] ?? 0) * (v["pCBS"] ?? 0)) / 100),
     padrao: { base: 2400, pIBS: 0, pCBS: 0 },
     procedencia: {
       status: "pendente",
       fonteId: "reforma",
-      vigencia: { observacao: "Alíquotas, grupos XML e cronograma pendentes de validação oficial." },
+      vigencia: {
+        observacao: "Alíquotas, grupos XML e cronograma pendentes de validação oficial.",
+      },
     },
   },
 ];

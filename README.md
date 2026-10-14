@@ -49,6 +49,29 @@ responsabilidades do back-end, exemplo de payload interno, falhas previstas e ra
 - [docs/fiscal-assumptions.md](docs/fiscal-assumptions.md) — premissas, o que é fato e o que é suposição
 - [docs/test-scenarios.md](docs/test-scenarios.md) — cenários de teste manual
 
+## Estado atual (2026-10-14)
+
+O projeto continua sendo um **protótipo em Ambiente de Simulação**, agora com
+fundação de engenharia para evoluir a plataforma fiscal:
+
+- **Motor monetário exato** (`src/lib/money.ts`): `bigint` em centavos, sem
+  `number`/`toFixed`/`Math.round`, quatro critérios de arredondamento explícitos
+  e rateio por maior resto que fecha o total.
+- **Modelo de pendência** (`src/domain/pendencia.ts`): nenhum número de cenário
+  é exibido sem a pendência que explica por que ele não é apuração fiscal.
+- **Registro de regras fiscais** (`src/fiscal/regras.ts`): fonte, vigência,
+  versão, casos de teste e ciclo de vida. Começa **sem nenhuma regra validada** —
+  nenhuma documentação oficial foi conferida.
+- **Testes automatizados** (`npm run test`): 62 testes cobrindo cálculo, XML,
+  pendências e registro de regras.
+- **Verificação completa** (`npm run verify`): typecheck + lint + testes.
+
+Auditoria técnica e matriz de lacunas: [`docs/auditoria-tecnica.md`](docs/auditoria-tecnica.md).
+
+Ainda **não** existe: back-end, banco de dados, autenticação, isolamento
+multiempresa, certificado digital, assinatura, XSD oficial versionado e
+integração com SEFAZ/provedores. Nada disso é simulado como se fosse real.
+
 ## Stack
 
 React + TypeScript + Vite, TanStack Router, Tailwind CSS, shadcn/ui, Lucide Icons.

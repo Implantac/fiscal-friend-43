@@ -27,7 +27,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export const Route = createFileRoute("/nfe")({
   head: () => ({
@@ -76,16 +83,11 @@ function EmissaoNfe() {
   const cliente = clientes.find((c) => c.id === clienteId);
 
   const totais = useMemo(() => {
-    const produtosTotal = itens.reduce(
-      (acc, i) => acc + i.quantidade * i.preco - i.desconto,
-      0,
-    );
+    const produtosTotal = itens.reduce((acc, i) => acc + i.quantidade * i.preco - i.desconto, 0);
     return { produtos: produtosTotal, frete, nota: produtosTotal + frete };
   }, [itens, frete]);
 
-  const cfop = cliente
-    ? sugerirCfop(cliente.uf, empresaSimulada.uf, cliente.contribuinte)
-    : null;
+  const cfop = cliente ? sugerirCfop(cliente.uf, empresaSimulada.uf, cliente.contribuinte) : null;
   const previa = previaTributaria(totais.produtos);
 
   const problemas: ProblemaCampo[] = [];
@@ -124,10 +126,7 @@ function EmissaoNfe() {
               <Save className="size-4" aria-hidden /> Salvar rascunho (F9)
             </Button>
             <Documented docId="m2.transmitir" inline>
-              <Button
-                disabled={processando}
-                onClick={() => transmitir({ resumo, problemas })}
-              >
+              <Button disabled={processando} onClick={() => transmitir({ resumo, problemas })}>
                 {processando ? (
                   <Loader2 className="size-4 animate-spin" aria-hidden />
                 ) : (
@@ -140,7 +139,24 @@ function EmissaoNfe() {
         }
       />
 
-      <ExportarDocumento rotuloPdf="DANFE" gerar={() => gerarNfe({ modelo: "55", natureza, cliente, cfop: cfop?.codigo, itens: itens.map((i) => ({ produto: produtos.find((p) => p.id === i.produtoId)!, quantidade: i.quantidade, preco: i.preco, desconto: i.desconto })), frete })} />
+      <ExportarDocumento
+        rotuloPdf="DANFE"
+        gerar={() =>
+          gerarNfe({
+            modelo: "55",
+            natureza,
+            cliente,
+            cfop: cfop?.codigo,
+            itens: itens.map((i) => ({
+              produto: produtos.find((p) => p.id === i.produtoId)!,
+              quantidade: i.quantidade,
+              preco: i.preco,
+              desconto: i.desconto,
+            })),
+            frete,
+          })
+        }
+      />
 
       {resultado ? <ResultadoAlert resultado={resultado} onFechar={limpar} /> : null}
 
@@ -266,7 +282,9 @@ function EmissaoNfe() {
                               type="number"
                               step="0.01"
                               value={item.preco}
-                              onChange={(e) => atualizar(item.id, { preco: Number(e.target.value) })}
+                              onChange={(e) =>
+                                atualizar(item.id, { preco: Number(e.target.value) })
+                              }
                             />
                           </TableCell>
                           <TableCell>
@@ -353,6 +371,9 @@ function EmissaoNfe() {
                 <p className="pt-1 text-xs text-muted-foreground">
                   Os percentuais acima são arbitrários e servem apenas para demonstrar a tela. A
                   apuração real depende de regras versionadas no back-end.
+                </p>
+                <p className="pt-1 text-xs font-medium text-destructive">
+                  {previa.pendencias[0]?.motivo}
                 </p>
               </CardContent>
             </Card>

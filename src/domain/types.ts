@@ -4,18 +4,10 @@
  * Eles descrevem apenas o modelo interno do protótipo.
  */
 
-export type ManifestacaoTipo =
-  | "ciencia"
-  | "confirmacao"
-  | "nao_realizada"
-  | "desconhecimento";
+export type ManifestacaoTipo = "ciencia" | "confirmacao" | "nao_realizada" | "desconhecimento";
 
 export type ManifestacaoStatus =
-  | "sem_manifestacao"
-  | "ciencia"
-  | "confirmacao"
-  | "nao_realizada"
-  | "desconhecimento";
+  "sem_manifestacao" | "ciencia" | "confirmacao" | "nao_realizada" | "desconhecimento";
 
 export interface EventoHistorico {
   id: string;

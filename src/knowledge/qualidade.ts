@@ -17,7 +17,10 @@ const temVigencia = (p: Procedencia) => !!p.vigencia?.inicio;
 export interface Lacuna {
   tipo: string;
   item: string;
-  destino: { to: "/conhecimento" | "/debugger" | "/cstat" | "/math-lab" | "/cenarios"; search?: Record<string, string> };
+  destino: {
+    to: "/conhecimento" | "/debugger" | "/cstat" | "/math-lab" | "/cenarios";
+    search?: Record<string, string>;
+  };
 }
 
 export function detectarLacunas(): Lacuna[] {
@@ -27,21 +30,27 @@ export function detectarLacunas(): Lacuna[] {
 
   for (const r of regras) {
     const d = { to: "/debugger" as const, search: { regra: r.id } };
-    if (!temFonte(r.procedencia)) l.push({ tipo: "Regra sem fonte oficial", item: r.id, destino: d });
-    if (!regrasTestadas.has(r.id)) l.push({ tipo: "Regra sem caso de teste", item: r.id, destino: d });
-    if (r.cstats.length === 0) l.push({ tipo: "Regra sem rejeição relacionada", item: r.id, destino: d });
+    if (!temFonte(r.procedencia))
+      l.push({ tipo: "Regra sem fonte oficial", item: r.id, destino: d });
+    if (!regrasTestadas.has(r.id))
+      l.push({ tipo: "Regra sem caso de teste", item: r.id, destino: d });
+    if (r.cstats.length === 0)
+      l.push({ tipo: "Regra sem rejeição relacionada", item: r.id, destino: d });
   }
   for (const c of campos) {
     const d = { to: "/conhecimento" as const, search: { doc: c.documento, campo: c.id } };
     if (c.regras.length === 0) l.push({ tipo: "Campo sem regra", item: c.id, destino: d });
     if (!c.exemploXml) l.push({ tipo: "XML sem documentação", item: c.id, destino: d });
     if (!temVersao(c.procedencia)) l.push({ tipo: "Conteúdo sem versão", item: c.id, destino: d });
-    if (!temVigencia(c.procedencia)) l.push({ tipo: "Conteúdo sem vigência", item: c.id, destino: d });
+    if (!temVigencia(c.procedencia))
+      l.push({ tipo: "Conteúdo sem vigência", item: c.id, destino: d });
   }
   for (const c of cstats) {
     const d = { to: "/cstat" as const, search: { codigo: c.codigo } };
-    if (c.regras.length === 0 && !regrasCitadasEmCstat.has(c.codigo)) l.push({ tipo: "Rejeição sem regra", item: c.codigo, destino: d });
-    if (!c.descricaoOficial) l.push({ tipo: "Rejeição sem código oficial conferido", item: c.codigo, destino: d });
+    if (c.regras.length === 0 && !regrasCitadasEmCstat.has(c.codigo))
+      l.push({ tipo: "Rejeição sem regra", item: c.codigo, destino: d });
+    if (!c.descricaoOficial)
+      l.push({ tipo: "Rejeição sem código oficial conferido", item: c.codigo, destino: d });
   }
   for (const c of calculos) {
     l.push({ tipo: "Cálculo sem caso de teste", item: c.nome, destino: { to: "/math-lab" } });

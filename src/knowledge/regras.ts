@@ -89,7 +89,8 @@ export const regras: RegraExecutavel[] = [
     cstats: ["cstat.pendente.cfop"],
     severidade: "erro",
     procedencia: didatico,
-    avaliar: (d) => (d.ufOrigem === d.ufDestino ? d.cfop.startsWith("5") : cfopInterestadual(d.cfop)),
+    avaliar: (d) =>
+      d.ufOrigem === d.ufDestino ? d.cfop.startsWith("5") : cfopInterestadual(d.cfop),
     valorInformado: (d) => d.cfop,
     valorEsperado: (d) => (d.ufOrigem === d.ufDestino ? "CFOP 5xxx" : "CFOP 6xxx"),
   },
@@ -324,7 +325,8 @@ export const regras: RegraExecutavel[] = [
     id: "REGRA-NFSE-DESCRICAO",
     documento: "nfse",
     titulo: "Discriminação do serviço suficiente",
-    explicacaoSimples: "A descrição precisa dizer o que foi feito, não apenas 'serviços prestados'.",
+    explicacaoSimples:
+      "A descrição precisa dizer o que foi feito, não apenas 'serviços prestados'.",
     condicaoTecnica: "descricaoServico.length ≥ 10",
     impacto: "Município pode recusar ou glosar a nota.",
     campos: ["nfse.servico"],

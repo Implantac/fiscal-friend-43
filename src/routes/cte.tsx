@@ -9,7 +9,7 @@ import { Documented } from "@/components/blueprint/Documented";
 import { ResultadoAlert } from "@/components/blueprint/ResultadoAlert";
 import { useEmissao } from "@/simulation/useEmissao";
 import { clientes, ufs } from "@/simulation/cadastros";
-import { parametrosCenario } from "@/simulation/parametros-cenario";
+import { aplicarPercentualCenario, parametrosCenario } from "@/simulation/parametros-cenario";
 import { brl, formatChave } from "@/lib/format";
 import type { ProblemaCampo } from "@/simulation/emissao-gateway";
 
@@ -26,7 +26,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export const Route = createFileRoute("/cte")({
   head: () => ({
@@ -83,7 +90,11 @@ function lerXmlDemonstrativo(nome: string, conteudo: string): NotaVinculada {
   if (chave || nome1 || valor) base.origemLeitura = "xml";
 
   if (!chave) {
-    base.chave = `3526040000000000019155001000000${Math.floor(Math.random() * 9000 + 1000)}1000000123`.slice(0, 44);
+    base.chave =
+      `3526040000000000019155001000000${Math.floor(Math.random() * 9000 + 1000)}1000000123`.slice(
+        0,
+        44,
+      );
     base.emitente = `${base.emitente} (dado demonstrativo)`;
     base.valor = base.valor || 4820.9;
     base.peso = base.peso || 320;
@@ -107,7 +118,7 @@ function EmissaoCte() {
 
   const totalCarga = notas.reduce((a, n) => a + n.valor, 0);
   const pesoTotal = notas.reduce((a, n) => a + n.peso, 0);
-  const seguroEstimado = (totalCarga * parametrosCenario.seguroPercentual) / 100;
+  const seguroEstimado = aplicarPercentualCenario(totalCarga, parametrosCenario.seguroPercentual);
   const totalPrestacao = valorFrete + pedagio;
 
   const processarArquivos = async (arquivos: FileList | null) => {
@@ -171,7 +182,21 @@ function EmissaoCte() {
         }
       />
 
-      <ExportarDocumento rotuloPdf="DACTE" gerar={() => gerarCte({ remetente: clientes.find((c) => c.id === remetenteId), destinatario: clientes.find((c) => c.id === destinatarioId), ufInicio, ufFim, valorFrete, pedagio, notas, observacao })} />
+      <ExportarDocumento
+        rotuloPdf="DACTE"
+        gerar={() =>
+          gerarCte({
+            remetente: clientes.find((c) => c.id === remetenteId),
+            destinatario: clientes.find((c) => c.id === destinatarioId),
+            ufInicio,
+            ufFim,
+            valorFrete,
+            pedagio,
+            notas,
+            observacao,
+          })
+        }
+      />
 
       {resultado ? <ResultadoAlert resultado={resultado} onFechar={limpar} /> : null}
 
@@ -193,9 +218,7 @@ function EmissaoCte() {
               }`}
             >
               <FileUp className="size-6 text-muted-foreground" aria-hidden />
-              <p className="text-sm">
-                Arraste arquivos XML de NF-e aqui ou selecione no disco.
-              </p>
+              <p className="text-sm">Arraste arquivos XML de NF-e aqui ou selecione no disco.</p>
               <p className="text-xs text-muted-foreground">
                 Os arquivos permanecem no navegador. Nada é enviado a servidores.
               </p>

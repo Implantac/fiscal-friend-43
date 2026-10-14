@@ -96,7 +96,9 @@ function Conhecimento() {
               setCampoAtivo(undefined);
             }}
             className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
-              d.id === documento.id ? "bg-primary text-primary-foreground" : "bg-surface hover:bg-accent"
+              d.id === documento.id
+                ? "bg-primary text-primary-foreground"
+                : "bg-surface hover:bg-accent"
             }`}
           >
             {d.sigla}
@@ -149,7 +151,9 @@ function Conhecimento() {
 
               <TabsContent value="uso" className="grid gap-3 pt-3 sm:grid-cols-2">
                 <div>
-                  <p className="text-xs font-semibold uppercase text-muted-foreground">Quando usar</p>
+                  <p className="text-xs font-semibold uppercase text-muted-foreground">
+                    Quando usar
+                  </p>
                   <ul className="list-disc space-y-1 pl-4 pt-1">
                     {documento.quandoUsar.map((x) => (
                       <li key={x}>{x}</li>
@@ -293,7 +297,9 @@ export function DetalheCampo({ id }: { id: string }) {
       <div className="grid gap-3 sm:grid-cols-2">
         <Bloco titulo="Depende de">
           <ul className="list-disc space-y-0.5 pl-4 text-sm">
-            {c.dependeDe.length === 0 && <li className="text-muted-foreground">Sem dependências</li>}
+            {c.dependeDe.length === 0 && (
+              <li className="text-muted-foreground">Sem dependências</li>
+            )}
             {c.dependeDe.map((d) => (
               <li key={d}>{d}</li>
             ))}
@@ -311,7 +317,11 @@ export function DetalheCampo({ id }: { id: string }) {
       {calc && (
         <Bloco titulo="Cálculo">
           <p className="font-mono text-xs">{calc.formula}</p>
-          <Link to="/math-lab" search={{ calc: calc.id }} className="text-xs text-primary hover:underline">
+          <Link
+            to="/math-lab"
+            search={{ calc: calc.id }}
+            className="text-xs text-primary hover:underline"
+          >
             Abrir no Laboratório de Cálculos
           </Link>
         </Bloco>

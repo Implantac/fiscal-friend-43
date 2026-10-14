@@ -78,7 +78,9 @@ function Academia() {
                   >
                     {t.aulas.map((a) => (
                       <AccordionItem key={a.id} value={a.id}>
-                        <AccordionTrigger className="text-left text-sm">{a.titulo}</AccordionTrigger>
+                        <AccordionTrigger className="text-left text-sm">
+                          {a.titulo}
+                        </AccordionTrigger>
                         <AccordionContent className="space-y-2 text-sm">
                           {[
                             ["Conceito", a.conceito],

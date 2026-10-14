@@ -17,29 +17,46 @@ const etapas = [
 ] as const;
 
 const efeitosManifestacao = [
-  ["Ciência da Emissão", "Registra que a nota chegou ao conhecimento do destinatário; não confirma a operação."],
+  [
+    "Ciência da Emissão",
+    "Registra que a nota chegou ao conhecimento do destinatário; não confirma a operação.",
+  ],
   ["Confirmação da Operação", "Declara que a operação aconteceu como descrita na nota."],
-  ["Desconhecimento da Operação", "Declara que o destinatário não reconhece a operação; exige justificativa."],
-  ["Operação não Realizada", "A operação foi reconhecida, mas não se concretizou; exige justificativa."],
+  [
+    "Desconhecimento da Operação",
+    "Declara que o destinatário não reconhece a operação; exige justificativa.",
+  ],
+  [
+    "Operação não Realizada",
+    "A operação foi reconhecida, mas não se concretizou; exige justificativa.",
+  ],
 ];
 
 /** Faixa de academia exibida no topo de cada módulo fiscal. Conteúdo sempre didático. */
 export function AcademyStepper() {
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const doc = documentos.find((d) => d.rota === path) ?? (path === "/" ? documentos.find((d) => d.id === "eventos") : undefined);
+  const doc =
+    documentos.find((d) => d.rota === path) ??
+    (path === "/" ? documentos.find((d) => d.id === "eventos") : undefined);
   const [aberto, setAberto] = useState(false);
   if (!doc) return null;
   const campos = camposPorDocumento(doc.id);
 
   const destino = (e: (typeof etapas)[number]) => {
     switch (e) {
-      case "Calcular": return { to: "/math-lab" as const };
-      case "Gerar XML": return { to: "/xml-lab" as const };
+      case "Calcular":
+        return { to: "/math-lab" as const };
+      case "Gerar XML":
+        return { to: "/xml-lab" as const };
       case "Validar":
-      case "Gerar erro": return { to: "/debugger" as const };
-      case "Diagnosticar": return { to: "/cstat" as const };
-      case "Corrigir": return { to: "/academia" as const };
-      default: return null;
+      case "Gerar erro":
+        return { to: "/debugger" as const };
+      case "Diagnosticar":
+        return { to: "/cstat" as const };
+      case "Corrigir":
+        return { to: "/academia" as const };
+      default:
+        return null;
     }
   };
 
@@ -55,9 +72,13 @@ export function AcademyStepper() {
             return (
               <li key={e} className="flex items-center gap-1">
                 {e === "Aprender" ? (
-                  <button className={cls} onClick={() => setAberto((a) => !a)}>{e}</button>
+                  <button className={cls} onClick={() => setAberto((a) => !a)}>
+                    {e}
+                  </button>
                 ) : d ? (
-                  <Link to={d.to} search={{} as never} className={cls}>{e}</Link>
+                  <Link to={d.to} search={{} as never} className={cls}>
+                    {e}
+                  </Link>
                 ) : (
                   <span className={`${cls} bg-accent`}>{e} (esta tela)</span>
                 )}
@@ -88,11 +109,19 @@ export function AcademyStepper() {
             <div className="grid gap-3 sm:grid-cols-2">
               <div>
                 <p className="text-xs font-semibold">Quando usar</p>
-                <ul className="list-disc pl-4 text-xs">{doc.quandoUsar.map((q) => <li key={q}>{q}</li>)}</ul>
+                <ul className="list-disc pl-4 text-xs">
+                  {doc.quandoUsar.map((q) => (
+                    <li key={q}>{q}</li>
+                  ))}
+                </ul>
               </div>
               <div>
                 <p className="text-xs font-semibold">Quando não usar</p>
-                <ul className="list-disc pl-4 text-xs">{doc.quandoNaoUsar.map((q) => <li key={q}>{q}</li>)}</ul>
+                <ul className="list-disc pl-4 text-xs">
+                  {doc.quandoNaoUsar.map((q) => (
+                    <li key={q}>{q}</li>
+                  ))}
+                </ul>
               </div>
             </div>
             {doc.id === "eventos" && (
@@ -119,7 +148,10 @@ export function AcademyStepper() {
               <p className="text-xs font-semibold">Fluxo</p>
               <ol className="mt-1 space-y-1 text-xs">
                 {doc.fluxo.map((f, i) => (
-                  <li key={f} className="flex gap-2"><span className="font-mono text-muted-foreground">{i + 1}.</span>{f}</li>
+                  <li key={f} className="flex gap-2">
+                    <span className="font-mono text-muted-foreground">{i + 1}.</span>
+                    {f}
+                  </li>
                 ))}
               </ol>
             </div>

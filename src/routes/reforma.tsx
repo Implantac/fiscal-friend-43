@@ -84,8 +84,8 @@ function Reforma() {
             </TableBody>
           </Table>
           <p className="mt-3 text-xs text-muted-foreground">
-            Comparação conceitual. Antes de implementar qualquer campo novo no ERP, confirme leiaute,
-            grupo XML, classificação e vigência na nota técnica correspondente.
+            Comparação conceitual. Antes de implementar qualquer campo novo no ERP, confirme
+            leiaute, grupo XML, classificação e vigência na nota técnica correspondente.
           </p>
         </CardContent>
       </Card>

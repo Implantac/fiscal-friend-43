@@ -101,8 +101,12 @@ function CStatCenter() {
               <div className="flex items-center justify-between gap-2">
                 <CardTitle className="text-base">{atual.situacao}</CardTitle>
                 <StatusBadge status={atual.procedencia.status} />
-                <span className={`rounded border px-1.5 py-0.5 text-[11px] font-semibold ${naturezaCstat(atual) === "oficial" ? "border-validated text-validated" : "border-illustrative text-illustrative"}`}>
-                  {naturezaCstat(atual) === "oficial" ? "Código oficial" : "Identificador didático (não é código oficial)"}
+                <span
+                  className={`rounded border px-1.5 py-0.5 text-[11px] font-semibold ${naturezaCstat(atual) === "oficial" ? "border-validated text-validated" : "border-illustrative text-illustrative"}`}
+                >
+                  {naturezaCstat(atual) === "oficial"
+                    ? "Código oficial"
+                    : "Identificador didático (não é código oficial)"}
                 </span>
               </div>
             </CardHeader>

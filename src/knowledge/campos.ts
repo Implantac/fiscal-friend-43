@@ -127,7 +127,8 @@ export const campos: CampoFiscal[] = [
     dependeDe: ["UF origem", "UF destino", "Consumidor final", "Base"],
     influencia: ["Totais", "Obrigações acessórias no destino"],
     calculoId: "calc.difal",
-    exemploXml: "<ICMSUFDest><vBCUFDest>2400.00</vBCUFDest><vICMSUFDest>144.00</vICMSUFDest></ICMSUFDest>",
+    exemploXml:
+      "<ICMSUFDest><vBCUFDest>2400.00</vBCUFDest><vICMSUFDest>144.00</vICMSUFDest></ICMSUFDest>",
     regras: ["REGRA-DIFAL-OBRIGATORIO"],
     cstats: ["cstat.pendente.difal"],
     implementacaoErp: [
@@ -151,7 +152,8 @@ export const campos: CampoFiscal[] = [
     origemDado: "Meios de pagamento configurados no caixa.",
     dependeDe: ["Total da venda"],
     influencia: ["Validação de soma dos pagamentos", "Troco"],
-    exemploXml: "<pag><detPag><tPag>01</tPag><vPag>100.00</vPag></detPag><vTroco>5.00</vTroco></pag>",
+    exemploXml:
+      "<pag><detPag><tPag>01</tPag><vPag>100.00</vPag></detPag><vTroco>5.00</vTroco></pag>",
     regras: ["REGRA-PAG-SOMA"],
     cstats: ["cstat.pendente.pagamento"],
     implementacaoErp: [
@@ -201,7 +203,8 @@ export const campos: CampoFiscal[] = [
     dependeDe: ["Município de incidência"],
     influencia: ["Alíquota de ISS", "Retenção", "Obrigatoriedade de campos municipais"],
     calculoId: "calc.iss",
-    exemploXml: "<servico><itemListaServico>…</itemListaServico><discriminacao>…</discriminacao></servico>",
+    exemploXml:
+      "<servico><itemListaServico>…</itemListaServico><discriminacao>…</discriminacao></servico>",
     regras: ["REGRA-NFSE-DESCRICAO"],
     cstats: ["cstat.pendente.nfse"],
     implementacaoErp: [

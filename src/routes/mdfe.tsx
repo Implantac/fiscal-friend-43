@@ -26,7 +26,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export const Route = createFileRoute("/mdfe")({
   head: () => ({
@@ -59,10 +66,38 @@ interface DocumentoManifesto {
 }
 
 const documentosDisponiveis: DocumentoManifesto[] = [
-  { id: "d1", tipo: "CT-e", chave: "35260400000000000191570010000004411000004410", destino: "Uberlândia/MG", valor: 3200, peso: 820 },
-  { id: "d2", tipo: "CT-e", chave: "35260400000000000191570010000004421000004420", destino: "Londrina/PR", valor: 5400, peso: 1450 },
-  { id: "d3", tipo: "NF-e", chave: "35260400000000000191550010000009911000009910", destino: "Sorocaba/SP", valor: 18400.5, peso: 640 },
-  { id: "d4", tipo: "NF-e", chave: "35260400000000000191550010000009921000009920", destino: "Uberlândia/MG", valor: 7620.3, peso: 310 },
+  {
+    id: "d1",
+    tipo: "CT-e",
+    chave: "35260400000000000191570010000004411000004410",
+    destino: "Uberlândia/MG",
+    valor: 3200,
+    peso: 820,
+  },
+  {
+    id: "d2",
+    tipo: "CT-e",
+    chave: "35260400000000000191570010000004421000004420",
+    destino: "Londrina/PR",
+    valor: 5400,
+    peso: 1450,
+  },
+  {
+    id: "d3",
+    tipo: "NF-e",
+    chave: "35260400000000000191550010000009911000009910",
+    destino: "Sorocaba/SP",
+    valor: 18400.5,
+    peso: 640,
+  },
+  {
+    id: "d4",
+    tipo: "NF-e",
+    chave: "35260400000000000191550010000009921000009920",
+    destino: "Uberlândia/MG",
+    valor: 7620.3,
+    peso: 310,
+  },
 ];
 
 function EmissaoMdfe() {
@@ -100,7 +135,11 @@ function EmissaoMdfe() {
   if (!motoristaId)
     problemas.push({ campo: "Motorista", mensagem: "Informe o motorista.", docId: "m7.condutor" });
   if (!veiculoId)
-    problemas.push({ campo: "Veículo", mensagem: "Informe o veículo de tração.", docId: "m7.veiculo" });
+    problemas.push({
+      campo: "Veículo",
+      mensagem: "Informe o veículo de tração.",
+      docId: "m7.veiculo",
+    });
 
   return (
     <div className="space-y-5">
@@ -127,7 +166,22 @@ function EmissaoMdfe() {
         }
       />
 
-      <ExportarDocumento rotuloPdf="DAMDFE" gerar={() => gerarMdfe({ documentos: documentosDisponiveis.filter((d) => selecionados.includes(d.id)), motorista: motoristas.find((m) => m.id === motoristaId), veiculo: veiculos.find((v) => v.id === veiculoId), reboques: (veiculos.find((v) => v.id === veiculoId)?.reboques ?? []).filter((r) => reboquesAtivos.includes(r.placa)), ufInicio, ufFim, percurso })} />
+      <ExportarDocumento
+        rotuloPdf="DAMDFE"
+        gerar={() =>
+          gerarMdfe({
+            documentos: documentosDisponiveis.filter((d) => selecionados.includes(d.id)),
+            motorista: motoristas.find((m) => m.id === motoristaId),
+            veiculo: veiculos.find((v) => v.id === veiculoId),
+            reboques: (veiculos.find((v) => v.id === veiculoId)?.reboques ?? []).filter((r) =>
+              reboquesAtivos.includes(r.placa),
+            ),
+            ufInicio,
+            ufFim,
+            percurso,
+          })
+        }
+      />
 
       {resultado ? <ResultadoAlert resultado={resultado} onFechar={limpar} /> : null}
 
@@ -150,7 +204,10 @@ function EmissaoMdfe() {
               </TableHeader>
               <TableBody>
                 {documentosDisponiveis.map((d) => (
-                  <TableRow key={d.id} data-state={selecionados.includes(d.id) ? "selected" : undefined}>
+                  <TableRow
+                    key={d.id}
+                    data-state={selecionados.includes(d.id) ? "selected" : undefined}
+                  >
                     <TableCell>
                       <Checkbox
                         checked={selecionados.includes(d.id)}

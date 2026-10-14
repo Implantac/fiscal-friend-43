@@ -61,7 +61,8 @@ export const cstats: CStat[] = [
     codigo: "cstat.pendente.difal",
     documento: "nfe55",
     situacao: "Grupo de partilha para a UF de destino ausente ou incompleto",
-    causaProvavel: "Cliente cadastrado como contribuinte quando é consumidor final não contribuinte.",
+    causaProvavel:
+      "Cliente cadastrado como contribuinte quando é consumidor final não contribuinte.",
     regras: ["REGRA-DIFAL-OBRIGATORIO"],
     campos: ["nfe.difal"],
     xmlProblema: "<!-- grupo ICMSUFDest ausente -->",
@@ -138,7 +139,11 @@ export const cstats: CStat[] = [
     campos: ["nfce.qrcode"],
     correcao: "Conferir CSC e ambiente configurados no back-end.",
     impactoErp: "CSC nunca deve ficar no PDV em texto claro.",
-    checklistSuporte: ["Conferir ambiente", "Conferir identificador do CSC", "Conferir versão do algoritmo"],
+    checklistSuporte: [
+      "Conferir ambiente",
+      "Conferir identificador do CSC",
+      "Conferir versão do algoritmo",
+    ],
     procedencia: { ...pendente, fonteId: "mo-nfce" },
   },
   {
@@ -203,7 +208,11 @@ export const cstats: CStat[] = [
     campos: ["mdfe.condutor", "mdfe.percurso"],
     correcao: "Corrigir o cadastro envolvido e reemitir ou usar evento, conforme o caso.",
     impactoErp: "Validar cadastros de motorista e veículo antes da viagem.",
-    checklistSuporte: ["Conferir CPF do condutor", "Conferir placas", "Conferir UF inicial e final"],
+    checklistSuporte: [
+      "Conferir CPF do condutor",
+      "Conferir placas",
+      "Conferir UF inicial e final",
+    ],
     procedencia: { ...pendente, fonteId: "mo-mdfe" },
   },
   {

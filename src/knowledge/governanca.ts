@@ -2,7 +2,14 @@ import type { Procedencia } from "./types";
 import { repositorioLocal } from "./storage";
 
 /** Ciclo profissional de revisão do conhecimento. */
-export const ciclo = ["rascunho", "pendente", "em_revisao", "validado", "publicado", "obsoleto"] as const;
+export const ciclo = [
+  "rascunho",
+  "pendente",
+  "em_revisao",
+  "validado",
+  "publicado",
+  "obsoleto",
+] as const;
 export type StatusGovernanca = (typeof ciclo)[number];
 
 export const governancaLabel: Record<StatusGovernanca, string> = {
@@ -59,13 +66,15 @@ export function proximos(s: StatusGovernanca): StatusGovernanca[] {
 /** Retorna mensagem de bloqueio, ou null se a transição é permitida. */
 export function validarTransicao(r: Omit<RevisaoRegistro, "id" | "data">): string | null {
   if (r.autor.trim().length < 2) return "Informe o autor.";
-  if (r.justificativa.trim().length < 15) return "A justificativa precisa de pelo menos 15 caracteres.";
+  if (r.justificativa.trim().length < 15)
+    return "A justificativa precisa de pelo menos 15 caracteres.";
   if (r.para === "em_revisao" && r.revisor.trim().length < 2) return "Informe quem vai revisar.";
   if (r.para === "validado" || r.para === "publicado") {
     if (r.fonteId === "sem-fonte") return "Só é possível validar com fonte oficial cadastrada.";
     if (!r.versao.trim()) return "Informe a versão do documento oficial consultado.";
     if (r.revisor.trim().length < 2) return "Validação exige revisor.";
-    if (r.revisor.trim().toLowerCase() === r.autor.trim().toLowerCase()) return "Revisor deve ser diferente do autor.";
+    if (r.revisor.trim().toLowerCase() === r.autor.trim().toLowerCase())
+      return "Revisor deve ser diferente do autor.";
   }
   return null;
 }

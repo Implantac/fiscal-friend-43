@@ -61,7 +61,9 @@ function MathLab() {
             type="button"
             onClick={() => trocar(c.id)}
             className={`rounded-md border px-3 py-1.5 text-xs font-medium transition-colors ${
-              c.id === atual.id ? "bg-primary text-primary-foreground" : "bg-surface hover:bg-accent"
+              c.id === atual.id
+                ? "bg-primary text-primary-foreground"
+                : "bg-surface hover:bg-accent"
             }`}
           >
             {c.nome}

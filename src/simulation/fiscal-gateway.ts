@@ -53,8 +53,7 @@ export class MockFiscalGateway implements FiscalGateway {
       return {
         tipo: "rejeicao_fiscal",
         titulo: "Evento já registrado para esta nota (cenário simulado)",
-        mensagemTecnica:
-          "retorno_simulado: evento equivalente já existe para a chave informada",
+        mensagemTecnica: "retorno_simulado: evento equivalente já existe para a chave informada",
         explicacao:
           "O cenário demonstra a recusa por repetição do mesmo evento. O código oficial de rejeição não foi fixado aqui porque ainda não foi confirmado em manual versionado.",
         acaoSugerida:

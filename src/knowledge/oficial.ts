@@ -10,7 +10,9 @@ export type Natureza = "oficial" | "didatico";
 export const naturezaLabel: Record<Natureza, string> = { oficial: "Oficial", didatico: "Didático" };
 
 export const naturezaCstat = (c: CStat): Natureza =>
-  c.descricaoOficial && c.procedencia.status === "validado" && c.procedencia.fonteId !== "sem-fonte" ? "oficial" : "didatico";
+  c.descricaoOficial && c.procedencia.status === "validado" && c.procedencia.fonteId !== "sem-fonte"
+    ? "oficial"
+    : "didatico";
 
 /** Todas as regras e cálculos atuais são exemplos didáticos. */
 export const naturezaRegra = (): Natureza => "didatico";
@@ -35,7 +37,8 @@ export const baseOficialRepo = repositorioLocal<RegistroOficial>("simulador-fisc
 
 export function validarRegistroOficial(r: Omit<RegistroOficial, "id" | "data">): string | null {
   if (!r.codigo.trim()) return "Informe o código oficial.";
-  if (r.descricaoOficial.trim().length < 5) return "Copie a descrição oficial exatamente como no documento.";
+  if (r.descricaoOficial.trim().length < 5)
+    return "Copie a descrição oficial exatamente como no documento.";
   if (r.fonteId === "sem-fonte") return "Escolha a fonte oficial.";
   if (!r.referencia.trim()) return "Informe onde está no documento (seção, página ou link).";
   if (!r.versao.trim()) return "Informe a versão do documento.";

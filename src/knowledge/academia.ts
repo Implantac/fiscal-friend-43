@@ -325,7 +325,8 @@ export const desafios: DesafioFiscal[] = [
     campoCorreto: "mdfe.condutor",
     regraCorreta: "REGRA-MDFE-CONDUTOR",
     cstatCorreto: "cstat.pendente.mdfe",
-    explicacao: "CPF com todos os dígitos iguais não passa na verificação dos dígitos verificadores.",
+    explicacao:
+      "CPF com todos os dígitos iguais não passa na verificação dos dígitos verificadores.",
     correcao: "Corrigir o CPF no cadastro do motorista e validar no cadastro, não na emissão.",
   },
   {
@@ -342,7 +343,8 @@ export const desafios: DesafioFiscal[] = [
     regraCorreta: "REGRA-PAG-SOMA",
     cstatCorreto: "cstat.pendente.pagamento",
     explicacao: "100,00 + 30,00 = 130,00, abaixo dos 150,00 do documento (exemplo didático).",
-    correcao: "Bloquear o fechamento do caixa enquanto a soma dos pagamentos for menor que o total.",
+    correcao:
+      "Bloquear o fechamento do caixa enquanto a soma dos pagamentos for menor que o total.",
   },
   {
     id: "d5",

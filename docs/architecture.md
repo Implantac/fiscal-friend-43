@@ -59,3 +59,69 @@ quando a interface muda, e cada entrada carrega seu estado de confiança: **Vali
 Estado local por tela (formulários) e estado global mínimo no `SimulatorProvider`: Modo
 Desenvolvedor, elemento selecionado no painel, notas recebidas e log de ações simuladas.
 Nada é persistido — recarregar a página reinicia a simulação, e isso é intencional.
+
+---
+
+## Camada fiscal e monetária (adicionada em 2026-10-14)
+
+O front-end continua não decidindo regra fiscal, mas agora existem três módulos
+explícitos que sustentam a evolução para produto:
+
+### `src/lib/money.ts` — motor monetário exato
+
+Toda aritmética de valor é feita em `bigint` (centavos), sem `number`,
+`toFixed()` ou `Math.round()`. Características:
+
+- quatro critérios de arredondamento explícitos (`half_up`, `half_even`,
+  `truncate`, `ceil`) — a escolha é de quem chama, porque cada tributo tem
+  critério próprio;
+- `aplicarPercentual(valor, "18")` com precisão intermediária cheia e um único
+  arredondamento no fim;
+- `ratear(valor, pesos)` pelo método do maior resto: a soma dos rateios é
+  **exatamente** o valor rateado (invariante testada);
+- `valorUnitario(total, qtd)` devolvendo decimal de 4 casas;
+- `multiplicarDecimalPorMoney(decimal, money)` para `qCom × vUnCom` — quantidade
+  não é valor monetário;
+- parsing pt-BR ("R$ 1.234,56"), notação científica e rejeição ruidosa de entrada
+  inválida (`ErroMonetario`), nunca zero silencioso.
+
+### `src/domain/pendencia.ts` — modelo de pendência
+
+Quando falta informação para determinar o tratamento fiscal, o sistema não
+escolhe padrão: devolve `Pendencia` com campo, motivo, consequência, orientação
+e severidade (`bloqueante` | `informativa`). Pendência bloqueante impede a
+emissão. `pendenciaAliquotaNaoValidada()` e `pendenciaCfopHeuristico()` são as
+pendências canônicas do simulador.
+
+### `src/fiscal/regras.ts` — registro de regras fiscais
+
+Estrutura que obriga toda regra a carregar fonte normativa (órgão, documento,
+dispositivo, versão, data da consulta), jurisdição, vigência, versão, condições,
+exceções, casos de teste, responsável e histórico. Ciclo de vida formal:
+`rascunho → em_revisao → validada_tecnicamente → aprovada_para_uso → vigente →
+substituida/revogada/bloqueada`.
+
+Regras de uso:
+
+- `regraParaCalculo(id, data)` **lança erro** se a regra não existir, não
+  estiver em estado utilizável ou estiver fora de vigência — o motor nunca
+  aplica regra não catalogada;
+- uma regra sem fonte normativa não passa de `rascunho`;
+- uma regra aprovada exige caso de teste, responsável e vigência.
+
+**Estado honesto:** o registro começa **sem nenhuma regra validada**, porque
+nenhuma documentação oficial foi conferida para construí-lo.
+
+## Fronteira de simulação (reafirmada)
+
+As portas `FiscalGateway` e `EmissaoGateway` e suas implementações `Mock`
+permanecem como única saída do domínio. Nenhuma tela chama serviço externo.
+Substituir os mocks por implementações HTTP continua sendo a única mudança
+necessária para sair da simulação.
+
+## Verificação
+
+`npm run verify` executa `typecheck` + `lint` + `test` (Vitest, ambiente Node,
+configuração isolada em `vitest.config.ts`). Testes cobrem o motor monetário, o
+registro de regras, a prévia/CFOP e a geração de XML (selo de simulação,
+`tpAmb=2`, ausência de `<Signature>`, casas decimais e fechamento de totais).

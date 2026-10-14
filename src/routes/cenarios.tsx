@@ -98,7 +98,9 @@ function CenariosPage() {
           </div>
 
           <div>
-            <p className="text-[11px] font-semibold uppercase text-muted-foreground">Passo a passo</p>
+            <p className="text-[11px] font-semibold uppercase text-muted-foreground">
+              Passo a passo
+            </p>
             <ol className="space-y-1.5 pt-2">
               {c.passos.map((p, i) => (
                 <li key={p} className="flex gap-2">
@@ -140,7 +142,9 @@ function CenariosPage() {
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <p className="text-[11px] font-semibold uppercase text-muted-foreground">Validações</p>
+              <p className="text-[11px] font-semibold uppercase text-muted-foreground">
+                Validações
+              </p>
               <ul className="list-disc space-y-1 pl-4 pt-1">
                 {c.validacoes.map((v) => (
                   <li key={v}>{v}</li>

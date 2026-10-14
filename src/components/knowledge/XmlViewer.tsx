@@ -39,14 +39,13 @@ export function XmlViewer({
   onSelecionarTag?: ((tag: string) => void) | undefined;
   className?: string | undefined;
 }) {
-  const linhas = useMemo(
-    () => (formatar ? formatarXml(xml) : xml).split("\n"),
-    [xml, formatar],
-  );
+  const linhas = useMemo(() => (formatar ? formatarXml(xml) : xml).split("\n"), [xml, formatar]);
   const busca = destaque?.trim().toLowerCase() ?? "";
 
   return (
-    <div className={cn("overflow-x-auto rounded-md border bg-muted/50 font-mono text-xs", className)}>
+    <div
+      className={cn("overflow-x-auto rounded-md border bg-muted/50 font-mono text-xs", className)}
+    >
       {linhas.map((linha, i) => {
         const tag = tagDaLinha(linha);
         const marcada = !!busca && linha.toLowerCase().includes(busca);
@@ -62,7 +61,9 @@ export function XmlViewer({
               ativa && "bg-accent",
             )}
           >
-            <span className="w-8 shrink-0 select-none text-right text-muted-foreground">{i + 1}</span>
+            <span className="w-8 shrink-0 select-none text-right text-muted-foreground">
+              {i + 1}
+            </span>
             <span className="whitespace-pre">{linha}</span>
           </button>
         );

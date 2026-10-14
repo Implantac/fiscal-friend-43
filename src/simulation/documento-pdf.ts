@@ -12,7 +12,11 @@ export async function baixarPdf(l: LayoutPdf, nome: string) {
 
   const marcaDagua = () => {
     doc.saveGraphicsState();
-    doc.setGState(new (doc as unknown as { GState: new (o: object) => unknown }).GState({ opacity: 0.12 }) as never);
+    doc.setGState(
+      new (doc as unknown as { GState: new (o: object) => unknown }).GState({
+        opacity: 0.12,
+      }) as never,
+    );
     doc.setFont("helvetica", "bold");
     doc.setFontSize(30);
     doc.setTextColor(200, 0, 0);

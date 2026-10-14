@@ -165,7 +165,13 @@ export const documentos: DocumentoFiscal[] = [
       "Geração, assinatura e autorização",
       "Uso em MDF-e e eventos posteriores",
     ],
-    eventos: ["Cancelamento", "Carta de correção", "Anulação", "Substituição", "Prestação em desacordo"],
+    eventos: [
+      "Cancelamento",
+      "Carta de correção",
+      "Anulação",
+      "Substituição",
+      "Prestação em desacordo",
+    ],
     procedencia: p("mo-cte", "CT-e"),
   },
   {

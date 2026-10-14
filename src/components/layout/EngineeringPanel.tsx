@@ -54,7 +54,12 @@ export function EngineeringPanel() {
           <span className="text-sm font-semibold">Painel de engenharia</span>
         </div>
         {entry && (
-          <Button variant="ghost" size="icon" onClick={() => selectDoc(null)} aria-label="Limpar seleção">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => selectDoc(null)}
+            aria-label="Limpar seleção"
+          >
             <X className="size-4" />
           </Button>
         )}
@@ -170,12 +175,18 @@ export function EngineeringPanel() {
             {campo && (
               <div className="space-y-4 border-t pt-4">
                 <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-primary">Base fiscal</p>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-primary">
+                    Base fiscal
+                  </p>
                   <StatusBadge status={campo.procedencia.status} />
                 </div>
                 <Bloco titulo="Identificação">
-                  <code className="font-mono text-xs">{campo.grupoXml} / {campo.tagXml}</code>
-                  <p className="text-xs text-muted-foreground">{campo.tipo} · {campo.obrigatoriedade}</p>
+                  <code className="font-mono text-xs">
+                    {campo.grupoXml} / {campo.tagXml}
+                  </code>
+                  <p className="text-xs text-muted-foreground">
+                    {campo.tipo} · {campo.obrigatoriedade}
+                  </p>
                 </Bloco>
                 <Bloco titulo="Conceito">
                   <p>{campo.conceito}</p>
@@ -187,27 +198,57 @@ export function EngineeringPanel() {
                 </Bloco>
                 {campo.calculoId && (
                   <Bloco titulo="Cálculo">
-                    <Link to="/math-lab" search={{} as never} className="text-primary hover:underline">Abrir no laboratório de cálculos</Link>
+                    <Link
+                      to="/math-lab"
+                      search={{} as never}
+                      className="text-primary hover:underline"
+                    >
+                      Abrir no laboratório de cálculos
+                    </Link>
                   </Bloco>
                 )}
                 <Bloco titulo="XML (ilustrativo)">
-                  <pre className="overflow-x-auto rounded-md bg-muted p-2 font-mono text-[11px]">{campo.exemploXml}</pre>
+                  <pre className="overflow-x-auto rounded-md bg-muted p-2 font-mono text-[11px]">
+                    {campo.exemploXml}
+                  </pre>
                 </Bloco>
                 <Bloco titulo="Regras e rejeições">
                   <div className="flex flex-wrap gap-1">
                     {campo.regras.map((r) => (
-                      <Link key={r} to="/debugger" search={{ regra: r }} className="rounded border px-1.5 py-0.5 font-mono text-[11px] hover:bg-accent">{r}</Link>
+                      <Link
+                        key={r}
+                        to="/debugger"
+                        search={{ regra: r }}
+                        className="rounded border px-1.5 py-0.5 font-mono text-[11px] hover:bg-accent"
+                      >
+                        {r}
+                      </Link>
                     ))}
                     {campo.cstats.map((c) => (
-                      <Link key={c} to="/cstat" search={{ codigo: c }} className="rounded border px-1.5 py-0.5 font-mono text-[11px] hover:bg-accent">{c}</Link>
+                      <Link
+                        key={c}
+                        to="/cstat"
+                        search={{ codigo: c }}
+                        className="rounded border px-1.5 py-0.5 font-mono text-[11px] hover:bg-accent"
+                      >
+                        {c}
+                      </Link>
                     ))}
                   </div>
                 </Bloco>
                 <Bloco titulo="Implementação no ERP">
-                  <ul className="list-disc space-y-1 pl-4">{campo.implementacaoErp.map((i) => <li key={i}>{i}</li>)}</ul>
+                  <ul className="list-disc space-y-1 pl-4">
+                    {campo.implementacaoErp.map((i) => (
+                      <li key={i}>{i}</li>
+                    ))}
+                  </ul>
                 </Bloco>
                 <Bloco titulo="Testes">
-                  <ul className="list-disc space-y-1 pl-4">{campo.testes.map((i) => <li key={i}>{i}</li>)}</ul>
+                  <ul className="list-disc space-y-1 pl-4">
+                    {campo.testes.map((i) => (
+                      <li key={i}>{i}</li>
+                    ))}
+                  </ul>
                 </Bloco>
                 <Bloco titulo="Versão e vigência">
                   <VersionTimeline procedencia={campo.procedencia} />

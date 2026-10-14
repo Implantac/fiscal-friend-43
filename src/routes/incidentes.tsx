@@ -14,9 +14,17 @@ export const Route = createFileRoute("/incidentes")({
   head: () => ({
     meta: [
       { title: "Registro de incidentes — Simulador Fiscal" },
-      { name: "description", content: "Registre incidentes fiscais do suporte e transforme cada caso em rascunho de conhecimento pendente de validação." },
+      {
+        name: "description",
+        content:
+          "Registre incidentes fiscais do suporte e transforme cada caso em rascunho de conhecimento pendente de validação.",
+      },
       { property: "og:title", content: "Registro de incidentes — Simulador Fiscal" },
-      { property: "og:description", content: "Sintoma, rejeição, causa, correção e prevenção, virando conhecimento para a equipe." },
+      {
+        property: "og:description",
+        content:
+          "Sintoma, rejeição, causa, correção e prevenção, virando conhecimento para a equipe.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -37,7 +45,15 @@ interface Incidente {
 }
 
 const incidentesRepo = repositorioLocal<Incidente>("simulador-fiscal:incidentes");
-const vazio: Omit<Incidente, "id" | "data"> = { titulo: "", documento: "nfe55", cstat: "", sintoma: "", causa: "", correcao: "", prevencao: "" };
+const vazio: Omit<Incidente, "id" | "data"> = {
+  titulo: "",
+  documento: "nfe55",
+  cstat: "",
+  sintoma: "",
+  causa: "",
+  correcao: "",
+  prevencao: "",
+};
 
 function paraConhecimento(i: Incidente): string {
   const c = cstatByCodigo.get(i.cstat);
@@ -49,10 +65,14 @@ function paraConhecimento(i: Incidente): string {
     `Regras relacionadas: ${c?.regras.join(", ") || "—"}`,
     `Campos relacionados: ${c?.campos.join(", ") || "—"}`,
     ``,
-    `## Sintoma`, i.sintoma || "—",
-    `## Causa`, i.causa || "—",
-    `## Correção`, i.correcao || "—",
-    `## Prevenção no ERP`, i.prevencao || "—",
+    `## Sintoma`,
+    i.sintoma || "—",
+    `## Causa`,
+    i.causa || "—",
+    `## Correção`,
+    i.correcao || "—",
+    `## Prevenção no ERP`,
+    i.prevencao || "—",
     `## Teste de regressão sugerido`,
     `Reproduzir o cenário do incidente e confirmar que a regra aponta a falha antes do envio.`,
   ].join("\n");
@@ -81,7 +101,9 @@ function IncidentesPage() {
       cstat: i.cstat,
       regras: c?.regras ?? [],
       passos: i.sintoma,
-      esperado: c ? `A regra deve apontar a falha antes do envio (${c.situacao}).` : "Reproduzir e confirmar a correção.",
+      esperado: c
+        ? `A regra deve apontar a falha antes do envio (${c.situacao}).`
+        : "Reproduzir e confirmar a correção.",
       status: "pendente_aprovacao",
       data: new Date().toISOString(),
     });
@@ -93,7 +115,11 @@ function IncidentesPage() {
       toast.error("Informe um título (5+ caracteres) e o sintoma (10+ caracteres).");
       return;
     }
-    const inc: Incidente = { ...form, id: `INC-${String(lista.length + 1).padStart(3, "0")}`, data: new Date().toISOString() };
+    const inc: Incidente = {
+      ...form,
+      id: `INC-${String(lista.length + 1).padStart(3, "0")}`,
+      data: new Date().toISOString(),
+    };
     salvar([inc, ...lista]);
     setForm(vazio);
     setSelecionado(inc.id);
@@ -105,9 +131,18 @@ function IncidentesPage() {
     <label className="block space-y-1 text-xs">
       <span className="font-medium">{rotulo}</span>
       {area ? (
-        <textarea rows={2} value={form[k]} onChange={(e) => setForm({ ...form, [k]: e.target.value })} className="w-full rounded-md border bg-background px-2 py-1.5 text-sm" />
+        <textarea
+          rows={2}
+          value={form[k]}
+          onChange={(e) => setForm({ ...form, [k]: e.target.value })}
+          className="w-full rounded-md border bg-background px-2 py-1.5 text-sm"
+        />
       ) : (
-        <input value={form[k]} onChange={(e) => setForm({ ...form, [k]: e.target.value })} className="w-full rounded-md border bg-background px-2 py-1.5 text-sm" />
+        <input
+          value={form[k]}
+          onChange={(e) => setForm({ ...form, [k]: e.target.value })}
+          className="w-full rounded-md border bg-background px-2 py-1.5 text-sm"
+        />
       )}
     </label>
   );
@@ -125,15 +160,31 @@ function IncidentesPage() {
           <div className="grid grid-cols-2 gap-2">
             <label className="space-y-1 text-xs">
               <span className="font-medium">Documento</span>
-              <select value={form.documento} onChange={(e) => setForm({ ...form, documento: e.target.value })} className="w-full rounded-md border bg-background px-2 py-1.5 text-sm">
-                {documentos.map((d) => <option key={d.id} value={d.id}>{d.sigla}</option>)}
+              <select
+                value={form.documento}
+                onChange={(e) => setForm({ ...form, documento: e.target.value })}
+                className="w-full rounded-md border bg-background px-2 py-1.5 text-sm"
+              >
+                {documentos.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.sigla}
+                  </option>
+                ))}
               </select>
             </label>
             <label className="space-y-1 text-xs">
               <span className="font-medium">Rejeição</span>
-              <select value={form.cstat} onChange={(e) => setForm({ ...form, cstat: e.target.value })} className="w-full rounded-md border bg-background px-2 py-1.5 text-sm">
+              <select
+                value={form.cstat}
+                onChange={(e) => setForm({ ...form, cstat: e.target.value })}
+                className="w-full rounded-md border bg-background px-2 py-1.5 text-sm"
+              >
                 <option value="">Não identificada</option>
-                {cstats.map((c) => <option key={c.codigo} value={c.codigo}>{c.situacao}</option>)}
+                {cstats.map((c) => (
+                  <option key={c.codigo} value={c.codigo}>
+                    {c.situacao}
+                  </option>
+                ))}
               </select>
             </label>
           </div>
@@ -141,18 +192,28 @@ function IncidentesPage() {
           {campo("causa", "Causa encontrada", true)}
           {campo("correcao", "Correção aplicada", true)}
           {campo("prevencao", "Como o ERP deve prevenir", true)}
-          <Button onClick={registrar} className="w-full">Registrar incidente</Button>
+          <Button onClick={registrar} className="w-full">
+            Registrar incidente
+          </Button>
         </div>
 
         <div className="space-y-4">
           {lista.length === 0 ? (
-            <p className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">Nenhum incidente registrado ainda.</p>
+            <p className="rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
+              Nenhum incidente registrado ainda.
+            </p>
           ) : (
             <ul className="divide-y rounded-lg border bg-surface">
               {lista.map((i) => (
                 <li key={i.id}>
-                  <button type="button" onClick={() => setSelecionado(i.id)} className={`flex w-full items-center justify-between gap-3 px-4 py-2 text-left text-sm hover:bg-accent ${selecionado === i.id ? "bg-accent" : ""}`}>
-                    <span><span className="font-mono text-xs">{i.id}</span> · {i.titulo}</span>
+                  <button
+                    type="button"
+                    onClick={() => setSelecionado(i.id)}
+                    className={`flex w-full items-center justify-between gap-3 px-4 py-2 text-left text-sm hover:bg-accent ${selecionado === i.id ? "bg-accent" : ""}`}
+                  >
+                    <span>
+                      <span className="font-mono text-xs">{i.id}</span> · {i.titulo}
+                    </span>
                     <span className="text-xs text-muted-foreground">{dateBR(i.data)}</span>
                   </button>
                 </li>
@@ -168,16 +229,48 @@ function IncidentesPage() {
               </div>
               {atual.cstat && (
                 <p className="text-xs">
-                  Ver na base: <Link to="/cstat" search={{ codigo: atual.cstat }} className="text-primary hover:underline">rejeição relacionada</Link>
+                  Ver na base:{" "}
+                  <Link
+                    to="/cstat"
+                    search={{ codigo: atual.cstat }}
+                    className="text-primary hover:underline"
+                  >
+                    rejeição relacionada
+                  </Link>
                 </p>
               )}
-              <pre className="max-h-96 overflow-auto rounded-md bg-muted p-3 font-mono text-xs whitespace-pre-wrap">{paraConhecimento(atual)}</pre>
+              <pre className="max-h-96 overflow-auto rounded-md bg-muted p-3 font-mono text-xs whitespace-pre-wrap">
+                {paraConhecimento(atual)}
+              </pre>
               <div className="flex flex-wrap gap-2">
-                <Button variant="outline" onClick={() => { void navigator.clipboard.writeText(paraConhecimento(atual)); toast.success("Rascunho copiado."); }}>Copiar rascunho</Button>
-                <Button variant="outline" onClick={() => gerarTeste(atual)}>Gerar caso de regressão</Button>
-                <Button variant="ghost" onClick={() => { salvar(lista.filter((i) => i.id !== atual.id)); setSelecionado(null); }}>Excluir</Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    void navigator.clipboard.writeText(paraConhecimento(atual));
+                    toast.success("Rascunho copiado.");
+                  }}
+                >
+                  Copiar rascunho
+                </Button>
+                <Button variant="outline" onClick={() => gerarTeste(atual)}>
+                  Gerar caso de regressão
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    salvar(lista.filter((i) => i.id !== atual.id));
+                    setSelecionado(null);
+                  }}
+                >
+                  Excluir
+                </Button>
               </div>
-              <p className="text-[11px] text-muted-foreground">O caso gerado aparece na Regressão como "pendente de aprovação". <Link to="/regressao" className="text-primary hover:underline">Abrir regressão</Link></p>
+              <p className="text-[11px] text-muted-foreground">
+                O caso gerado aparece na Regressão como "pendente de aprovação".{" "}
+                <Link to="/regressao" className="text-primary hover:underline">
+                  Abrir regressão
+                </Link>
+              </p>
             </div>
           )}
         </div>

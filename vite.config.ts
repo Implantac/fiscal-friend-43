@@ -12,4 +12,11 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  vite: {
+    // Vite valida o header Host por segurança. Como o preview da plataforma é
+    // servido por um proxy com host próprio, é necessário liberar qualquer host
+    // em dev E em preview — sem isso o preview responde 403.
+    server: { allowedHosts: true },
+    preview: { allowedHosts: true },
+  },
 });

@@ -61,8 +61,7 @@ export const catalog: DocEntry[] = [
     tela: "Todas",
     elemento: "Selo de ambiente",
     nome: "Ambiente de execução",
-    finalidade:
-      "Deixar explícito que nenhuma operação desta aplicação gera documento fiscal real.",
+    finalidade: "Deixar explícito que nenhuma operação desta aplicação gera documento fiscal real.",
     tipo: "Enum de ambiente (simulação | homologação | produção)",
     obrigatoriedade: "Sempre visível",
     validacaoFront: [
@@ -90,8 +89,7 @@ export const catalog: DocEntry[] = [
       {
         origem: "Erro local",
         situacao: "Ambiente configurado incorretamente na integração real.",
-        tratamento:
-          "Bloquear a ação e exigir confirmação explícita antes de qualquer transmissão.",
+        tratamento: "Bloquear a ação e exigir confirmação explícita antes de qualquer transmissão.",
       },
     ],
     estado: "ilustrativo",
@@ -112,9 +110,7 @@ export const catalog: DocEntry[] = [
       "Não pode bloquear o funcionamento normal dos controles.",
     ],
     backendPython: ["Nenhuma responsabilidade — recurso exclusivo de front-end."],
-    mapeamentos: [
-      { alvo: "Modelo interno", caminho: "ui.devMode", estado: "ilustrativo" },
-    ],
+    mapeamentos: [{ alvo: "Modelo interno", caminho: "ui.devMode", estado: "ilustrativo" }],
     falhas: [],
     estado: "ilustrativo",
     rastreabilidade: {
@@ -266,8 +262,7 @@ export const catalog: DocEntry[] = [
       {
         origem: "Erro do provedor",
         situacao: "Falha de comunicação, certificado vencido ou serviço fora do ar.",
-        tratamento:
-          "Permitir nova tentativa sem duplicar o evento; registrar a mensagem técnica.",
+        tratamento: "Permitir nova tentativa sem duplicar o evento; registrar a mensagem técnica.",
       },
       {
         origem: "Rejeição fiscal",

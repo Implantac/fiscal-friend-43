@@ -17,8 +17,10 @@ export const fontes: FonteFiscal[] = [
     id: "moc-nfe",
     categoria: "Manual / MOC",
     nome: "Manual de Orientação do Contribuinte — NF-e/NFC-e (Portal Nacional da NF-e)",
-    referencia: "https://www.nfe.fazenda.gov.br/portal/listaConteudo.aspx?tipoConteudo=ndIjl+iEFdE=",
-    observacao: "Página oficial de documentos. Consulte a versão vigente do MOC; a versão exata usada pelo ERP ainda não foi registrada.",
+    referencia:
+      "https://www.nfe.fazenda.gov.br/portal/listaConteudo.aspx?tipoConteudo=ndIjl+iEFdE=",
+    observacao:
+      "Página oficial de documentos. Consulte a versão vigente do MOC; a versão exata usada pelo ERP ainda não foi registrada.",
   },
   {
     id: "portal-nfe",
@@ -45,7 +47,8 @@ export const fontes: FonteFiscal[] = [
     id: "mo-nfce",
     categoria: "Manual / MOC",
     nome: "Manual de Orientação — NFC-e (modelo 65)",
-    referencia: "https://www.nfe.fazenda.gov.br/portal/listaConteudo.aspx?tipoConteudo=ndIjl+iEFdE=",
+    referencia:
+      "https://www.nfe.fazenda.gov.br/portal/listaConteudo.aspx?tipoConteudo=ndIjl+iEFdE=",
     observacao: "Regras de contingência e QR Code variam por UF.",
   },
   {
@@ -67,7 +70,8 @@ export const fontes: FonteFiscal[] = [
     categoria: "Receita Federal",
     nome: "Padrão nacional da NFS-e",
     referencia: "https://www.gov.br/nfse/pt-br",
-    observacao: "Coexistem padrão nacional e padrões municipais. Cada município pode exigir campos próprios.",
+    observacao:
+      "Coexistem padrão nacional e padrões municipais. Cada município pode exigir campos próprios.",
   },
   {
     id: "encat",
@@ -80,7 +84,8 @@ export const fontes: FonteFiscal[] = [
     categoria: "Legislação",
     nome: "Lei Complementar 214/2025 — IBS, CBS e Imposto Seletivo",
     referencia: "https://www.planalto.gov.br/ccivil_03/leis/lcp/lcp214.htm",
-    observacao: "Cronograma, alíquotas e leiautes ainda em evolução; tratar como pendente de validação.",
+    observacao:
+      "Cronograma, alíquotas e leiautes ainda em evolução; tratar como pendente de validação.",
   },
   {
     id: "ec-132",

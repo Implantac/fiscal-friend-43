@@ -28,4 +28,7 @@ export const formatCnpj = (raw: string) => {
 
 /** Agrupa a chave de acesso em blocos de 4 para leitura humana. */
 export const formatChave = (chave: string) =>
-  chave.replace(/\D/g, "").replace(/(.{4})/g, "$1 ").trim();
+  chave
+    .replace(/\D/g, "")
+    .replace(/(.{4})/g, "$1 ")
+    .trim();

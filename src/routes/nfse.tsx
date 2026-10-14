@@ -9,7 +9,7 @@ import { Documented } from "@/components/blueprint/Documented";
 import { ResultadoAlert } from "@/components/blueprint/ResultadoAlert";
 import { useEmissao } from "@/simulation/useEmissao";
 import { clientes, servicos } from "@/simulation/cadastros";
-import { parametrosCenario } from "@/simulation/parametros-cenario";
+import { aplicarPercentualCenario, parametrosCenario } from "@/simulation/parametros-cenario";
 import { brl } from "@/lib/format";
 import type { ProblemaCampo } from "@/simulation/emissao-gateway";
 
@@ -68,15 +68,27 @@ function EmissaoNfse() {
   const { resultado, processando, salvar, transmitir, limpar } = useEmissao("nfse");
 
   const baseCalculo = Math.max(0, valor - deducoes);
-  const issEstimado = (baseCalculo * aliquotaIss) / 100;
+  const issEstimado = aplicarPercentualCenario(baseCalculo, aliquotaIss);
 
   const problemas: ProblemaCampo[] = [];
   if (!clienteId)
-    problemas.push({ campo: "Cliente", mensagem: "Selecione o tomador fictício.", docId: "m4.cliente" });
+    problemas.push({
+      campo: "Cliente",
+      mensagem: "Selecione o tomador fictício.",
+      docId: "m4.cliente",
+    });
   if (!servicoId)
-    problemas.push({ campo: "Serviço", mensagem: "Selecione o serviço prestado.", docId: "m4.servico" });
+    problemas.push({
+      campo: "Serviço",
+      mensagem: "Selecione o serviço prestado.",
+      docId: "m4.servico",
+    });
   if (valor <= 0)
-    problemas.push({ campo: "Valor", mensagem: "Informe um valor maior que zero.", docId: "m4.valor" });
+    problemas.push({
+      campo: "Valor",
+      mensagem: "Informe um valor maior que zero.",
+      docId: "m4.valor",
+    });
   if (descricao.trim().length < 10)
     problemas.push({
       campo: "Descrição",
@@ -108,7 +120,20 @@ function EmissaoNfse() {
         }
       />
 
-      <ExportarDocumento rotuloPdf="DANFSe" gerar={() => gerarNfse({ cliente: clientes.find((c) => c.id === clienteId), servico: servicos.find((s) => s.id === servicoId), descricao, valor, deducoes, aliquotaIss, issRetido })} />
+      <ExportarDocumento
+        rotuloPdf="DANFSe"
+        gerar={() =>
+          gerarNfse({
+            cliente: clientes.find((c) => c.id === clienteId),
+            servico: servicos.find((s) => s.id === servicoId),
+            descricao,
+            valor,
+            deducoes,
+            aliquotaIss,
+            issRetido,
+          })
+        }
+      />
 
       {resultado ? <ResultadoAlert resultado={resultado} onFechar={limpar} /> : null}
 

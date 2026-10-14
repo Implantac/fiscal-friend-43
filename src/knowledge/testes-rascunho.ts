@@ -14,4 +14,6 @@ export interface TesteRascunho {
   data: string;
 }
 
-export const testesRascunhoRepo = repositorioLocal<TesteRascunho>("simulador-fiscal:testes-rascunho");
+export const testesRascunhoRepo = repositorioLocal<TesteRascunho>(
+  "simulador-fiscal:testes-rascunho",
+);

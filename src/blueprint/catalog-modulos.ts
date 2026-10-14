@@ -34,8 +34,16 @@ export const catalogModulos: DocEntry[] = [
       { alvo: "TecnoSpeed", caminho: "Grupo de destinatário do documento", estado: "pendente" },
     ],
     falhas: [
-      { origem: "Erro local", situacao: "Destinatário não selecionado.", tratamento: "Bloquear a transmissão e focar o campo." },
-      { origem: "Rejeição fiscal", situacao: "Dados cadastrais inconsistentes com a base oficial.", tratamento: "Exibir o retorno oficial sem reescrever o texto." },
+      {
+        origem: "Erro local",
+        situacao: "Destinatário não selecionado.",
+        tratamento: "Bloquear a transmissão e focar o campo.",
+      },
+      {
+        origem: "Rejeição fiscal",
+        situacao: "Dados cadastrais inconsistentes com a base oficial.",
+        tratamento: "Exibir o retorno oficial sem reescrever o texto.",
+      },
     ],
     estado: "ilustrativo",
     rastreabilidade: SEM_FONTE,
@@ -66,7 +74,11 @@ export const catalogModulos: DocEntry[] = [
     exemplo: `// Modelo interno ilustrativo
 { "codigo": "SKU-1001", "ncm": "72091500", "quantidade": 40, "valorUnitario": 210.50, "desconto": 0 }`,
     falhas: [
-      { origem: "Erro local", situacao: "Item com quantidade zero ou negativa.", tratamento: "Destacar a linha e impedir a transmissão." },
+      {
+        origem: "Erro local",
+        situacao: "Item com quantidade zero ou negativa.",
+        tratamento: "Destacar a linha e impedir a transmissão.",
+      },
     ],
     estado: "ilustrativo",
     rastreabilidade: SEM_FONTE,
@@ -88,11 +100,13 @@ export const catalogModulos: DocEntry[] = [
       "Determinar o CFOP a partir de regras versionadas: natureza, finalidade, origem da mercadoria, destino e regime.",
       "Rejeitar o CFOP enviado pelo front quando conflitar com a regra vigente.",
     ],
-    mapeamentos: [
-      { alvo: "Modelo interno", caminho: "nfe.itens[].cfop", estado: "ilustrativo" },
-    ],
+    mapeamentos: [{ alvo: "Modelo interno", caminho: "nfe.itens[].cfop", estado: "ilustrativo" }],
     falhas: [
-      { origem: "Rejeição fiscal", situacao: "CFOP incompatível com a operação declarada.", tratamento: "Apresentar o retorno oficial e permitir correção." },
+      {
+        origem: "Rejeição fiscal",
+        situacao: "CFOP incompatível com a operação declarada.",
+        tratamento: "Apresentar o retorno oficial e permitir correção.",
+      },
     ],
     estado: "ilustrativo",
     rastreabilidade: SEM_FONTE,
@@ -121,7 +135,11 @@ export const catalogModulos: DocEntry[] = [
       { alvo: "Modelo interno", caminho: "nfe.previaTributaria", estado: "ilustrativo" },
     ],
     falhas: [
-      { origem: "Erro local", situacao: "Prévia divergindo do cálculo do back-end.", tratamento: "Exibir sempre o valor do back-end como autoritativo." },
+      {
+        origem: "Erro local",
+        situacao: "Prévia divergindo do cálculo do back-end.",
+        tratamento: "Exibir sempre o valor do back-end como autoritativo.",
+      },
     ],
     estado: "ilustrativo",
     rastreabilidade: {
@@ -153,9 +171,21 @@ export const catalogModulos: DocEntry[] = [
       { alvo: "TecnoSpeed", caminho: "Serviço de envio de NF-e", estado: "pendente" },
     ],
     falhas: [
-      { origem: "Erro local", situacao: "Campos obrigatórios ausentes.", tratamento: "Listar os campos e focar o primeiro." },
-      { origem: "Erro do provedor", situacao: "Indisponibilidade ou tempo de resposta excedido.", tratamento: "Permitir nova tentativa idempotente." },
-      { origem: "Rejeição fiscal", situacao: "Documento recusado na autorização.", tratamento: "Exibir código e descrição oficiais, sem paráfrase." },
+      {
+        origem: "Erro local",
+        situacao: "Campos obrigatórios ausentes.",
+        tratamento: "Listar os campos e focar o primeiro.",
+      },
+      {
+        origem: "Erro do provedor",
+        situacao: "Indisponibilidade ou tempo de resposta excedido.",
+        tratamento: "Permitir nova tentativa idempotente.",
+      },
+      {
+        origem: "Rejeição fiscal",
+        situacao: "Documento recusado na autorização.",
+        tratamento: "Exibir código e descrição oficiais, sem paráfrase.",
+      },
     ],
     estado: "ilustrativo",
     rastreabilidade: SEM_FONTE,
@@ -171,14 +201,15 @@ export const catalogModulos: DocEntry[] = [
     finalidade: "Permitir lançamento rápido por código de barras ou seleção, com teclado.",
     tipo: "Coleção de itens com produto e quantidade",
     obrigatoriedade: "Pelo menos um item por cupom",
-    validacaoFront: [
-      "Enter confirma o item sem uso de mouse.",
-      "Quantidade maior que zero.",
-    ],
+    validacaoFront: ["Enter confirma o item sem uso de mouse.", "Quantidade maior que zero."],
     backendPython: ["Recalcular preços e totais; preço do front é apenas exibição."],
     mapeamentos: [{ alvo: "Modelo interno", caminho: "nfce.itens[]", estado: "ilustrativo" }],
     falhas: [
-      { origem: "Erro local", situacao: "Código lido não encontrado no cadastro.", tratamento: "Sinalizar sem travar o caixa e manter o foco no campo." },
+      {
+        origem: "Erro local",
+        situacao: "Código lido não encontrado no cadastro.",
+        tratamento: "Sinalizar sem travar o caixa e manter o foco no campo.",
+      },
     ],
     estado: "ilustrativo",
     rastreabilidade: SEM_FONTE,
@@ -202,7 +233,11 @@ export const catalogModulos: DocEntry[] = [
     ],
     mapeamentos: [{ alvo: "Modelo interno", caminho: "nfce.pagamentos[]", estado: "ilustrativo" }],
     falhas: [
-      { origem: "Erro local", situacao: "Soma dos pagamentos diferente do total.", tratamento: "Bloquear o fechamento com mensagem objetiva." },
+      {
+        origem: "Erro local",
+        situacao: "Soma dos pagamentos diferente do total.",
+        tratamento: "Bloquear o fechamento com mensagem objetiva.",
+      },
     ],
     estado: "ilustrativo",
     rastreabilidade: SEM_FONTE,
@@ -224,7 +259,11 @@ export const catalogModulos: DocEntry[] = [
     ],
     mapeamentos: [{ alvo: "Modelo interno", caminho: "pdv.online", estado: "ilustrativo" }],
     falhas: [
-      { origem: "Erro do provedor", situacao: "Sem conexão com o serviço de autorização.", tratamento: "Enfileirar e sinalizar pendência de forma visível." },
+      {
+        origem: "Erro do provedor",
+        situacao: "Sem conexão com o serviço de autorização.",
+        tratamento: "Enfileirar e sinalizar pendência de forma visível.",
+      },
     ],
     estado: "ilustrativo",
     rastreabilidade: SEM_FONTE,
@@ -248,7 +287,11 @@ export const catalogModulos: DocEntry[] = [
     ],
     mapeamentos: [{ alvo: "Modelo interno", caminho: "pdv.fila[]", estado: "ilustrativo" }],
     falhas: [
-      { origem: "Erro do provedor", situacao: "Falha ao reprocessar a fila.", tratamento: "Manter os itens na fila e registrar o motivo." },
+      {
+        origem: "Erro do provedor",
+        situacao: "Falha ao reprocessar a fila.",
+        tratamento: "Manter os itens na fila e registrar o motivo.",
+      },
     ],
     estado: "ilustrativo",
     rastreabilidade: SEM_FONTE,
@@ -272,7 +315,11 @@ export const catalogModulos: DocEntry[] = [
       { alvo: "PlugNotas", caminho: "Grupo de tomador do serviço", estado: "pendente" },
     ],
     falhas: [
-      { origem: "Erro do provedor", situacao: "Cadastro rejeitado pelo padrão do município.", tratamento: "Exibir o retorno do provedor sem reinterpretar." },
+      {
+        origem: "Erro do provedor",
+        situacao: "Cadastro rejeitado pelo padrão do município.",
+        tratamento: "Exibir o retorno do provedor sem reinterpretar.",
+      },
     ],
     estado: "ilustrativo",
     rastreabilidade: SEM_FONTE,
@@ -296,7 +343,11 @@ export const catalogModulos: DocEntry[] = [
       { alvo: "PlugNotas", caminho: "Código de serviço municipal", estado: "pendente" },
     ],
     falhas: [
-      { origem: "Rejeição fiscal", situacao: "Código não aceito pelo município.", tratamento: "Exibir a mensagem oficial e permitir nova escolha." },
+      {
+        origem: "Rejeição fiscal",
+        situacao: "Código não aceito pelo município.",
+        tratamento: "Exibir a mensagem oficial e permitir nova escolha.",
+      },
     ],
     estado: "ilustrativo",
     rastreabilidade: SEM_FONTE,
@@ -314,7 +365,9 @@ export const catalogModulos: DocEntry[] = [
     validacaoFront: ["Impedir valor zero ou negativo."],
     backendPython: ["Recalcular base, deduções e retenções conforme regras do município."],
     mapeamentos: [{ alvo: "Modelo interno", caminho: "nfse.valorServico", estado: "ilustrativo" }],
-    falhas: [{ origem: "Erro local", situacao: "Valor não informado.", tratamento: "Bloquear a emissão." }],
+    falhas: [
+      { origem: "Erro local", situacao: "Valor não informado.", tratamento: "Bloquear a emissão." },
+    ],
     estado: "ilustrativo",
     rastreabilidade: SEM_FONTE,
   }),
@@ -331,7 +384,11 @@ export const catalogModulos: DocEntry[] = [
     backendPython: ["Aplicar limite de tamanho e sanitização conforme o padrão do município."],
     mapeamentos: [{ alvo: "Modelo interno", caminho: "nfse.descricao", estado: "ilustrativo" }],
     falhas: [
-      { origem: "Erro do provedor", situacao: "Texto acima do limite aceito.", tratamento: "Informar o limite real retornado pelo provedor." },
+      {
+        origem: "Erro do provedor",
+        situacao: "Texto acima do limite aceito.",
+        tratamento: "Informar o limite real retornado pelo provedor.",
+      },
     ],
     estado: "ilustrativo",
     rastreabilidade: SEM_FONTE,
@@ -343,7 +400,8 @@ export const catalogModulos: DocEntry[] = [
     tela: "Emissão de NFS-e",
     elemento: "Bloco de tributação avançada",
     nome: "Campos opcionais de tributação",
-    finalidade: "Manter a tela enxuta no caso comum, sem esconder o que é necessário em casos específicos.",
+    finalidade:
+      "Manter a tela enxuta no caso comum, sem esconder o que é necessário em casos específicos.",
     tipo: "Grupo recolhido com alíquota, deduções, retenção e observações",
     obrigatoriedade: "Opcional no protótipo",
     validacaoFront: [
@@ -356,7 +414,11 @@ export const catalogModulos: DocEntry[] = [
     ],
     mapeamentos: [{ alvo: "Modelo interno", caminho: "nfse.tributacao", estado: "ilustrativo" }],
     falhas: [
-      { origem: "Rejeição fiscal", situacao: "Retenção incompatível com o cadastro do tomador.", tratamento: "Abrir o bloco e destacar o campo apontado." },
+      {
+        origem: "Rejeição fiscal",
+        situacao: "Retenção incompatível com o cadastro do tomador.",
+        tratamento: "Abrir o bloco e destacar o campo apontado.",
+      },
     ],
     estado: "ilustrativo",
     rastreabilidade: SEM_FONTE,
@@ -388,8 +450,16 @@ export const catalogModulos: DocEntry[] = [
       { alvo: "TecnoSpeed", caminho: "Grupo de documentos transportados", estado: "pendente" },
     ],
     falhas: [
-      { origem: "Erro local", situacao: "Arquivo ilegível ou sem chave reconhecível.", tratamento: "Marcar a linha como demonstrativa e exigir revisão." },
-      { origem: "Erro do provedor", situacao: "Documento não localizado na base do provedor.", tratamento: "Informar sem remover o vínculo automaticamente." },
+      {
+        origem: "Erro local",
+        situacao: "Arquivo ilegível ou sem chave reconhecível.",
+        tratamento: "Marcar a linha como demonstrativa e exigir revisão.",
+      },
+      {
+        origem: "Erro do provedor",
+        situacao: "Documento não localizado na base do provedor.",
+        tratamento: "Informar sem remover o vínculo automaticamente.",
+      },
     ],
     estado: "ilustrativo",
     rastreabilidade: SEM_FONTE,
@@ -411,7 +481,11 @@ export const catalogModulos: DocEntry[] = [
     ],
     mapeamentos: [{ alvo: "Modelo interno", caminho: "cte.partes", estado: "ilustrativo" }],
     falhas: [
-      { origem: "Rejeição fiscal", situacao: "Tomador incompatível com a operação declarada.", tratamento: "Exibir o retorno oficial." },
+      {
+        origem: "Rejeição fiscal",
+        situacao: "Tomador incompatível com a operação declarada.",
+        tratamento: "Exibir o retorno oficial.",
+      },
     ],
     estado: "ilustrativo",
     rastreabilidade: SEM_FONTE,
@@ -447,14 +521,19 @@ export const catalogModulos: DocEntry[] = [
     tela: "Emissão de CT-e OS",
     elemento: "Abas de modalidade",
     nome: "Modalidade do serviço",
-    finalidade: "Separar transporte de pessoas de transporte de valores, que exigem dados distintos.",
+    finalidade:
+      "Separar transporte de pessoas de transporte de valores, que exigem dados distintos.",
     tipo: "Enum de modalidade",
     obrigatoriedade: "Obrigatório",
     validacaoFront: ["Trocar de modalidade não pode apagar dados já digitados sem aviso."],
     backendPython: ["Selecionar o conjunto de campos exigido para cada modalidade."],
     mapeamentos: [{ alvo: "Modelo interno", caminho: "cteOs.modalidade", estado: "ilustrativo" }],
     falhas: [
-      { origem: "Erro local", situacao: "Campos da modalidade incompletos.", tratamento: "Mostrar a aba onde está o problema." },
+      {
+        origem: "Erro local",
+        situacao: "Campos da modalidade incompletos.",
+        tratamento: "Mostrar a aba onde está o problema.",
+      },
     ],
     estado: "ilustrativo",
     rastreabilidade: SEM_FONTE,
@@ -471,7 +550,9 @@ export const catalogModulos: DocEntry[] = [
     validacaoFront: ["Exigir seleção antes de transmitir."],
     backendPython: ["Completar dados cadastrais e validar situação."],
     mapeamentos: [{ alvo: "Modelo interno", caminho: "cteOs.tomador", estado: "ilustrativo" }],
-    falhas: [{ origem: "Erro local", situacao: "Tomador ausente.", tratamento: "Bloquear a transmissão." }],
+    falhas: [
+      { origem: "Erro local", situacao: "Tomador ausente.", tratamento: "Bloquear a transmissão." },
+    ],
     estado: "ilustrativo",
     rastreabilidade: SEM_FONTE,
   }),
@@ -487,7 +568,13 @@ export const catalogModulos: DocEntry[] = [
     validacaoFront: ["Valor maior que zero."],
     backendPython: ["Confirmar quais dados de passageiros o modelo exige."],
     mapeamentos: [{ alvo: "Modelo interno", caminho: "cteOs.passageiros", estado: "ilustrativo" }],
-    falhas: [{ origem: "Erro local", situacao: "Quantidade inválida.", tratamento: "Bloquear e focar o campo." }],
+    falhas: [
+      {
+        origem: "Erro local",
+        situacao: "Quantidade inválida.",
+        tratamento: "Bloquear e focar o campo.",
+      },
+    ],
     estado: "ilustrativo",
     rastreabilidade: SEM_FONTE,
     pendencias: ["Não foi confirmado se o modelo exige identificação individual dos passageiros."],
@@ -505,7 +592,11 @@ export const catalogModulos: DocEntry[] = [
     backendPython: ["Confirmar a estrutura exigida e os limites de quantidade e valor."],
     mapeamentos: [{ alvo: "Modelo interno", caminho: "cteOs.malotes[]", estado: "ilustrativo" }],
     falhas: [
-      { origem: "Erro local", situacao: "Malote sem número.", tratamento: "Destacar a linha incompleta." },
+      {
+        origem: "Erro local",
+        situacao: "Malote sem número.",
+        tratamento: "Destacar a linha incompleta.",
+      },
     ],
     estado: "ilustrativo",
     rastreabilidade: SEM_FONTE,
@@ -522,8 +613,12 @@ export const catalogModulos: DocEntry[] = [
     obrigatoriedade: "Obrigatório",
     validacaoFront: ["Maior que zero."],
     backendPython: ["Recalcular total e tributos conforme regra vigente."],
-    mapeamentos: [{ alvo: "Modelo interno", caminho: "cteOs.valorPrestacao", estado: "ilustrativo" }],
-    falhas: [{ origem: "Erro local", situacao: "Valor zerado.", tratamento: "Bloquear a transmissão." }],
+    mapeamentos: [
+      { alvo: "Modelo interno", caminho: "cteOs.valorPrestacao", estado: "ilustrativo" },
+    ],
+    falhas: [
+      { origem: "Erro local", situacao: "Valor zerado.", tratamento: "Bloquear a transmissão." },
+    ],
     estado: "ilustrativo",
     rastreabilidade: SEM_FONTE,
   }),
@@ -548,7 +643,11 @@ export const catalogModulos: DocEntry[] = [
       { alvo: "TecnoSpeed", caminho: "Grupo de documentos do manifesto", estado: "pendente" },
     ],
     falhas: [
-      { origem: "Rejeição fiscal", situacao: "Documento cancelado ou não autorizado incluído no manifesto.", tratamento: "Exibir o retorno oficial e destacar a linha." },
+      {
+        origem: "Rejeição fiscal",
+        situacao: "Documento cancelado ou não autorizado incluído no manifesto.",
+        tratamento: "Exibir o retorno oficial e destacar a linha.",
+      },
     ],
     estado: "ilustrativo",
     rastreabilidade: SEM_FONTE,
@@ -565,7 +664,13 @@ export const catalogModulos: DocEntry[] = [
     validacaoFront: ["Exigir seleção antes de transmitir."],
     backendPython: ["Validar o documento do condutor conforme exigência do modelo."],
     mapeamentos: [{ alvo: "Modelo interno", caminho: "mdfe.condutor", estado: "ilustrativo" }],
-    falhas: [{ origem: "Erro local", situacao: "Condutor não informado.", tratamento: "Bloquear a transmissão." }],
+    falhas: [
+      {
+        origem: "Erro local",
+        situacao: "Condutor não informado.",
+        tratamento: "Bloquear a transmissão.",
+      },
+    ],
     estado: "ilustrativo",
     rastreabilidade: SEM_FONTE,
   }),
@@ -585,7 +690,11 @@ export const catalogModulos: DocEntry[] = [
     ],
     mapeamentos: [{ alvo: "Modelo interno", caminho: "mdfe.veiculo", estado: "ilustrativo" }],
     falhas: [
-      { origem: "Rejeição fiscal", situacao: "Placa inválida ou composição não aceita.", tratamento: "Exibir o retorno oficial sem reescrevê-lo." },
+      {
+        origem: "Rejeição fiscal",
+        situacao: "Placa inválida ou composição não aceita.",
+        tratamento: "Exibir o retorno oficial sem reescrevê-lo.",
+      },
     ],
     estado: "ilustrativo",
     rastreabilidade: SEM_FONTE,
@@ -606,7 +715,11 @@ export const catalogModulos: DocEntry[] = [
     ],
     mapeamentos: [{ alvo: "Modelo interno", caminho: "mdfe.percurso[]", estado: "ilustrativo" }],
     falhas: [
-      { origem: "Rejeição fiscal", situacao: "Percurso incompatível com origem e destino.", tratamento: "Exibir o retorno oficial e permitir correção." },
+      {
+        origem: "Rejeição fiscal",
+        situacao: "Percurso incompatível com origem e destino.",
+        tratamento: "Exibir o retorno oficial e permitir correção.",
+      },
     ],
     estado: "ilustrativo",
     rastreabilidade: SEM_FONTE,

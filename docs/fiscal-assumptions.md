@@ -10,7 +10,7 @@ Este documento existe para que ninguém confunda o que o protótipo **mostra** c
 - Nenhum código de rejeição, código de evento ou código de meio de pagamento foi fixado.
 - Nenhuma alíquota exibida é real.
 
-## 2. Parâmetros de cenário
+## 2. Parâmetros de cenário (agora com pendência bloqueante)
 
 `src/simulation/parametros-cenario.ts` define percentuais **arbitrários** (ICMS, IPI, PIS, COFINS,
 ISS, seguro) apenas para que as telas produzam números. Eles não representam nenhum estado,
@@ -70,3 +70,27 @@ Ao confirmar um item em documentação oficial, atualize a entrada correspondent
 
 Enquanto isso não acontecer, o item permanece **Pendente de validação** — e a interface diz isso ao
 desenvolvedor.
+
+
+## 10. Precisão monetária (2026-10-14)
+
+Os cálculos do protótipo passaram a usar `src/lib/money.ts`: inteiros em
+centavos (`bigint`), sem `number`, `toFixed()` ou `Math.round()`. Consequências:
+
+- o rateio de frete por item fecha exatamente o total (antes podia divergir 1
+  centavo por arredondamento isolado);
+- cada cálculo informa o critério de arredondamento usado;
+- a prévia tributária e a sugestão de CFOP devolvem `Pendencia` bloqueante
+  (`src/domain/pendencia.ts`), dizendo o que falta e por que o número exibido
+  não é apuração.
+
+Isso **não** tornou nenhum valor oficial: apenas tornou a inexatidão impossível
+de esconder.
+
+## 11. Registro de regras (2026-10-14)
+
+`src/fiscal/regras.ts` define o formato que toda regra fiscal futura deve ter
+(fonte, dispositivo, versão, vigência, condições, exceções, casos de teste,
+responsável, histórico) e os estados do ciclo de vida. Nenhuma regra está
+marcada como validada: nenhuma documentação oficial foi consultada. O motor se
+recusa a calcular com regra não catalogada.

@@ -1,11 +1,4 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 import type { ManifestacaoTipo, NotaRecebida, ResultadoSimulado } from "@/domain/types";
 import { notasIniciais } from "@/simulation/mock-data";
 import { fiscalGateway, rotuloManifestacao } from "@/simulation/fiscal-gateway";
@@ -97,7 +90,10 @@ export function SimulatorProvider({ children }: { children: ReactNode }) {
         ),
       );
 
-      registrarLog(`${rotuloManifestacao[tipo]} · ${nota.emitente}: ${resultado.titulo}`, resultado.tipo);
+      registrarLog(
+        `${rotuloManifestacao[tipo]} · ${nota.emitente}: ${resultado.titulo}`,
+        resultado.tipo,
+      );
       return resultado;
     },
     [notas, registrarLog],

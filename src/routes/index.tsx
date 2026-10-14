@@ -31,7 +31,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -127,10 +134,7 @@ function Manifestacao() {
       />
 
       {resultado && (
-        <Alert
-          className="mb-4"
-          variant={resultado.tipo === "sucesso" ? "default" : "destructive"}
-        >
+        <Alert className="mb-4" variant={resultado.tipo === "sucesso" ? "default" : "destructive"}>
           <AlertTitle className="flex items-center gap-2">
             {resultado.titulo}
             <Badge variant="outline" className="text-[11px]">
@@ -302,7 +306,9 @@ function Manifestacao() {
               rows={4}
               placeholder="Descreva o motivo com pelo menos 15 caracteres"
             />
-            <p className="text-xs text-muted-foreground">{justificativa.trim().length} caractere(s)</p>
+            <p className="text-xs text-muted-foreground">
+              {justificativa.trim().length} caractere(s)
+            </p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setPedido(null)}>
