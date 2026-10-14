@@ -24,6 +24,7 @@ const base = {
   serie: "1",
   numero: "1",
   ambiente: 2 as const,
+  valorTotalCentavos: 0n,
 };
 
 const novo = (): DocumentoFiscal =>

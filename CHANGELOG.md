@@ -3,6 +3,106 @@
 Todas as mudanças relevantes deste repositório são registradas aqui.
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [Não publicado] — 2026-10-14 (Etapa 2.8)
+
+### Adicionado — documentos fiscais reais, atrás de autenticação
+
+- `src/fiscal/servidor/documento.ts` — serviço de ciclo de vida, sem framework
+  e sem HTTP: cria documento com número reservado atomicamente, lista isolado
+  por tenant e aplica transições. Recebe a unidade de trabalho por injeção, o
+  que permite testar **todas** as regras de autorização sem subir servidor.
+- `src/fiscal/servidor/documento.functions.ts` — `listarDocumentos`,
+  `criarDocumento` e `avancarDocumento`, todos começando em `exigirContexto()`.
+  Devolvem DTO, nunca o objeto de domínio: `bigint` não sobrevive a
+  `JSON.stringify` (a serialização lança `TypeError`), e o valor trafega como
+  string de centavos.
+- `src/fiscal/servidor/estrutura-dev.ts` — tenant, empresa e estabelecimento de
+  desenvolvimento, com identificadores UUID determinísticos.
+- `src/fiscal/servidor/registro.ts` — singletons de processo em `globalThis`.
+- `src/routes/documentos.tsx` — tela real de documentos, com selo de estado,
+  valor formatado a partir do inteiro exato e a lista de estados indisponíveis
+  **com o motivo de cada um**.
+- 29 testes novos (19 do serviço, 4 do registro, 6 do schema/repositório de
+  valor).
+
+### Corrigido — três bugs reais encontrados ao ligar as peças
+
+1. **O tenant de desenvolvimento não era UUID.** `garantirUsuarioDev` passava a
+   string `"tenant-dev"`. No caminho Postgres isso quebra em dois lugares:
+   `set_config('app.tenant_id', …)` faz `NULLIF(…)::UUID` e lança, e a chave
+   estrangeira de `tenants` rejeita a linha. Só o caminho em memória
+   "funcionava" — que é justamente o caminho que os testes não cobriam.
+   Agora o identificador é derivado por `uuidDeterministico`, com bits de
+   versão e variante fixados.
+
+2. **Em dev, o login e a consulta usavam repositórios diferentes.** O plugin do
+   framework carrega módulos de server function com um sufixo de query
+   (`?tss-serverfn-split`), que é uma instância de módulo distinta da que as
+   rotas importam. Um `let` de módulo dividia os repositórios em memória em
+   dois: `POST iniciarSessao` gravava a sessão em um, e `exigirContexto()` —
+   chamado de dentro de `documento.functions.ts` — consultava o outro.
+   Sintoma observado em execução real: "Sessão inválida ou expirada" um
+   milissegundo depois de um login com HTTP 200. Os singletons passaram a viver
+   em `globalThis`, com teste de regressão que reimporta o módulo.
+
+3. **`revogar`/`revogarTodasDoUsuario` ligavam `$1` sem usá-lo.** O SQL filtrava
+   só por `id`/`usuario_id` e confiava na RLS para o tenant. Agora o tenant
+   aparece no `WHERE` também — a intenção fica legível e a consulta falha de
+   forma explícita se a política mudar.
+
+### Adicionado — valor monetário na entidade persistida (migração 002)
+
+`valor_total_centavos BIGINT NOT NULL DEFAULT 0`, com `CHECK (>= 0)`. A coluna
+usa a **mesma unidade interna do motor monetário** (`src/lib/money.ts`, onde
+`Money = bigint`), para que não exista conversão entre cálculo e persistência —
+conversão é onde o erro de escala nasce. `DocumentoFiscal.valorTotalCentavos` é
+`bigint`; o repositório converte com `BigInt(string)`, que é exato, ao
+contrário de `Number(string)`, que perde precisão acima de 2^53 (há teste com
+2^53 + 1).
+
+### Decisão de arquitetura — o que a tela de documentos NÃO pode fazer
+
+`autorizado`, `transmitido`, `rejeitado`, `pendente_consulta`,
+`cancelado_ou_encerrado`, `indisponivel_ou_contingencia`, `assinado`,
+`xml_validado` e `documento_gerado` são **inalcançáveis** por este serviço.
+Todos dependem de algo que não existe ainda — XSD oficial, certificado A1/A3,
+transmissão ao SEFAZ — e oferecer o botão seria convidar o operador a marcar,
+com as próprias mãos, um documento como autorizado sem que nenhum fisco tenha
+dito isso. Cada estado recusado vem com o motivo, e a recusa acontece **antes**
+de qualquer consulta ao banco (há teste que conta as consultas).
+
+### Evidência por execução (servidor de desenvolvimento real, HTTP)
+
+```
+POST /_serverFn/<iniciarSessao>    tenant derivado, credencial correta
+  -> 200 + set-cookie: ff_sessao=<opaco>; Max-Age=3600; HttpOnly; SameSite=Lax
+
+GET  listarDocumentos  SEM cookie            -> {ok:false,"Sessão inválida ou expirada."}
+GET  listarDocumentos  cookie forjado        -> {ok:false,"Sessão inválida ou expirada."}
+POST criarDocumento    SEM cookie            -> {ok:false,"Sessão inválida ou expirada."}
+GET  listarDocumentos  com cookie            -> {ok:true, documentos:[], memoria:true}
+POST criarDocumento    com cookie            -> nfe55 55/1/1, "simulacao",
+                                                12345 centavos -> "R$ 123,45",
+                                                transições: ["pre_validacao"]
+POST criarDocumento    MESMA idempotência    -> MESMO documento (mesmo id, mesmo
+                                                criadoEm) — nenhum número novo
+POST avancarDocumento  -> "pre_validacao", evento ev-1, usuário usr-dev-1
+POST avancarDocumento  para "autorizado"     -> RECUSADO pelo validador
+GET  listarDocumentos  depois                -> 1 documento, semValorFiscal:true,
+                                                bloqueado: "documento_gerado" com motivo
+```
+
+### Limitações conhecidas
+
+- Nenhuma consulta real contra um Postgres: o executor segue testado com pool
+  falso. Todo o smoke test acima rodou no caminho em memória.
+- Criar documento exige empresa e estabelecimento. Sem `DEV_AUTH_EMAIL` (ou sem
+  banco) a operação é recusada com mensagem explícita; em produção o cadastro
+  de empresa/estabelecimento ainda não existe.
+- As telas de emissão (NF-e, CT-e, MDF-e…) continuam sendo simuladores e não
+  passam por `exigirContexto()`. `/documentos` é o caminho real.
+- `bun.lock` continua dessincronizado (`pg-mem`, `pg`, `@types/pg` ausentes).
+
 ## [Não publicado] — 2026-10-14 (Etapa 2.7)
 
 ### Adicionado — conexão Postgres real (Lovable Cloud)

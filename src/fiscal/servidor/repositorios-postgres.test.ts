@@ -265,7 +265,8 @@ describe("SessoesPostgres", () => {
     await sessoes.revogar("tenant-a", "ses-1");
     const update = sql.queries.at(-1)?.sql ?? "";
     expect(update).toContain("revogada_em IS NULL");
-    expect(update).toContain("WHERE id = $2");
+    expect(update).toContain("WHERE tenant_id = $1");
+    expect(update).toContain("id = $2");
     expect(sql.transacoes.at(-1)).toBe("tenant-a");
   });
 

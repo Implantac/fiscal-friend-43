@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { encerrarSessao, iniciarSessao, sessaoAtual } from "@/fiscal/servidor/sessao.functions";
+import { tenantPadraoDev } from "@/fiscal/servidor/documento.functions";
 import type { ContextoUsuario } from "@/fiscal/seguranca";
 
 export const Route = createFileRoute("/entrar")({
@@ -38,7 +39,10 @@ function EntrarPage() {
   const sair = useServerFn(encerrarSessao);
   const consultar = useServerFn(sessaoAtual);
 
-  const [tenantId, setTenantId] = useState("tenant-dev");
+  // UUID determinístico derivado de "tenant-dev". A versão anterior usava a
+  // string literal, que não é UUID — e o caminho Postgres exige UUID em
+  // `set_config('app.tenant_id', …)` e na chave estrangeira de `tenants`.
+  const [tenantId, setTenantId] = useState(tenantPadraoDev());
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [carregando, setCarregando] = useState(false);
@@ -109,9 +113,18 @@ function EntrarPage() {
                 do órgão, com protocolo próprio, e só existe depois de transmissão real.
               </p>
               <p className="mt-2">
-                A persistência desta sessão está <strong>em memória do processo</strong> enquanto o
-                banco não for provisionado: reiniciar o servidor derruba todas as sessões. As rotas
-                de documento (NF-e, CT-e, MDF-e…) ainda não passam por esta autenticação.
+                Sem string de conexão (<code>SUPABASE_DB_URL</code> ou <code>DATABASE_URL</code>) a
+                sessão e os documentos ficam <strong>em memória do processo</strong>: reiniciar o
+                servidor derruba tudo. Em produção essa configuração é recusada em vez de fingir
+                persistência.
+              </p>
+              <p className="mt-2">
+                A rota{" "}
+                <Link to="/documentos" className="underline">
+                  /documentos
+                </Link>{" "}
+                já exige esta sessão e verifica o papel no servidor. As telas de emissão (NF-e,
+                CT-e, MDF-e…) seguem sendo simuladores e não passam por ela.
               </p>
             </AlertDescription>
           </Alert>
@@ -137,8 +150,9 @@ function EntrarPage() {
               required
             />
             <p className="text-xs text-muted-foreground">
-              Identificador da conta. O mesmo e-mail pode existir em tenants diferentes — o tenant
-              faz parte da credencial.
+              Identificador da conta (UUID). O mesmo e-mail pode existir em tenants diferentes — o
+              tenant faz parte da credencial. Em desenvolvimento o valor é derivado de{" "}
+              <code>DEV_AUTH_TENANT</code> (padrão <code>tenant-dev</code>).
             </p>
           </div>
 

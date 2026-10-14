@@ -130,7 +130,7 @@ Risco: **alto** (erro fiscal/segurança) · **médio** · **baixo**.
 
 | # | Lacuna | Prio | Risco | Arquivos afetados | Critério de aceite | Dependência externa |
 |---|---|---|---|---|---|---|
-| L1 | Sem back-end, banco, auth e multi-tenant | P0 | alto | todo `src/routes`, `src/simulation` | CRUD de empresas/estabelecimentos com isolamento por tenant testado; login com papéis; migração versionada | **endereçada nas Etapas 2, 2.5, 2.6 e 2.7**: isolamento, papéis, ciclo de vida, numeração, auditoria, schema com RLS, hash de senha, repositório Postgres, camada HTTP de sessão e conexão real com o banco implementados e testados. Falta validar a conexão contra a instância do Lovable Cloud e ligar as rotas de documento a `exigirContexto()` |
+| L1 | Sem back-end, banco, auth e multi-tenant | P0 | alto | todo `src/routes`, `src/simulation` | CRUD de empresas/estabelecimentos com isolamento por tenant testado; login com papéis; migração versionada | **endereçada nas Etapas 2, 2.5, 2.6, 2.7 e 2.8**: isolamento, papéis, ciclo de vida, numeração, auditoria, schema com RLS, hash de senha, repositório Postgres, camada HTTP de sessão, conexão real com o banco e **rota de documento exigindo contexto e verificando papel no servidor**. Falta validar a conexão contra a instância do Lovable Cloud |
 | L2 | Motor monetário em `number`/`toFixed` | P0 | alto | `documento-saida.ts`, rotas, `knowledge/*` | cálculo em decimal exato, teste de regressão com valores extremos; rateio fecha total | nenhuma — **feito na Etapa 1** |
 | L3 | Sem testes automatizados | P0 | alto | repositório | runner + testes de cálculo, XML, registro de regras; `npm run verify` verde | nenhuma — **feito na Etapa 1** |
 | L4 | Alíquotas de cenário aplicadas sem bloqueio | P1 | alto | `parametros-cenario.ts`, rotas | toda prévia devolve `Pendencia` bloqueante explicando o que falta | nenhuma — **feito na Etapa 1** |
@@ -395,7 +395,7 @@ etapa; nenhuma alíquota, CST ou código foi criado ou alterado.
 foi local (HTTP do próprio servidor de desenvolvimento).
 
 **Homologações pendentes.** Nenhuma aberta por esta etapa além das já listadas
-em §9.9.
+em §9.11.
 
 **Limitações conhecidas.** Nenhuma rota de documento exige contexto ainda;
 bloqueio é por conta, sem MFA nem limite por IP; sem conexão de banco real.
@@ -448,17 +448,129 @@ lógica de sessão (as duas ocorrências de "PBKDF2" são texto descritivo da te
 com pool falso; SSL, pooler, latência e a política de RLS de `sessoes` seguem não
 verificados porque nenhuma instância existe neste ambiente.
 
-### 9.9 Pendente
+### 9.9 Etapa 2.8 — documentos fiscais reais atrás de autenticação (2026-10-14)
 
-- validar a conexão contra a instância do Lovable Cloud (aplicar a migração e
-  exercitar login/logout de verdade);
-- ligar as rotas de documento a `exigirContexto()` — hoje a camada existe e é
-  testada, mas nenhuma rota de NF-e/CT-e/MDF-e a exige;
+| Item | Arquivo | Situação |
+|---|---|---|
+| Serviço de ciclo de vida (criar/listar/transicionar), sem framework | `src/fiscal/servidor/documento.ts` | implementado + 19 testes |
+| Server functions com `exigirContexto()` em todas | `src/fiscal/servidor/documento.functions.ts` | implementado |
+| Tela real de documentos | `src/routes/documentos.tsx` | implementado |
+| Estrutura dev (tenant/empresa/estabelecimento) | `src/fiscal/servidor/estrutura-dev.ts` | implementado |
+| Singletons em `globalThis` | `src/fiscal/servidor/registro.ts` | implementado + 4 testes |
+| `valor_total_centavos` + motor monetário na entidade | `db/migrations/002_valor_documento.sql`, `src/fiscal/ciclo-vida.ts` | implementado |
+
+**Três bugs reais encontrados ao ligar as peças, todos corrigidos:**
+
+1. **O tenant de desenvolvimento não era UUID.** `garantirUsuarioDev` passava a
+   string `"tenant-dev"`. No caminho Postgres isso quebra em dois lugares —
+   `set_config('app.tenant_id', …)` faz `NULLIF(…)::UUID` e lança, e a chave
+   estrangeira de `tenants` rejeita a linha. Só o caminho em memória
+   "funcionava", que é justamente o que os testes não cobriam. Agora o
+   identificador é derivado por `uuidDeterministico`, com bits de versão (4) e
+   variante (RFC 4122) fixados.
+
+2. **Em dev, login e consulta usavam repositórios diferentes.** O plugin do
+   framework carrega módulos de server function com sufixo de query
+   (`?tss-serverfn-split`) — uma instância de módulo distinta da que as rotas
+   importam. Um `let` de módulo dividia os repositórios em memória em dois:
+   `POST iniciarSessao` gravava a sessão em um, e `exigirContexto()`, chamado
+   de dentro de `documento.functions.ts`, consultava o outro. Sintoma observado
+   em execução real: `"Sessão inválida ou expirada"` um milissegundo depois de
+   um login com HTTP 200. Os singletons passaram a viver em `globalThis`, com
+   teste de regressão que reimporta o módulo.
+
+3. **`revogar`/`revogarTodasDoUsuario` ligavam `$1` sem usá-lo.** O SQL filtrava
+   só por `id`/`usuario_id` e confiava na RLS para o tenant. Agora o tenant
+   aparece no `WHERE` também.
+
+**Decisão de arquitetura — o que a tela de documentos não pode fazer.**
+`autorizado`, `transmitido`, `rejeitado`, `pendente_consulta`,
+`cancelado_ou_encerrado`, `indisponivel_ou_contingencia`, `assinado`,
+`xml_validado` e `documento_gerado` são inalcançáveis pelo serviço. Todos
+dependem de algo que não existe ainda — XSD oficial, certificado A1/A3,
+transmissão ao SEFAZ — e oferecer o botão seria convidar o operador a marcar,
+com as próprias mãos, um documento como autorizado sem que nenhum fisco tenha
+dito isso. Cada estado recusado vem com o motivo, e a recusa acontece **antes**
+de qualquer consulta ao banco (há teste que conta as consultas).
+
+**Evidência por execução** (servidor de desenvolvimento real, HTTP):
+
+```
+GET  listarDocumentos  SEM cookie          -> {ok:false,"Sessão inválida ou expirada."}
+GET  listarDocumentos  cookie forjado      -> {ok:false,"Sessão inválida ou expirada."}
+POST criarDocumento    SEM cookie          -> {ok:false,"Sessão inválida ou expirada."}
+GET  listarDocumentos  com cookie          -> {ok:true, documentos:[], memoria:true}
+POST criarDocumento    com cookie          -> nfe55 55/1/1, "simulacao",
+                                              12345 centavos -> "R$ 123,45"
+POST criarDocumento    MESMA idempotência  -> MESMO documento, nenhum número novo
+POST avancarDocumento                     -> "pre_validacao", evento ev-1
+POST avancarDocumento para "autorizado"    -> RECUSADO pelo validador
+```
+
+**Não provado:** nenhuma consulta real contra um Postgres. Todo o smoke test
+acima rodou no caminho em memória; o executor segue testado com pool falso.
+
+### 9.10 Relatório de fim de etapa — 2.8 (modelo obrigatório)
+
+**Arquivos alterados.** Novos: `src/fiscal/servidor/{documento,documento.functions,estrutura-dev,registro}.ts`
+e os três de teste, `db/migrations/002_valor_documento.sql`, `src/routes/documentos.tsx`.
+Modificados: `src/fiscal/ciclo-vida.ts`, `src/fiscal/persistencia-postgres.ts`,
+`src/fiscal/servidor/{portas-servidor,sessao,repositorios-memoria,repositorios-postgres,sessao.functions}.ts`,
+`src/fiscal/servidor/{sessao,repositorios-postgres}.test.ts`,
+`src/fiscal/{schema,persistencia,persistencia-postgres,ciclo-vida}.test.ts`,
+`src/routes/entrar.tsx`, `src/components/layout/Sidebar.tsx`, `.env.example`,
+`CHANGELOG.md` e este documento.
+
+**Implementado.** Serviço de ciclo de vida framework-agnóstico; server functions
+todas começando em `exigirContexto()`; DTO de saída (o domínio não atravessa o
+HTTP); tela real de documentos com estados, motivos de bloqueio e valor
+formatado a partir do inteiro exato; valor monetário persistido em centavos;
+estrutura de desenvolvimento; singletons em `globalThis`.
+
+**Corrigido.** (1) tenant de desenvolvimento que não era UUID e quebrava o
+caminho Postgres em dois lugares; (2) login e consulta usando repositórios em
+memória diferentes por causa da duplicação de módulos em dev; (3) `$1` ligado e
+não usado nas queries de revogação de sessão.
+
+**Testes.** 217 → **246**, sem regressão. Inclui execução real do servidor de
+desenvolvimento por HTTP (evidência em §9.9).
+
+**Regras fiscais e fontes.** Nenhuma. Nenhuma fonte oficial foi consultada;
+nenhuma alíquota, CST ou código foi criado ou alterado. A migração 002 não
+introduz regra tributária — introduz unidade de medida.
+
+**Integrações reais x simuladas.** Nenhuma integração fiscal. A persistência é
+código real com **execução não verificada contra Postgres**: todo o smoke test
+rodou no caminho em memória.
+
+**Homologações pendentes.** Aplicar as migrações 001 e 002 na instância do
+Lovable Cloud e repetir o smoke test com `SUPABASE_DB_URL` definido; confirmar
+que `emTransacao` + `set_config` comportam-se como o teste com pool finto
+afirma; confirmar que as chaves estrangeiras de empresa/estabelecimento são
+satisfeitas pelo arranque de desenvolvimento.
+
+**Limitações conhecidas.** Sem conexão validada; sem cadastro de empresa e
+estabelecimento em produção; simuladores de emissão continuam fora de
+`exigirContexto()`; nenhum estado além de `pre_validacao` é alcançável;
+`bun.lock` dessincronizado.
+
+**Próximas prioridades.** Validação da conexão real contra o Lovable Cloud
+(aplicar migração e repetir o smoke test com banco), e início da Etapa 3:
+motor de regras versionado com rastreabilidade até fonte oficial.
+
+### 9.11 Pendente
+
+- validar a conexão contra a instância do Lovable Cloud (aplicar as migrações
+  001 e 002 e exercitar login/criação de documento de verdade);
+- levar as telas de emissão (NF-e, CT-e, MDF-e…) a `exigirContexto()` — hoje
+  `/documentos` exige, os simuladores não;
+- cadastro de empresa e estabelecimento em produção (hoje só existe o arranque
+  de desenvolvimento, e sem ele a criação de documento é recusada);
 - MFA e rate limiting por IP (hoje o bloqueio é por conta);
 - regenerar `bun.lock` (`bun install`) — está dessincronizado desde a Etapa 2.5;
 - backup, retenção, TLS e criptografia em repouso (Etapa 7).
 
-### 9.10 Relatório de fim de etapa — 2.7 (modelo obrigatório)
+### 9.12 Relatório de fim de etapa — 2.7 (modelo obrigatório)
 
 **Arquivos alterados.** Novos: `src/fiscal/servidor/{conexao-postgres,ambiente}.ts`
 e seus dois arquivos de teste. Modificados: `src/fiscal/servidor/sessao.functions.ts`,

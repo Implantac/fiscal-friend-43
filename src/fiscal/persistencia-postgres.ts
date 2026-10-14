@@ -68,6 +68,7 @@ interface LinhaDocumento {
   protocolo: string | null;
   c_stat: string | null;
   idempotencia: string | null;
+  valor_total_centavos: string | number;
   criado_em: string;
   atualizado_em: string;
 }
@@ -90,6 +91,9 @@ function paraDominio(l: LinhaDocumento): DocumentoFiscal {
     protocolo: l.protocolo ?? undefined,
     cStat: l.c_stat ?? undefined,
     idempotencia: l.idempotencia ?? undefined,
+    // `bigint` chega do driver `pg` como string. BigInt(string) é exato — ao
+    // contrário de Number(string), que perderia precisão acima de 2^53.
+    valorTotalCentavos: BigInt(String(l.valor_total_centavos ?? 0)),
     historico: [],
     criadoEm: l.criado_em,
     atualizadoEm: l.atualizado_em,
@@ -107,8 +111,8 @@ export class RepositorioDocumentosPostgres implements RepositorioDocumentos {
         `INSERT INTO documentos_fiscais
            (id, tenant_id, empresa_id, estabelecimento_id, familia, modelo, serie,
             numero, chave, estado, ambiente, xml, versao_leiaute, protocolo, c_stat,
-            idempotencia, criado_em, atualizado_em)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)
+            idempotencia, valor_total_centavos, criado_em, atualizado_em)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19)
          ON CONFLICT (tenant_id, estabelecimento_id, modelo, serie, numero) DO UPDATE SET
            estado = EXCLUDED.estado,
            chave = EXCLUDED.chave,
@@ -117,6 +121,7 @@ export class RepositorioDocumentosPostgres implements RepositorioDocumentos {
            protocolo = EXCLUDED.protocolo,
            c_stat = EXCLUDED.c_stat,
            idempotencia = EXCLUDED.idempotencia,
+           valor_total_centavos = EXCLUDED.valor_total_centavos,
            atualizado_em = EXCLUDED.atualizado_em
          WHERE documentos_fiscais.atualizado_em <= EXCLUDED.atualizado_em`,
         [
@@ -136,6 +141,9 @@ export class RepositorioDocumentosPostgres implements RepositorioDocumentos {
           doc.protocolo ?? null,
           doc.cStat ?? null,
           doc.idempotencia ?? null,
+          // `bigint` não pode ser enviado como parâmetro pelo driver `pg`
+          // diretamente; string preserva o valor exato.
+          doc.valorTotalCentavos.toString(),
           doc.criadoEm,
           doc.atualizadoEm,
         ],

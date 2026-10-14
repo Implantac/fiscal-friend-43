@@ -188,18 +188,23 @@ export class SessoesPostgres implements RepositorioSessoes {
   }
 
   async revogar(tenantId: string, sessaoId: string): Promise<void> {
+    // O tenant aparece no WHERE **e** em `app.tenant_id`: a RLS já filtra, mas
+    // repetir o filtro no SQL torna a intenção legível e faz a consulta falhar
+    // de forma explícita (zero linhas) se alguém mudar a política.
     await this.db.emTransacao(tenantId, (tx) =>
-      tx.query(`UPDATE sessoes SET revogada_em = now() WHERE id = $2 AND revogada_em IS NULL`, [
-        tenantId,
-        sessaoId,
-      ]),
+      tx.query(
+        `UPDATE sessoes SET revogada_em = now()
+          WHERE tenant_id = $1 AND id = $2 AND revogada_em IS NULL`,
+        [tenantId, sessaoId],
+      ),
     );
   }
 
   async revogarTodasDoUsuario(tenantId: string, usuarioId: string): Promise<void> {
     await this.db.emTransacao(tenantId, (tx) =>
       tx.query(
-        `UPDATE sessoes SET revogada_em = now() WHERE usuario_id = $2 AND revogada_em IS NULL`,
+        `UPDATE sessoes SET revogada_em = now()
+          WHERE tenant_id = $1 AND usuario_id = $2 AND revogada_em IS NULL`,
         [tenantId, usuarioId],
       ),
     );

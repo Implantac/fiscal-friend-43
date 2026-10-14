@@ -73,6 +73,7 @@ class SqlFalso implements SqlExecutor {
         protocolo,
         cStat,
         idempotencia,
+        valorCentavos,
         criadoEm,
         atualizadoEm,
       ] = params;
@@ -93,6 +94,7 @@ class SqlFalso implements SqlExecutor {
         protocolo,
         c_stat: cStat,
         idempotencia,
+        valor_total_centavos: valorCentavos,
         criado_em: criadoEm,
         atualizado_em: atualizadoEm,
       });
@@ -135,6 +137,7 @@ const base = {
   serie: "1",
   numero: "1",
   ambiente: 2 as const,
+  valorTotalCentavos: 0n,
 };
 
 function doc(over: Partial<DocumentoFiscal> = {}): DocumentoFiscal {
@@ -193,6 +196,21 @@ describe("RepositorioDocumentosPostgres", () => {
     expect(lido!.idempotencia).toBe("idem-1");
     expect(lido!.ambiente).toBe(2);
     expect(lido!.estado).toBe("simulacao");
+  });
+
+  it("o valor em centavos faz round-trip como inteiro exato", async () => {
+    const sql = new SqlFalso();
+    const repo = new RepositorioDocumentosPostgres(sql);
+    // Valor acima de 2^53 centavos: Number() perderia precisão aqui, BigInt não.
+    const grande = 9007199254740993n; // 2^53 + 1
+    await repo.salvar(doc({ valorTotalCentavos: grande }));
+
+    const insert = sql.queries.find((q) => q.sql.includes("INSERT INTO documentos_fiscais"))!;
+    // O driver `pg` não aceita bigint: trafega como string, sem perder casas.
+    expect(insert.params).toContain(String(grande));
+
+    const lido = await repo.obterPorId("t1", "doc-1");
+    expect(lido!.valorTotalCentavos).toBe(grande);
   });
 
   it("isolamento por tenant na leitura", async () => {

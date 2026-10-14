@@ -81,6 +81,18 @@ export interface DocumentoFiscal {
   cStat?: string | undefined;
   /** Chave de idempotência da transmissão. */
   idempotencia?: string | undefined;
+  /**
+   * Valor total do documento em **centavos de Real**, como inteiro exato
+   * (`bigint`). Nunca ponto flutuante: a unidade interna do motor monetário
+   * (`src/lib/money.ts`, onde `Money = bigint`) é deliberadamente a mesma do
+   * banco (`valor_total_centavos BIGINT`), para que não exista conversão entre
+   * o cálculo e a persistência — conversão é onde o erro de escala nasce.
+   *
+   * Zero é um valor válido e honesto: documento recém-criado, antes de qualquer
+   * item. O domínio não conhece `money.ts` para não depender de `src/lib`; o
+   * tipo é o mesmo (`bigint`), e a convenção está documentada aqui.
+   */
+  valorTotalCentavos: bigint;
   historico: EventoDocumento[];
   criadoEm: string;
   atualizadoEm: string;
@@ -245,6 +257,19 @@ export function estadoTerminal(estado: EstadoDocumento): boolean {
 /** Estados em que o documento já tem valor fiscal — nunca podem ser "simulados". */
 export function estadoComValorFiscal(estado: EstadoDocumento): boolean {
   return estado === "transmitido" || estado === "autorizado" || estado === "cancelado_ou_encerrado";
+}
+
+/**
+ * Modelo do documento derivado da família, quando a família o determina.
+ *
+ * `nfe55` → "55", `cteos67` → "67", `mdfe58` → "58". `nfse` devolve
+ * `undefined` porque o modelo de NFS-e não é um número único: varia por
+ * município (ABRASF, DSF, NBS-e…), e escolher um arbitrariamente seria
+ * inventar dado fiscal. Quem cria uma NFS-e informa o modelo explicitamente.
+ */
+export function modeloDaFamilia(familia: FamiliaDocumental): string | undefined {
+  const m = /(\d+)$/.exec(familia);
+  return m ? m[1] : undefined;
 }
 
 /**

@@ -36,10 +36,12 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import type { ContextoUsuario } from "@/fiscal/seguranca";
+import type { EstruturaDev } from "./estrutura-dev";
 import type { DependenciasSessao } from "@/fiscal/servidor/portas-servidor";
 import { SessoesMemoria, UsuariosMemoria } from "@/fiscal/servidor/repositorios-memoria";
 import { AuditoriaMemoria } from "@/fiscal/auditoria";
-import { decisaoAtual } from "@/fiscal/servidor/ambiente";
+import { decisaoAtual, tenantDevId } from "@/fiscal/servidor/ambiente";
+import { registroGlobal } from "./registro";
 
 const MINUTOS_COOKIE = 60;
 
@@ -62,16 +64,52 @@ const entradaLogin = z.object({
 
 /* --------------------------------------------------------------- dependências */
 
-let dependencias: DependenciasSessao | undefined;
-let trilha: AuditoriaMemoria | undefined;
+/**
+ * REGISTRO GLOBAL — e por que ele não é um simples `let` de módulo.
+ *
+ * ============================================================================
+ * O BUG QUE ISTO CORRIGE
+ * ============================================================================
+ * Em desenvolvimento, o plugin do framework carrega os módulos de server
+ * function com um sufixo de query (`…sessao.functions.ts?tsr-serverfn-split`),
+ * que é uma instância de módulo **diferente** da que as rotas importam
+ * normalmente. Consequência, observada em execução real:
+ *
+ *   POST /_serverFn/<iniciarSessao>  -> 200, cookie gravado, sessão criada
+ *   GET  /_serverFn/<listarDocumentos> -> "Sessão inválida ou expirada"
+ *
+ * O login gravava a sessão no `SessoesMemoria` de uma instância do módulo, e
+ * `exigirContexto()` — chamado de dentro de `documento.functions.ts`, que
+ * importa `sessao.functions.ts` sem a query — consultava o `SessoesMemoria` de
+ * outra instância. A sessão existia; o lugar onde ela foi guardada é que não
+ * era o mesmo.
+ *
+ * Um `let` de módulo não sobrevive a isso. `globalThis` sobrevive: qualquer que
+ * seja o número de instâncias do módulo, existe um único registro.
+ *
+ * Em produção o bundle é único e o problema não se manifesta — mas a correção
+ * vale para os dois ambientes, e não custa nada.
+ */
+interface RegistroSessao {
+  dependencias?: DependenciasSessao;
+  trilha?: AuditoriaMemoria;
+  seed?: Promise<void>;
+  estrutura?: Promise<EstruturaDev | undefined>;
+}
+
+/** Registro em `globalThis`: sobrevive à duplicação de módulos em dev. */
+function registro(): RegistroSessao {
+  return registroGlobal<RegistroSessao>("__fiscal_friend_43_sessao__");
+}
 
 function memoria(): { deps: DependenciasSessao; auditoria: AuditoriaMemoria } {
-  if (dependencias && trilha) return { deps: dependencias, auditoria: trilha };
+  const reg = registro();
+  if (reg.dependencias && reg.trilha) return { deps: reg.dependencias, auditoria: reg.trilha };
   const usuarios = new UsuariosMemoria();
   const novas: DependenciasSessao = { usuarios, sessoes: new SessoesMemoria() };
-  dependencias = novas;
-  trilha = new AuditoriaMemoria();
-  return { deps: novas, auditoria: trilha };
+  reg.dependencias = novas;
+  reg.trilha = new AuditoriaMemoria();
+  return { deps: novas, auditoria: reg.trilha };
 }
 
 /**
@@ -97,14 +135,15 @@ export async function obterDependencias(): Promise<DependenciasSessao> {
   // partir de uma rota.
   const { obterExecutor } = await import("./conexao-postgres");
   const { UsuariosPostgres, SessoesPostgres } = await import("./repositorios-postgres");
-  if (!dependencias) {
+  const reg = registro();
+  if (!reg.dependencias) {
     const executor = obterExecutor();
-    dependencias = {
+    reg.dependencias = {
       usuarios: new UsuariosPostgres(executor),
       sessoes: new SessoesPostgres(executor),
     };
   }
-  return dependencias;
+  return reg.dependencias;
 }
 
 /** Trilha de auditoria da camada de sessão (mesma instância dos repositórios). */
@@ -112,7 +151,45 @@ export function obterAuditoria(): AuditoriaMemoria {
   return memoria().auditoria;
 }
 
-let seed: Promise<void> | undefined;
+/**
+ * Estrutura mínima de desenvolvimento (tenant, empresa, estabelecimento).
+ *
+ * Só existe quando `DEV_AUTH_EMAIL` está definido **e** há banco Postgres. Sem
+ * banco não há chaves estrangeiras a satisfazer, e sem `DEV_AUTH_EMAIL` não há
+ * arranque de desenvolvimento — em produção nada é criado aqui.
+ *
+ * O tenant é identificado por UUID determinístico derivado do nome. A versão
+ * anterior passava a string `"tenant-dev"` direto, o que quebrava o caminho
+ * Postgres em dois lugares: `set_config('app.tenant_id', …)` faz
+ * `NULLIF(…)::UUID` e lança em texto que não é UUID, e a chave estrangeira de
+ * `tenants` rejeita a linha. Só o caminho em memória "funcionava" — que é
+ * justamente o caminho que os testes não cobriam.
+ */
+export function estruturaDev(): Promise<EstruturaDev | undefined> {
+  const reg = registro();
+  if (!reg.estrutura) {
+    reg.estrutura = (async () => {
+      if (!process.env["DEV_AUTH_EMAIL"]) return undefined;
+      const { estruturaDevDeterministica } = await import("./estrutura-dev");
+      const ids = estruturaDevDeterministica();
+
+      // Em memória não há chave estrangeira a satisfazer: os identificadores
+      // são apenas rótulos, e a estrutura "existe" no repositório em memória.
+      // Em Postgres as linhas precisam existir de verdade.
+      if (decisaoAtual().tipo === "postgres") {
+        const { obterExecutor } = await import("./conexao-postgres");
+        const { garantirEstruturaDev } = await import("./estrutura-dev");
+        return garantirEstruturaDev(obterExecutor());
+      }
+      return ids;
+    })().catch((e) => {
+      // Falhar aqui não pode derrubar o login com erro genérico: a mensagem
+      // precisa dizer o que aconteceu.
+      throw e;
+    });
+  }
+  return reg.estrutura;
+}
 
 /**
  * Cria o usuário de desenvolvimento a partir de variáveis de ambiente.
@@ -125,12 +202,15 @@ let seed: Promise<void> | undefined;
  */
 
 export function garantirUsuarioDev(): Promise<void> {
-  if (!seed) {
-    seed = (async () => {
+  const reg = registro();
+  if (!reg.seed) {
+    reg.seed = (async () => {
       const email = process.env["DEV_AUTH_EMAIL"];
       const senha = process.env["DEV_AUTH_SENHA"];
-      const tenantId = process.env["DEV_AUTH_TENANT"] ?? "tenant-dev";
       if (!email || !senha) return;
+      const nomeTenant = process.env["DEV_AUTH_TENANT"] ?? "tenant-dev";
+      const tenantId = tenantDevId(nomeTenant);
+      await estruturaDev();
       const m = await logica();
       await m.criarUsuario(await obterDependencias(), {
         id: process.env["DEV_AUTH_USUARIO"] ?? "usr-dev-1",
@@ -143,7 +223,7 @@ export function garantirUsuarioDev(): Promise<void> {
       /* usuário já existe — irrelevante */
     });
   }
-  return seed;
+  return reg.seed;
 }
 
 /* ----------------------------------------------------------------- server fns */

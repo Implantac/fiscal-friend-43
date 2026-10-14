@@ -46,6 +46,12 @@ Detalhes: [`docs/modelo-dados.md`](docs/modelo-dados.md) ·
   isolamento por tenant. Com `FISCAL_PERSISTENCIA=auto` (padrão) o sistema usa
   Postgres quando há conexão e memória em desenvolvimento — e recusa memória em
   produção em vez de fingir que persiste.
+- **Documentos reais** (`/documentos`): criam documento persistido com número
+  reservado atomicamente, atrás de `exigirContexto()` e de verificação de papel
+  no servidor. Nascem em `simulacao`, sem valor fiscal. `autorizado`,
+  `transmitido`, `assinado` e `xml_validado` são **inalcançáveis** — cada um
+  depende de algo que ainda não existe (XSD oficial, certificado, transmissão),
+  e a tela diz qual.
 - **Camada HTTP de sessão** (`src/fiscal/servidor/`): token opaco em cookie
   `HttpOnly` + `SameSite=Lax` + `Secure` em produção, apenas o hash do token
   persistido, bloqueio progressivo após 5 falhas, resposta genérica a credencial
@@ -61,8 +67,10 @@ Detalhes: [`docs/banco-de-dados.md`](docs/banco-de-dados.md) e
 > usa repositório em memória do processo (`FISCAL_PERSISTENCIA=auto`, e `memoria`
 > explícito é recusado em produção): reiniciar o servidor derruba todas as
 > sessões. Defina `DEV_AUTH_EMAIL` e `DEV_AUTH_SENHA` para criar o usuário de
-> desenvolvimento — não existe senha padrão no código. Autenticar **não** é
-> autorizar documento fiscal.
+> desenvolvimento — não existe senha padrão no código. O tenant mostrado na tela
+> de login é um UUID **derivado** de `DEV_AUTH_TENANT`; a string literal não é
+> UUID e quebraria o caminho Postgres. Autenticar **não** é autorizar documento
+> fiscal.
 
 ## O que este projeto não é
 

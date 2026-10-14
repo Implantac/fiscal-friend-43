@@ -25,6 +25,7 @@ import {
   Gauge,
   Rocket,
   NotebookPen,
+  FolderOpen,
 } from "lucide-react";
 
 const secoes = [
@@ -38,6 +39,12 @@ const secoes = [
       { to: "/cte", label: "CT-e 57", desc: "Carga", icon: Truck },
       { to: "/cte-os", label: "CT-e OS 67", desc: "Pessoas e valores", icon: Bus },
       { to: "/mdfe", label: "MDF-e 58", desc: "Manifesto", icon: ClipboardList },
+      {
+        to: "/documentos",
+        label: "Documentos",
+        desc: "Ciclo de vida real",
+        icon: FolderOpen,
+      },
     ],
   },
   {

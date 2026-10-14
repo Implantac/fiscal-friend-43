@@ -20,6 +20,7 @@ import { Route as CteRouteImport } from './routes/cte'
 import { Route as CteOsRouteImport } from './routes/cte-os'
 import { Route as DebuggerRouteImport } from './routes/debugger'
 import { Route as DiagnosticoIaRouteImport } from './routes/diagnostico-ia'
+import { Route as DocumentosRouteImport } from './routes/documentos'
 import { Route as EntrarRouteImport } from './routes/entrar'
 import { Route as FontesRouteImport } from './routes/fontes'
 import { Route as GovernancaRouteImport } from './routes/governanca'
@@ -90,6 +91,11 @@ const DebuggerRoute = DebuggerRouteImport.update({
 const DiagnosticoIaRoute = DiagnosticoIaRouteImport.update({
   id: '/diagnostico-ia',
   path: '/diagnostico-ia',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocumentosRoute = DocumentosRouteImport.update({
+  id: '/documentos',
+  path: '/documentos',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EntrarRoute = EntrarRouteImport.update({
@@ -185,6 +191,7 @@ export interface FileRoutesByFullPath {
   '/cte-os': typeof CteOsRoute
   '/debugger': typeof DebuggerRoute
   '/diagnostico-ia': typeof DiagnosticoIaRoute
+  '/documentos': typeof DocumentosRoute
   '/entrar': typeof EntrarRoute
   '/fontes': typeof FontesRoute
   '/governanca': typeof GovernancaRoute
@@ -214,6 +221,7 @@ export interface FileRoutesByTo {
   '/cte-os': typeof CteOsRoute
   '/debugger': typeof DebuggerRoute
   '/diagnostico-ia': typeof DiagnosticoIaRoute
+  '/documentos': typeof DocumentosRoute
   '/entrar': typeof EntrarRoute
   '/fontes': typeof FontesRoute
   '/governanca': typeof GovernancaRoute
@@ -244,6 +252,7 @@ export interface FileRoutesById {
   '/cte-os': typeof CteOsRoute
   '/debugger': typeof DebuggerRoute
   '/diagnostico-ia': typeof DiagnosticoIaRoute
+  '/documentos': typeof DocumentosRoute
   '/entrar': typeof EntrarRoute
   '/fontes': typeof FontesRoute
   '/governanca': typeof GovernancaRoute
@@ -275,6 +284,7 @@ export interface FileRouteTypes {
     | '/cte-os'
     | '/debugger'
     | '/diagnostico-ia'
+    | '/documentos'
     | '/entrar'
     | '/fontes'
     | '/governanca'
@@ -304,6 +314,7 @@ export interface FileRouteTypes {
     | '/cte-os'
     | '/debugger'
     | '/diagnostico-ia'
+    | '/documentos'
     | '/entrar'
     | '/fontes'
     | '/governanca'
@@ -333,6 +344,7 @@ export interface FileRouteTypes {
     | '/cte-os'
     | '/debugger'
     | '/diagnostico-ia'
+    | '/documentos'
     | '/entrar'
     | '/fontes'
     | '/governanca'
@@ -363,6 +375,7 @@ export interface RootRouteChildren {
   CteOsRoute: typeof CteOsRoute
   DebuggerRoute: typeof DebuggerRoute
   DiagnosticoIaRoute: typeof DiagnosticoIaRoute
+  DocumentosRoute: typeof DocumentosRoute
   EntrarRoute: typeof EntrarRoute
   FontesRoute: typeof FontesRoute
   GovernancaRoute: typeof GovernancaRoute
@@ -458,6 +471,13 @@ declare module '@tanstack/react-router' {
       path: '/diagnostico-ia'
       fullPath: '/diagnostico-ia'
       preLoaderRoute: typeof DiagnosticoIaRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/documentos': {
+      id: '/documentos'
+      path: '/documentos'
+      fullPath: '/documentos'
+      preLoaderRoute: typeof DocumentosRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/entrar': {
@@ -587,6 +607,7 @@ const rootRouteChildren: RootRouteChildren = {
   CteOsRoute: CteOsRoute,
   DebuggerRoute: DebuggerRoute,
   DiagnosticoIaRoute: DiagnosticoIaRoute,
+  DocumentosRoute: DocumentosRoute,
   EntrarRoute: EntrarRoute,
   FontesRoute: FontesRoute,
   GovernancaRoute: GovernancaRoute,

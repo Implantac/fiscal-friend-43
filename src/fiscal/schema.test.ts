@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { readFileSync, readdirSync } from "node:fs";
 import { describe, expect, it, beforeAll } from "vitest";
 import { newDb, DataType, type IMemoryDb } from "pg-mem";
 
@@ -19,6 +19,16 @@ import { newDb, DataType, type IMemoryDb } from "pg-mem";
  * Por isso o teste é explícito sobre o escopo: ele valida as constraints, não
  * a política de isolamento.
  */
+
+/**
+ * Todas as migrações do diretório, em ordem lexicográfica — a mesma ordem em
+ * que são aplicadas. Um teste que lesse apenas a 001 passaria a ignorar, em
+ * silêncio, qualquer coluna adicionada depois: a migração 002 acrescentou
+ * `valor_total_centavos` e foi justamente esse o tipo de coisa que escaparia.
+ */
+const MIGRACOES = readdirSync("db/migrations")
+  .filter((f) => f.endsWith(".sql"))
+  .sort();
 
 const MIGRACAO = "db/migrations/001_fundacao.sql";
 
@@ -46,7 +56,13 @@ function extrairDdl(sql: string): string[] {
       .map((s) => s.trim())
       // Remover a linha da constraint deixa vírgula sobrando antes do `)`.
       .map((s) => s.replace(/,\s*\)/g, ")"))
-      .filter((s) => /^CREATE (TABLE|INDEX|UNIQUE INDEX)/i.test(s))
+      // Migração 002 acrescenta coluna e constraint via ALTER TABLE — o
+      // emulador entende as duas formas, então ambas são mantidas.
+      .filter(
+        (s) =>
+          /^CREATE (TABLE|INDEX|UNIQUE INDEX)/i.test(s) ||
+          /^ALTER TABLE\s+\w+\s+(ADD COLUMN|ADD CONSTRAINT)/i.test(s),
+      )
   );
 }
 
@@ -73,7 +89,8 @@ beforeAll(() => {
     returns: DataType.integer,
     implementation: (t: string) => String(t ?? "").length,
   });
-  db.public.none(extrairDdl(readFileSync(MIGRACAO, "utf8")).join(";\n") + ";");
+  const ddl = MIGRACOES.flatMap((f) => extrairDdl(readFileSync(`db/migrations/${f}`, "utf8")));
+  db.public.none(ddl.join(";\n") + ";");
 });
 
 /**
@@ -148,12 +165,13 @@ function inserirDocumento(over: {
   estado?: string;
   ambiente?: number;
   chave?: string;
+  valorCentavos?: number;
 }) {
   inserir(
     `INSERT INTO documentos_fiscais
        (id, tenant_id, empresa_id, estabelecimento_id, familia, modelo, serie, numero,
-        chave, estado, ambiente, idempotencia)
-     VALUES ($1,$2,$3,$4,'nfe55','55','1',$5,$6,$7,$8,$9)`,
+        chave, estado, ambiente, idempotencia, valor_total_centavos)
+     VALUES ($1,$2,$3,$4,'nfe55','55','1',$5,$6,$7,$8,$9,$10)`,
     [
       over.id ?? DOC,
       over.tenantId ?? TENANT,
@@ -164,6 +182,7 @@ function inserirDocumento(over: {
       over.estado ?? "simulacao",
       over.ambiente ?? 2,
       over.idempotencia ?? null,
+      over.valorCentavos ?? 0,
     ],
   );
 }
@@ -303,6 +322,24 @@ describe("schema: restrições de integridade", () => {
     expect(() =>
       inserir(sql, [id, TENANT, ESTABELECIMENTO, 5, 7, "justificativa longa o suficiente"]),
     ).not.toThrow();
+  });
+
+  it("documento nasce com valor zero e não aceita valor negativo", () => {
+    criarBase();
+    // O valor é guardado em centavos inteiros (migração 002), na mesma unidade
+    // do motor monetário — sem conversão entre cálculo e persistência.
+    inserirDocumento({ id: DOC });
+    const linhas = consultar<{ valor_total_centavos: number }>(
+      `SELECT valor_total_centavos FROM documentos_fiscais WHERE id = $1`,
+      [DOC],
+    );
+    expect(linhas[0]!.valor_total_centavos).toBe(0);
+
+    // Documento fiscal com total negativo não existe: estorno e cancelamento
+    // são documentos/eventos próprios, não sinal invertido.
+    expect(() =>
+      inserirDocumento({ id: "dddddddd-dddd-dddd-dddd-dddddddddddd", valorCentavos: -1 }),
+    ).toThrow(/check|violates/i);
   });
 
   it("numeração não aceita valor negativo", () => {

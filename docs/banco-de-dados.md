@@ -148,15 +148,31 @@ cp .env.example .env.local   # e preencha
 npm run dev
 ```
 
+### Migração 002 — valor do documento em centavos
+
+`valor_total_centavos BIGINT NOT NULL DEFAULT 0`, com `CHECK (>= 0)`. A coluna
+usa a **mesma unidade interna do motor monetário** (`src/lib/money.ts`, onde
+`Money = bigint`), para que não exista conversão entre cálculo e persistência —
+conversão é onde o erro de escala nasce. O repositório converte a linha com
+`BigInt(string)`, exato, e não com `Number(string)`, que perde precisão acima de
+2^53 (há teste com 2^53 + 1).
+
+`brl()` de `src/lib/format.ts` continua aceitando `number` e **não** deve ser
+usada para valor fiscal: formate a partir do inteiro com `formatar()` de
+`money.ts`.
+
 ## 7. O que falta para operar
 
-1. **Validar a conexão contra uma instância real.** O executor
+1. **Aplicar as migrações 001 e 002** (`psql "$SUPABASE_DB_URL" -f …`). O teste
+   de schema valida o DDL das duas contra um emulador de Postgres, mas não as
+   aplica em instância real.
+2. **Validar a conexão contra uma instância real.** O executor
    (`src/fiscal/servidor/conexao-postgres.ts`) está implementado e testado com
    pool falso, mas nenhum Postgres foi provisionado neste ambiente: SSL, pooler,
    latência e a política de RLS de `sessoes` continuam não verificados.
-2. Migrações automatizadas no start (hoje são aplicadas via `psql`).
-3. Backup, retenção e descarte (Etapa 7).
-4. TLS em trânsito e criptografia em repouso (Etapa 7).
+3. Migrações automatizadas no start (hoje são aplicadas via `psql`).
+4. Backup, retenção e descarte (Etapa 7).
+5. TLS em trânsito e criptografia em repouso (Etapa 7).
 
 A camada HTTP de login/sessão/cookie existe desde a Etapa 2.6
 (`src/fiscal/servidor/`) e desde a Etapa 2.7 escolhe sozinha onde persistir:

@@ -12,6 +12,8 @@ import {
   decidirPersistencia,
   emProducao,
   modoPersistencia,
+  tenantDevId,
+  uuidDeterministico,
   urlDoBanco,
 } from "./ambiente";
 
@@ -94,5 +96,29 @@ describe("leitura do ambiente do processo", () => {
   it("modo desconhecido cai em auto", () => {
     process.env["FISCAL_PERSISTENCIA"] = "xpto";
     expect(modoPersistencia()).toBe("auto");
+  });
+});
+
+describe("uuidDeterministico", () => {
+  const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+
+  it("é estável: a mesma entrada devolve o mesmo UUID", () => {
+    expect(uuidDeterministico("tenant-dev")).toBe(uuidDeterministico("tenant-dev"));
+  });
+
+  it("entradas diferentes devolvem UUIDs diferentes", () => {
+    expect(uuidDeterministico("tenant-dev")).not.toBe(uuidDeterministico("tenant-prod"));
+  });
+
+  it("o resultado tem formato UUID válido (versão 4, variante RFC 4122)", () => {
+    for (const nome of ["tenant-dev", "a", "Implantac", "x".repeat(200), ""]) {
+      expect(uuidDeterministico(nome)).toMatch(UUID);
+    }
+  });
+
+  it("não é afetado por diferenças de maiúscula no texto de origem", () => {
+    // Deliberado: identificadores de tenant são case-sensitive, e o hash
+    // também. O teste fixa o comportamento para que ninguém o mude sem saber.
+    expect(uuidDeterministico("Tenant")).not.toBe(uuidDeterministico("tenant"));
   });
 });
