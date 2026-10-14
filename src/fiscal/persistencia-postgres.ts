@@ -266,7 +266,7 @@ export class ServicoNumeracaoPostgres implements ServicoNumeracao {
     }
     await this.sql.query(
       `INSERT INTO numeracao_inutilizada
-         (tenant_id, estabelecimento_id, modelo, serie, de, ate, justificativa)
+         (tenant_id, estabelecimento_id, modelo, serie, numero_de, numero_ate, justificativa)
        VALUES ($1,$2,$3,$4,$5,$6,$7)`,
       [chave.tenantId, chave.estabelecimentoId, chave.modelo, chave.serie, de, ate, justificativa],
     );
@@ -275,15 +275,19 @@ export class ServicoNumeracaoPostgres implements ServicoNumeracao {
   async inutilizados(
     chave: ChaveNumeracao,
   ): Promise<{ de: number; ate: number; justificativa: string }[]> {
-    const linhas = await this.sql.query<{ de: string; ate: string; justificativa: string }>(
-      `SELECT de, ate, justificativa FROM numeracao_inutilizada
+    const linhas = await this.sql.query<{
+      numero_de: string;
+      numero_ate: string;
+      justificativa: string;
+    }>(
+      `SELECT numero_de, numero_ate, justificativa FROM numeracao_inutilizada
        WHERE tenant_id = $1 AND estabelecimento_id = $2 AND modelo = $3 AND serie = $4
-       ORDER BY de`,
+       ORDER BY numero_de`,
       [chave.tenantId, chave.estabelecimentoId, chave.modelo, chave.serie],
     );
     return linhas.map((l) => ({
-      de: Number(l.de),
-      ate: Number(l.ate),
+      de: Number(l.numero_de),
+      ate: Number(l.numero_ate),
       justificativa: l.justificativa,
     }));
   }

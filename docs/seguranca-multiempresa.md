@@ -54,9 +54,45 @@ Regras adicionais:
 `.env.example` documenta o contrato de variáveis **sem nenhum valor real**.
 Nenhum arquivo versionado contém credencial.
 
-## 5. O que ainda não está implementado
+## 5. Autenticação e sessão (Etapa 2.6)
 
-- autenticação, sessão, MFA e rate limiting (Etapa 2.5);
+| Decisão | Implementação | Motivo |
+|---|---|---|
+| Transporto da credencial | cookie **HttpOnly**, `SameSite=Lax`, `Secure` em produção, `Path=/`, `Max-Age` 60 min | token fora do alcance de JavaScript: um XSS não exfilta a sessão |
+| Formato do token | 32 bytes aleatórios, opaco, nunca derivado de dado do usuário | nada a adivinhar; rotação = novo registro |
+| O que o banco guarda | apenas o **hash SHA-256** do token | vazamento do banco não produz sessões utilizáveis |
+| Senha | PBKDF2-SHA256, 210.000 iterações, salt por senha, verificação em tempo constante | atrasa força bruta; evita timing attack |
+| Resposta a falha | sempre `"E-mail ou senha inválidos."`, com atraso uniforme | não revela se o e-mail existe |
+| Abuso | bloqueio progressivo: 5 falhas → 15 min | força bruta |
+| Tenant | faz parte da credencial e vem da sessão | o tenant não é parâmetro livre do request |
+
+**O que a sessão não faz.** Autenticar prova *quem* é o usuário. Autorizar uso
+de documento fiscal é decisão do SEFAZ, com protocolo próprio, e nenhuma
+resposta HTTP 200 da camada de sessão — ou de qualquer outra deste sistema —
+significa autorização fiscal.
+
+**Auditoria.** `sessao.iniciada`, `sessao.encerrada` e `sessao.falha` são
+eventos de trilha. Falhar em registrar um login bem-sucedido **falha o login**
+(fail closed): um login sem rastro é pior que um login negado. A tentativa falha
+é registrada sem e-mail — dado pessoal só entra na trilha quando estritamente
+necessário.
+
+**Persistência.** `FISCAL_PERSISTENCIA=memoria` (padrão) usa repositório em
+memória do processo e é **recusado em produção**: `obterDependencias()` lança em
+vez de fingir que existe banco. `FISCAL_PERSISTENCIA=postgres` exige
+`DATABASE_URL` e o driver — ainda não provisionados.
+
+**Bundle do cliente.** O plugin `import-protection` do framework nega
+`@tanstack/react-start/server` no cliente. O acesso a cookie/request vive em
+`http-cookies.ts`, carregado por `import()` dinâmico dentro dos `handler()`.
+Verificado no artefato de build: `.output/public/assets` não contém PBKDF2, o
+nome do cookie nem a lógica de sessão.
+
+## 6. O que ainda não está implementado
+
+- MFA e rate limiting por IP (hoje o bloqueio é por conta);
+- ligação das rotas de documento (NF-e, CT-e, MDF-e…) a `exigirContexto()`;
+- criptografia em trânsito (TLS) e em repouso (Etapa 7 — decisão de hospedagem);
 - criptografia em trânsito (TLS) e em repouso (Etapa 7 — decisão de hospedagem);
 - política de retenção e descarte conforme a legislação aplicável (Etapa 7);
 - procedimento de resposta a incidente de segurança (Etapa 7).

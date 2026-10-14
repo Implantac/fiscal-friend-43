@@ -27,6 +27,11 @@
 
 import { createHash } from "node:crypto";
 
+// Marcador do framework: este módulo é exclusivo de servidor. Se algum dia for
+// importado por código de rota, o build FALHA (regra import-protection), em vez
+// de embarcar `node:crypto` no bundle do navegador.
+import "@tanstack/react-start/server-only";
+
 const PBKDF2_ITERACOES = 210_000;
 const TAMANHO_SALT = 16;
 const TAMANHO_HASH = 32;

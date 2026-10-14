@@ -130,7 +130,7 @@ Risco: **alto** (erro fiscal/segurança) · **médio** · **baixo**.
 
 | # | Lacuna | Prio | Risco | Arquivos afetados | Critério de aceite | Dependência externa |
 |---|---|---|---|---|---|---|
-| L1 | Sem back-end, banco, auth e multi-tenant | P0 | alto | todo `src/routes`, `src/simulation` | CRUD de empresas/estabelecimentos com isolamento por tenant testado; login com papéis; migração versionada | **endereçada nas Etapas 2 e 2.5**: isolamento, papéis, ciclo de vida, numeração, auditoria, schema com RLS, hash de senha e repositório Postgres implementados e testados. Falta provisionar o banco, o driver de conexão e a camada HTTP de login |
+| L1 | Sem back-end, banco, auth e multi-tenant | P0 | alto | todo `src/routes`, `src/simulation` | CRUD de empresas/estabelecimentos com isolamento por tenant testado; login com papéis; migração versionada | **endereçada nas Etapas 2, 2.5 e 2.6**: isolamento, papéis, ciclo de vida, numeração, auditoria, schema com RLS, hash de senha, repositório Postgres e camada HTTP de sessão (cookie HttpOnly, bloqueio progressivo, sem enumeração de usuário) implementados e testados. Falta provisionar o banco com driver, e ligar as rotas de documento a `exigirContexto()` |
 | L2 | Motor monetário em `number`/`toFixed` | P0 | alto | `documento-saida.ts`, rotas, `knowledge/*` | cálculo em decimal exato, teste de regressão com valores extremos; rateio fecha total | nenhuma — **feito na Etapa 1** |
 | L3 | Sem testes automatizados | P0 | alto | repositório | runner + testes de cálculo, XML, registro de regras; `npm run verify` verde | nenhuma — **feito na Etapa 1** |
 | L4 | Alíquotas de cenário aplicadas sem bloqueio | P1 | alto | `parametros-cenario.ts`, rotas | toda prévia devolve `Pendencia` bloqueante explicando o que falta | nenhuma — **feito na Etapa 1** |
@@ -306,16 +306,71 @@ npm run test   -> 6 arquivos em src/fiscal, 75 testes, 75 passaram
 | Regra de lint que impede importação de módulo de servidor pelo cliente | `eslint.config.js` | implementado e verificado |
 | Documentação de banco e deploy | `docs/banco-de-dados.md` | implementado |
 
-Evidência: `npm run verify` verde (typecheck, lint, **154 testes**) e
-`npm run build` concluído.
+Evidência: `npm run test` com **154 testes** em 11 arquivos e `npm run build`
+concluído. **Correção de registro:** o relatório da Etapa 2.5 afirmou
+"typecheck 0 erros" — isso estava **incorreto**. Ao rodar `npm run typecheck` na
+Etapa 2.6 apareceram 4 erros residuais da Etapa 2.5 (colunas `de`/`ate` não
+renomeadas em `persistencia-postgres.ts` e tipos errados do `pg-mem` em
+`schema.test.ts`). Corrigidos na Etapa 2.6; o typecheck agora passa com 0 erros.
+A lição fica registrada: `vitest` não checa tipos, então "testes verdes" não é
+evidência de typecheck.
 
 Decisão de hospedagem **não** foi informada; o schema é Postgres genérico e a
 conexão entra por injeção de dependência, então trocar de provedor de banco não
 altera o domínio.
 
-### 9.6 Pendente
+### 9.6 Etapa 2.6 — camada HTTP de autenticação (entregue em 2026-10-14)
 
-- provisionar Postgres e aplicar migração no start;
-- driver de conexão e pool;
-- camada HTTP de login, cookie HttpOnly, sessão e MFA (Etapa 2.6);
+| Item | Arquivo | Situação |
+|---|---|---|
+| Portas de usuário/sessão (sem senha ou token em texto) | `src/fiscal/servidor/portas-servidor.ts` | implementado |
+| Lógica de login, resolução de contexto, logout, criação de usuário — sem framework e sem HTTP | `src/fiscal/servidor/sessao.ts` | implementado + 18 testes |
+| Repositório em memória (dev/teste), recusado em produção | `src/fiscal/servidor/repositorios-memoria.ts` | implementado |
+| Repositório Postgres real (`usuarios`/`sessoes`), zero interpolação, hash no formato validado | `src/fiscal/servidor/repositorios-postgres.ts` | implementado + 8 testes |
+| Server functions `iniciarSessao`/`encerrarSessao`/`sessaoAtual`/`exigirContexto` | `src/fiscal/servidor/sessao.functions.ts` | implementado |
+| Cookie HttpOnly/SameSite/Secure/Max-Age isolado do resto | `src/fiscal/servidor/http-cookies.ts` | implementado |
+| Tela de login com aviso explícito do que a sessão não faz | `src/routes/entrar.tsx` | implementado |
+| Auditoria de sessão (`sessao.iniciada/encerrada/falha`) | `src/fiscal/auditoria.ts` | implementado |
+| Variáveis `FISCAL_PERSISTENCIA` e `DEV_AUTH_*` | `.env.example` | implementado |
+
+**Evidência por execução** (servidor de desenvolvimento real, HTTP):
+
+```
+POST /_serverFn/<iniciarSessao>  credencial correta
+  -> 200 + set-cookie: ff_sessao=<token opaco>; Max-Age=3600; Path=/;
+     HttpOnly; SameSite=Lax
+
+GET  /_serverFn/<sessaoAtual>    com cookie        -> {autenticado:true, contexto:{...}}
+GET  /_serverFn/<sessaoAtual>    sem cookie        -> {autenticado:false}
+POST /_serverFn/<encerrarSessao>                   -> {ok:true}
+GET  /_serverFn/<sessaoAtual>    apos logout       -> {autenticado:false}
+
+4 senhas erradas  -> "E-mail ou senha inválidos."
+5a senha errada   -> "Conta temporariamente bloqueada ... 900 segundo(s)."
+senha correta depois do bloqueio -> continua bloqueado
+e-mail inexistente -> "E-mail ou senha inválidos."  (mensagem identica)
+```
+
+**Restrição do framework, descoberta e contornada.** O plugin
+`import-protection` do TanStack Start nega o especificador
+`@tanstack/react-start/server` no ambiente cliente; um import estático desse
+módulo em qualquer arquivo alcançável a partir de uma rota **quebra o build**
+(renomear o arquivo para `.functions.ts` não resolve). O acesso a
+cookie/request ficou em `http-cookies.ts`, carregado por `import()` dinâmico
+dentro dos `handler()`. Confirmado no artefato: `grep` em
+`.output/public/assets` não encontra PBKDF2, `ff_sessao`, `deriveBits` nem as
+mensagens de erro da sessão (a única ocorrência de "PBKDF2-SHA256" é o texto
+descritivo da própria tela de login).
+
+**Erro real encontrado pelos testes HTTP:** a criação do usuário de
+desenvolvimento era *fire-and-forget* e perdia a corrida com o primeiro login,
+que era negado sem motivo aparente. Corrigido tornando o seed uma promessa
+única, aguardada no handler.
+
+### 9.7 Pendente
+
+- provisionar Postgres, driver e pool; aplicar migração no start;
+- ligar as rotas de documento a `exigirContexto()` — hoje a camada existe e é
+  testada, mas nenhuma rota de NF-e/CT-e/MDF-e a exige;
+- MFA e rate limiting por IP (hoje o bloqueio é por conta);
 - backup, retenção, TLS e criptografia em repouso (Etapa 7).

@@ -29,7 +29,10 @@ export type AcaoAuditoria =
   | "certificado.removido"
   | "regra.proposta"
   | "regra.aprovada"
-  | "regra.revogada";
+  | "regra.revogada"
+  | "sessao.iniciada"
+  | "sessao.encerrada"
+  | "sessao.falha";
 
 export interface RegistroAuditoria {
   id: string;

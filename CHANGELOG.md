@@ -3,6 +3,84 @@
 Todas as mudanças relevantes deste repositório são registradas aqui.
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [Não publicado] — 2026-10-14 (Etapa 2.6)
+
+### Adicionado — camada HTTP de autenticação
+
+- `src/fiscal/servidor/portas-servidor.ts` — portas `RepositorioUsuarios` e
+  `RepositorioSessoes`. Nenhuma porta devolve senha ou token em texto.
+- `src/fiscal/servidor/sessao.ts` — lógica de autenticação, independente de
+  framework e de HTTP, portanto testável sem banco e sem servidor:
+  - **sem enumeração de usuário**: e-mail inexistente, usuário inativo e senha
+    errada produzem a mesma mensagem e passam pelo mesmo atraso;
+  - **token existe uma única vez**: `autenticar` devolve o token em texto para
+    o cookie; o repositório guarda apenas o hash SHA-256;
+  - **sessão inválida ≠ acesso**: token expirado, revogado ou inexistente
+    devolve `null`, nunca um contexto parcial;
+  - bloqueio progressivo (5 falhas / 15 minutos) e logout idempotente.
+- `src/fiscal/servidor/repositorios-memoria.ts` — implementação em memória para
+  desenvolvimento e teste, explicitamente **recusada em produção**
+  (`obterDependencias()` falha alto se `NODE_ENV=production`).
+- `src/fiscal/servidor/repositorios-postgres.ts` — implementação real contra as
+  tabelas `usuarios`/`sessoes` do migration 001, com zero interpolação de SQL,
+  hash de senha no formato `algoritmo$iteracoes$salt$hash` validado por
+  `desserializarSenhaHash` (formato desconhecido lança, não "passa") e revogação
+  condicional a `revogada_em IS NULL`.
+- `src/fiscal/servidor/sessao.functions.ts` — server functions `iniciarSessao`,
+  `encerrarSessao` e `sessaoAtual`, mais `exigirContexto()` para as funções que
+  exigirem usuário logado.
+- `src/fiscal/servidor/http-cookies.ts` — cookie de sessão **HttpOnly,
+  SameSite=Lax, Secure em produção, Path=/, Max-Age de 60 min**.
+- `src/routes/entrar.tsx` — tela de login. Além do formulário, ela declara o que
+  a sessão **não** faz: autenticar não é autorizar documento fiscal, e nenhum
+  HTTP 200 daquela tela significa autorização do SEFAZ.
+- 3 ações de auditoria: `sessao.iniciada`, `sessao.encerrada`, `sessao.falha`.
+  Falhar em registrar o login **falha o login** (fail closed); a tentativa falha
+  é registrada sem e-mail (LGPD).
+- `.env.example` ganhou `FISCAL_PERSISTENCIA` e `DEV_AUTH_*`. Não existe usuário
+  padrão com senha embutida no código: sem `DEV_AUTH_EMAIL`/`DEV_AUTH_SENHA`
+  nenhum usuário é criado.
+
+### Corrigido
+
+- `src/fiscal/persistencia-postgres.ts` — `inutilizados()` ainda lia as colunas
+  antigas `de`/`ate` depois da renomeação para `numero_de`/`numero_ate`, e
+  ordenava por `de` (coluna inexistente). O `npm run typecheck` estava falhando
+  desde a Etapa 2.5 — a afirmação "typecheck 0 erro" do relatório anterior
+  estava incorreta e foi corrigida aqui.
+- `src/fiscal/schema.test.ts` — tipos do `pg-mem` (`Db` → `IMemoryDb`,
+  `"uuid"` → `DataType.uuid`) que também quebravam o typecheck.
+
+### Arquitetura (restrição do framework, descoberta e contornada)
+
+O plugin `import-protection` do TanStack Start nega `@tanstack/react-start/server`
+no bundle do cliente. Um import estático desse módulo em qualquer arquivo
+alcançável a partir de uma rota **quebra o build** (não adianta renomear o arquivo
+para `.functions.ts`). Solução: o acesso a cookie/request ficou em
+`http-cookies.ts`, carregado por `import()` dinâmico **dentro** dos `handler()`.
+Verificado no artefato final: o bundle do cliente não contém PBKDF2, nem o nome do
+cookie, nem a lógica de sessão.
+
+### Provado por execução (servidor de desenvolvimento real)
+
+- login com credencial correta → HTTP 200 + `set-cookie: ff_sessao=…; Max-Age=3600;
+  Path=/; HttpOnly; SameSite=Lax`;
+- `sessaoAtual` com cookie → contexto `{usuarioId, tenantId, papel}`; sem cookie
+  ou após logout → `{autenticado: false}`;
+- 4 senhas erradas → `"E-mail ou senha inválidos."`; 5ª → bloqueio de 900 s; com a
+  senha correta depois do bloqueio → continua bloqueado;
+- e-mail inexistente → **mensagem idêntica** à de senha errada.
+
+### Limitações conhecidas (não escondidas)
+
+- A persistência da sessão está **em memória do processo**: reiniciar o servidor
+  derruba todas as sessões. `FISCAL_PERSISTENCIA=postgres` falha com mensagem
+  explícita porque o banco não está provisionado.
+- As rotas de documento (NF-e, CT-e, MDF-e…) **ainda não passam** por esta
+  autenticação. A camada existe e é testada; falta ligá-las.
+- `exigirContexto()` não é usado por nenhuma rota ainda.
+- Nada disso foi validado contra Postgres real.
+
 ## [Não publicado] — 2026-10-14 (Etapa 2.5)
 
 ### Adicionado

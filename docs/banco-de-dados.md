@@ -105,8 +105,13 @@ npm run dev
 
 1. Driver de conexão (`pg`/`postgres.js`) e pool — decisão de hospedagem.
 2. Migrações automatizadas no start (hoje são aplicadas via `psql`).
-3. Camada HTTP de login/sessão/cookie (Etapa 2.6).
-4. Backup, retenção e descarte (Etapa 7).
-5. TLS em trânsito e criptografia em repouso (Etapa 7).
+3. Backup, retenção e descarte (Etapa 7).
+4. TLS em trânsito e criptografia em repouso (Etapa 7).
+
+A camada HTTP de login/sessão/cookie **existe desde a Etapa 2.6**
+(`src/fiscal/servidor/`): `usuarios` e `sessoes` já têm repositório Postgres
+implementado e testado (zero interpolação, hash no formato validado, revogação
+condicional). O que falta é o item 1 — sem driver e sem `DATABASE_URL`, a
+inicialização falha com mensagem explícita em vez de usar repositório em memória.
 
 Até 1–5 existirem, o sistema **não** está apto a dados reais de contribuintes.

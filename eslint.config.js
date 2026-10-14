@@ -39,11 +39,15 @@ export default tseslint.config(
   // ------------------------------------------------------------------------
   // MÓDULOS EXCLUSIVOS DE SERVIDOR
   // ------------------------------------------------------------------------
-  // `autenticacao.ts` e `persistencia-postgres.ts` lidam com hash de senha,
-  // token de sessão e SQL. Se qualquer um deles for importado por código de
-  // rota (que roda no cliente), o material de credencial e a string de conexão
-  // entrariam no bundle do navegador. A regra abaixo transforma esse erro de
-  // arquitetura em falha de build.
+  // `autenticacao.ts`, `persistencia-postgres.ts`, `servidor/sessao.ts` e
+  // `servidor/repositorios-postgres.ts` lidam com hash de senha, token de
+  // sessão e SQL. Se qualquer um deles for importado por código de rota (que
+  // roda no cliente), o material de credencial e a string de conexão entrariam
+  // no bundle do navegador. A regra abaixo transforma esse erro de arquitetura
+  // em falha de build.
+  //
+  // `servidor/sessao.server.ts` NÃO entra na lista: é o ponto de entrada HTTP
+  // autorizado (createServerFn), que as telas podem importar.
   // ------------------------------------------------------------------------
   {
     files: ["src/routes/**/*.{ts,tsx}", "src/components/**/*.{ts,tsx}", "src/hooks/**/*.{ts,tsx}"],
@@ -58,6 +62,12 @@ export default tseslint.config(
                 "@/fiscal/autenticacao",
                 "**/fiscal/persistencia-postgres",
                 "@/fiscal/persistencia-postgres",
+                "**/fiscal/servidor/sessao",
+                "@/fiscal/servidor/sessao",
+                "**/fiscal/servidor/repositorios-postgres",
+                "@/fiscal/servidor/repositorios-postgres",
+                "**/fiscal/servidor/repositorios-memoria",
+                "@/fiscal/servidor/repositorios-memoria",
               ],
               message:
                 "Módulo exclusivo de servidor (hash de senha, token de sessão e SQL). Importe apenas de funções de servidor (`*.server.ts` / createServerFn).",

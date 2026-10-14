@@ -40,10 +40,22 @@ Detalhes: [`docs/modelo-dados.md`](docs/modelo-dados.md) ·
   por senha), comparação em tempo constante, bloqueio após 5 falhas.
 - **Repositório real** (`src/fiscal/persistencia-postgres.ts`) com numeração
   atômica em uma única instrução e zero interpolação de SQL.
+- **Camada HTTP de sessão** (`src/fiscal/servidor/`): token opaco em cookie
+  `HttpOnly` + `SameSite=Lax` + `Secure` em produção, apenas o hash do token
+  persistido, bloqueio progressivo após 5 falhas, resposta genérica a credencial
+  inválida (sem revelar se o e-mail existe) e login/logout auditados.
 - **Módulos de servidor são fechados ao cliente** por regra de lint: build
-  quebra se uma rota tentar importá-los.
+  quebra se uma rota tentar importá-los. Verificado também no artefato: o bundle
+  do cliente não contém a lógica de sessão.
 
-Detalhes: [`docs/banco-de-dados.md`](docs/banco-de-dados.md).
+Detalhes: [`docs/banco-de-dados.md`](docs/banco-de-dados.md) e
+[`docs/seguranca-multiempresa.md`](docs/seguranca-multiempresa.md).
+
+> **Sessão em desenvolvimento.** Sem `DATABASE_URL`, a sessão usa repositório em
+> memória do processo (`FISCAL_PERSISTENCIA=memoria`, recusado em produção):
+> reiniciar o servidor derruba todas as sessões. Defina `DEV_AUTH_EMAIL` e
+> `DEV_AUTH_SENHA` para criar o usuário de desenvolvimento — não existe senha
+> padrão no código. Autenticar **não** é autorizar documento fiscal.
 
 ## O que este projeto não é
 

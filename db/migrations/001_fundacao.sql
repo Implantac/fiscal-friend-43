@@ -156,11 +156,11 @@ CREATE TABLE numeracao_inutilizada (
   estabelecimento_id UUID NOT NULL REFERENCES estabelecimentos(id) ON DELETE RESTRICT,
   modelo             TEXT NOT NULL,
   serie              TEXT NOT NULL,
-  de                 BIGINT NOT NULL,
-  ate                BIGINT NOT NULL,
+  numero_de          BIGINT NOT NULL,
+  numero_ate         BIGINT NOT NULL,
   justificativa      TEXT NOT NULL CHECK (char_length(justificativa) >= 15),
   criado_em          TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CONSTRAINT numeracao_inutilizada_intervalo CHECK (ate >= de)
+  CONSTRAINT numeracao_inutilizada_intervalo CHECK (numero_ate >= numero_de)
 );
 
 -- ----------------------------------------------------------------------------
