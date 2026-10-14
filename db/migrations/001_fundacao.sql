@@ -334,11 +334,45 @@ BEGIN
   END LOOP;
 END $$;
 
--- `sessoes` e `tenants` usam política própria (o tenant é dono de si mesmo).
+-- ----------------------------------------------------------------------------
+-- POLÍTICA DE `sessoes` — exceção deliberada e documentada
+-- ----------------------------------------------------------------------------
+-- `sessoes` é a fronteira de AUTENTICAÇÃO, não a fronteira de dados de tenant.
+-- O token de sessão é a própria credencial: para descobrir a qual tenant uma
+-- sessão pertence, é preciso primeiro LER a sessão — e nesse momento o contexto
+-- de tenant ainda não existe. Uma política `tenant_id = tenant_atual()` pura
+-- tornaria o login impossível (a consulta devolveria zero linhas).
+--
+-- A divisão escolhida:
+--   * LEITURA  é permitida sem contexto de tenant. O que se expõe é metadado
+--     (id, tenant, usuário, hash do token, expiração, revogação). O hash do
+--     token é SHA-256 de 256 bits: conhecer a linha não concede uso da sessão.
+--   * ESCRITA  exige contexto de tenant. Revogar a sessão de outro tenant é o
+--     dano concreto que a política precisa impedir, e nesse caminho o tenant já
+--     é conhecido (a sessão foi encontrada; o usuário foi encontrado).
+--
+-- Compensações: (a) só o repositório de autenticação toca `sessoes`;
+-- (b) a linha nunca contém o token, apenas o hash; (c) `usuarios` mantém a
+-- política estrita porque nela o tenant sempre é conhecido.
+-- ----------------------------------------------------------------------------
 ALTER TABLE sessoes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE sessoes FORCE ROW LEVEL SECURITY;
-CREATE POLICY sessoes_tenant_isolation ON sessoes
+
+CREATE POLICY sessoes_leitura_token ON sessoes
+  FOR SELECT
+  USING (tenant_id = tenant_atual() OR tenant_atual() IS NULL);
+
+CREATE POLICY sessoes_escrita_tenant ON sessoes
+  FOR INSERT
+  WITH CHECK (tenant_id = tenant_atual());
+
+CREATE POLICY sessoes_atualiza_tenant ON sessoes
+  FOR UPDATE
   USING (tenant_id = tenant_atual()) WITH CHECK (tenant_id = tenant_atual());
+
+CREATE POLICY sessoes_remove_tenant ON sessoes
+  FOR DELETE
+  USING (tenant_id = tenant_atual());
 
 -- ----------------------------------------------------------------------------
 -- GARANTIA DE CONSISTÊNCIA DE TENANT

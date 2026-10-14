@@ -3,6 +3,71 @@
 Todas as mudanças relevantes deste repositório são registradas aqui.
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [Não publicado] — 2026-10-14 (Etapa 2.7)
+
+### Adicionado — conexão Postgres real (Lovable Cloud)
+
+- `src/fiscal/servidor/conexao-postgres.ts` — implementação concreta de
+  `SqlExecutor` com o driver `pg`: pool único por processo, `query` direto e
+  `emTransacao` com `BEGIN`/`COMMIT`/`ROLLBACK`, devolvendo a conexão ao pool
+  inclusive em erro.
+- `src/fiscal/servidor/ambiente.ts` — leitura de configuração e **decisão de
+  persistência** como função pura, testável sem framework e sem banco:
+  - `auto` (padrão): Postgres se houver `SUPABASE_DB_URL`/`DATABASE_URL`, memória
+    caso contrário;
+  - `postgres`: exige conexão — sem ela, falha com mensagem explícita;
+  - `memoria`: apenas desenvolvimento; **recusado em produção**, porque as
+    sessões sumiriam no restart.
+- 9 testes do executor com pool falso (transação, rollback, liberação da conexão,
+  `set_config` com parâmetro vinculado) e 10 testes da decisão de persistência.
+
+### Corrigido — conflito real entre RLS e login, encontrado ao conectar
+
+A política de RLS de `sessoes` era `tenant_id = tenant_atual()` pura. Como o
+token de sessão é a credencial e o tenant só é conhecido **depois** de a sessão
+ser encontrada, o login teria devolvido zero linhas em produção — falha
+silenciosa, o pior tipo em sistema fiscal. A política foi dividida:
+
+- **leitura** permitida sem contexto de tenant (o hash do token é SHA-256 de 256
+  bits: conhecer a linha não concede uso da sessão);
+- **escrita** exige contexto de tenant, porque revogar a sessão de outro tenant
+  é o dano concreto que a política existe para impedir.
+
+Em consequência, toda escrita passou a receber `tenantId` explícito
+(`registrarFalhaLogin`, `registrarSucessoLogin`, `revogar`,
+`revogarTodasDoUsuario`) e a rodar dentro de `emTransacao`. Sem o tenant na
+assinatura, nada obrigaria o chamador a informá-lo.
+
+### Decisão de arquitetura — conexão como `postgres`, não `service_role`
+
+O role `service_role` do Supabase tem **`BYPASSRLS`** e ignoraria por completo o
+isolamento por tenant do migration 001. A conexão direta como `postgres`
+**respeita** RLS — e o migration usa `FORCE ROW LEVEL SECURITY`, que sujeita até
+o dono da tabela à política. A chave secreta portanto não entra neste projeto, e
+nunca com prefixo `VITE_`.
+
+### Detalhe técnico que travava o isolamento
+
+`SET LOCAL app.tenant_id = $1` **não é válido**: Postgres não aceita parâmetro
+vinculado em utility statement, e a saída ingênua seria concatenar o tenant no
+texto do SQL. A forma correta é `set_config('app.tenant_id', $1, true)` — o
+terceiro argumento dá escopo de transação, que é o que o pooler do Supabase em
+modo transação preserva.
+
+### Limitações conhecidas (não escondidas)
+
+- **Nenhuma consulta real foi feita contra um Postgres.** O executor está
+  implementado e testado com pool falso; SSL, pooler, latência e a política de
+  RLS de `sessoes` seguem não verificados.
+- `bun.lock` está dessincronizado com `package.json` desde a Etapa 2.5 (`pg-mem`)
+  e agora também com `pg`/`@types/pg`: o sandbox não tem `bun`. Rode
+  `bun install` onde houver bun para regenerá-lo.
+- 3 vulnerabilidades pré-existentes em `tinypool` (via `vitest`) permanecem:
+  corrigi-las exigiria `npm audit fix --force`, que quebraria o `vitest`.
+- O build emite avisos de "externalized for browser compatibility" para `node:*`
+  durante a varredura do ambiente cliente — o artefato final foi verificado e
+  **não** contém o driver, o nome do cookie nem a lógica de sessão.
+
 ## [Não publicado] — 2026-10-14 (Etapa 2.6)
 
 ### Adicionado — camada HTTP de autenticação

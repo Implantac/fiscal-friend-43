@@ -4,7 +4,11 @@
  * ⚠️ USO EXCLUSIVO DE DESENVOLVIMENTO E TESTE.
  * Dados vivem só no processo: reiniciar o servidor apaga tudo. Nenhum caminho
  * de produção deve usar estes repositórios (ver `eslint.config.js`: módulos
- * server-only). A implementação real é Postgres — ver `docs/banco-de-dados.md`.
+ * server-only). A implementação real é Postgres — ver
+ * `src/fiscal/servidor/conexao-postgres.ts`.
+ *
+ * As assinaturas repetem as do repositório Postgres, incluindo o `tenantId`
+ * obrigatório em toda escrita, para que a substituição não mude comportamento.
  */
 
 import type { Papel } from "@/fiscal/seguranca";
@@ -36,19 +40,20 @@ export class UsuariosMemoria implements RepositorioUsuarios {
   }
 
   async registrarFalhaLogin(
+    tenantId: string,
     usuarioId: string,
     falhas: number,
     bloqueadoAte: string | null,
   ): Promise<void> {
     const u = this.itens.get(usuarioId);
-    if (!u) return;
+    if (!u || u.tenantId !== tenantId) return;
     u.falhasLogin = falhas;
     u.bloqueadoAte = bloqueadoAte;
   }
 
-  async registrarSucessoLogin(usuarioId: string): Promise<void> {
+  async registrarSucessoLogin(tenantId: string, usuarioId: string): Promise<void> {
     const u = this.itens.get(usuarioId);
-    if (!u) return;
+    if (!u || u.tenantId !== tenantId) return;
     u.falhasLogin = 0;
     u.bloqueadoAte = null;
   }
@@ -75,15 +80,17 @@ export class SessoesMemoria implements RepositorioSessoes {
     return undefined;
   }
 
-  async revogar(sessaoId: string): Promise<void> {
+  async revogar(tenantId: string, sessaoId: string): Promise<void> {
     const s = this.itens.get(sessaoId);
-    if (s && !s.revogadaEm) s.revogadaEm = new Date().toISOString();
+    if (!s || s.tenantId !== tenantId || s.revogadaEm) return;
+    s.revogadaEm = new Date().toISOString();
   }
 
-  async revogarTodasDoUsuario(usuarioId: string): Promise<void> {
+  async revogarTodasDoUsuario(tenantId: string, usuarioId: string): Promise<void> {
     const agora = new Date().toISOString();
     for (const s of this.itens.values()) {
-      if (s.usuarioId === usuarioId && !s.revogadaEm) s.revogadaEm = agora;
+      if (s.tenantId === tenantId && s.usuarioId === usuarioId && !s.revogadaEm)
+        s.revogadaEm = agora;
     }
   }
 }

@@ -130,7 +130,7 @@ Risco: **alto** (erro fiscal/segurança) · **médio** · **baixo**.
 
 | # | Lacuna | Prio | Risco | Arquivos afetados | Critério de aceite | Dependência externa |
 |---|---|---|---|---|---|---|
-| L1 | Sem back-end, banco, auth e multi-tenant | P0 | alto | todo `src/routes`, `src/simulation` | CRUD de empresas/estabelecimentos com isolamento por tenant testado; login com papéis; migração versionada | **endereçada nas Etapas 2, 2.5 e 2.6**: isolamento, papéis, ciclo de vida, numeração, auditoria, schema com RLS, hash de senha, repositório Postgres e camada HTTP de sessão (cookie HttpOnly, bloqueio progressivo, sem enumeração de usuário) implementados e testados. Falta provisionar o banco com driver, e ligar as rotas de documento a `exigirContexto()` |
+| L1 | Sem back-end, banco, auth e multi-tenant | P0 | alto | todo `src/routes`, `src/simulation` | CRUD de empresas/estabelecimentos com isolamento por tenant testado; login com papéis; migração versionada | **endereçada nas Etapas 2, 2.5, 2.6 e 2.7**: isolamento, papéis, ciclo de vida, numeração, auditoria, schema com RLS, hash de senha, repositório Postgres, camada HTTP de sessão e conexão real com o banco implementados e testados. Falta validar a conexão contra a instância do Lovable Cloud e ligar as rotas de documento a `exigirContexto()` |
 | L2 | Motor monetário em `number`/`toFixed` | P0 | alto | `documento-saida.ts`, rotas, `knowledge/*` | cálculo em decimal exato, teste de regressão com valores extremos; rateio fecha total | nenhuma — **feito na Etapa 1** |
 | L3 | Sem testes automatizados | P0 | alto | repositório | runner + testes de cálculo, XML, registro de regras; `npm run verify` verde | nenhuma — **feito na Etapa 1** |
 | L4 | Alíquotas de cenário aplicadas sem bloqueio | P1 | alto | `parametros-cenario.ts`, rotas | toda prévia devolve `Pendencia` bloqueante explicando o que falta | nenhuma — **feito na Etapa 1** |
@@ -367,10 +367,143 @@ desenvolvimento era *fire-and-forget* e perdia a corrida com o primeiro login,
 que era negado sem motivo aparente. Corrigido tornando o seed uma promessa
 única, aguardada no handler.
 
-### 9.7 Pendente
+### 9.7 Relatório de fim de etapa — 2.6 (modelo obrigatório)
 
-- provisionar Postgres, driver e pool; aplicar migração no start;
+**Arquivos alterados.** `src/fiscal/servidor/{portas-servidor,sessao,repositorios-memoria,repositorios-postgres,sessao.functions,http-cookies}.ts`
+(+ os três de teste), `src/fiscal/servidor/sessao.test.ts`,
+`src/routes/entrar.tsx`, `src/routeTree.gen.ts`, `src/fiscal/{auditoria,autenticacao,persistencia-postgres}.ts`,
+`src/fiscal/schema.test.ts`, `eslint.config.js`, `.env.example`, `README.md`,
+`CHANGELOG.md`, `db/migrations/001_fundacao.sql` e `docs/{banco-de-dados,seguranca-multiempresa,auditoria-tecnica}.md`.
+
+**Implementado.** Portas de usuário e sessão que nunca expõem senha nem token em
+texto; lógica de login/logout/resolução de contexto sem framework e sem HTTP;
+repositório em memória recusado em produção; repositório Postgres real com zero
+interpolação de SQL; server functions com cookie HttpOnly; tela de login que diz
+o que a sessão **não** faz; auditoria de sessão.
+
+**Corrigido.** O seed do usuário de desenvolvimento era *fire-and-forget* e
+perdia a corrida com o primeiro login (encontrado pelos testes HTTP, não pela
+leitura): virou promessa única aguardada no handler.
+
+**Testes.** 195 → **217**, sem regressão. Inclui execução real do servidor de
+desenvolvimento por HTTP (evidência em §9.6).
+
+**Regras fiscais e fontes.** Nenhuma. Nenhuma fonte oficial foi consultada nesta
+etapa; nenhuma alíquota, CST ou código foi criado ou alterado.
+
+**Integrações reais x simuladas.** Nenhuma integração fiscal. Toda a comunicação
+foi local (HTTP do próprio servidor de desenvolvimento).
+
+**Homologações pendentes.** Nenhuma aberta por esta etapa além das já listadas
+em §9.9.
+
+**Limitações conhecidas.** Nenhuma rota de documento exige contexto ainda;
+bloqueio é por conta, sem MFA nem limite por IP; sem conexão de banco real.
+
+**Próximas prioridades.** Conectar o banco e permitir que o sistema decida onde
+persistir (Etapa 2.7).
+
+### 9.8 Etapa 2.7 — conexão Postgres e a decisão de hospedagem (2026-10-14)
+
+O usuário informou que **o projeto roda no Lovable Cloud**, cujo backend é
+Supabase (Postgres gerenciado). Isso fechou a decisão de hospedagem que estava em
+aberto desde a Etapa 2.
+
+| Item | Arquivo | Situação |
+|---|---|---|
+| `SqlExecutor` concreto com `pg`: pool, `query`, `emTransacao` com BEGIN/COMMIT/ROLLBACK | `src/fiscal/servidor/conexao-postgres.ts` | implementado + 9 testes (pool falso) |
+| Decisão de persistência como função pura (`auto`/`postgres`/`memoria`) | `src/fiscal/servidor/ambiente.ts` | implementado + 10 testes |
+| Repositórios Postgres ligados à conexão real | `src/fiscal/servidor/sessao.functions.ts` | implementado |
+| Driver `pg` + `@types/pg` | `package.json` | adicionado |
+
+**Dois problemas reais encontrados ao conectar, ambos corrigidos:**
+
+1. **A política de RLS de `sessoes` quebraria o login.** Ela era
+   `tenant_id = tenant_atual()` pura. O token de sessão é a credencial e o tenant
+   só é conhecido *depois* de a sessão ser encontrada — a consulta devolveria zero
+   linhas, em produção, sem erro. A política foi dividida em leitura (sem contexto
+   de tenant, porque o hash do token é SHA-256 de 256 bits e conhecer a linha não
+   concede uso da sessão) e escrita (com contexto de tenant, porque revogar
+   sessão de outro tenant é o dano concreto). Consequência: toda escrita passou a
+   receber `tenantId` explícito e a rodar dentro de `emTransacao`.
+
+2. **`SET LOCAL` não aceita parâmetro vinculado.** `SET LOCAL app.tenant_id = $1`
+   é inválido no Postgres, e a saída ingênua seria concatenar o tenant no texto
+   do SQL — exatamente o que a camada de persistência promete não fazer. A forma
+   correta é `set_config('app.tenant_id', $1, true)`, que dá escopo de transação
+   e sobrevive ao pooler do Supabase em modo transação.
+
+**Decisão de arquitetura:** a conexão é feita como o role `postgres`, **não** como
+`service_role`. `service_role` tem `BYPASSRLS` e ignoraria por completo o
+isolamento por tenant do migration 001; o role `postgres` respeita RLS, e o
+migration usa `FORCE ROW LEVEL SECURITY`, que sujeita até o dono da tabela à
+política. A chave secreta do Supabase portanto não entra neste projeto.
+
+**Evidência:** typecheck 0 erros · lint 0 erros · **217 testes em 16 arquivos**
+(+22 nesta etapa) · `npm run build` ok · `grep` no artefato confirma que
+`.output/public/assets` não contém o driver `pg`, `set_config`, `ff_sessao` nem a
+lógica de sessão (as duas ocorrências de "PBKDF2" são texto descritivo da tela).
+
+**Não provado:** nenhuma consulta real contra um Postgres. O executor foi testado
+com pool falso; SSL, pooler, latência e a política de RLS de `sessoes` seguem não
+verificados porque nenhuma instância existe neste ambiente.
+
+### 9.9 Pendente
+
+- validar a conexão contra a instância do Lovable Cloud (aplicar a migração e
+  exercitar login/logout de verdade);
 - ligar as rotas de documento a `exigirContexto()` — hoje a camada existe e é
   testada, mas nenhuma rota de NF-e/CT-e/MDF-e a exige;
 - MFA e rate limiting por IP (hoje o bloqueio é por conta);
+- regenerar `bun.lock` (`bun install`) — está dessincronizado desde a Etapa 2.5;
 - backup, retenção, TLS e criptografia em repouso (Etapa 7).
+
+### 9.10 Relatório de fim de etapa — 2.7 (modelo obrigatório)
+
+**Arquivos alterados.** Novos: `src/fiscal/servidor/{conexao-postgres,ambiente}.ts`
+e seus dois arquivos de teste. Modificados: `src/fiscal/servidor/sessao.functions.ts`,
+`src/fiscal/servidor/{portas-servidor,sessao,repositorios-memoria,repositorios-postgres}.ts`,
+`src/fiscal/servidor/{sessao,repositorios-postgres}.test.ts`,
+`src/fiscal/schema.test.ts`, `db/migrations/001_fundacao.sql`, `eslint.config.js`,
+`.env.example`, `package.json`, `README.md`, `CHANGELOG.md` e
+`docs/{banco-de-dados,seguranca-multiempresa,auditoria-tecnica}.md`.
+
+**Implementado.** `SqlExecutor` concreto com `pg` (pool por processo,
+`emTransacao` com `BEGIN`/`COMMIT`/`ROLLBACK` e liberação da conexão inclusive em
+erro); leitura de configuração e decisão de persistência como função pura;
+repositórios Postgres ligados à conexão real; restrição de lint impedindo
+`conexao-postgres` de ser importado por rota, componente ou hook; variáveis
+`SUPABASE_DB_URL`/`DATABASE_URL`/`DATABASE_SSL`/`FISCAL_PERSISTENCIA` documentadas
+em `.env.example`.
+
+**Corrigido.** (1) A política de RLS de `sessoes` era `tenant_id = tenant_atual()`
+pura e faria o login devolver zero linhas em produção sem erro algum — política
+dividida em leitura e escrita, e toda escrita passou a receber `tenantId`
+explícito. (2) `SET LOCAL app.tenant_id = $1` não existe no Postgres; a forma
+correta é `set_config('app.tenant_id', $1, true)`.
+
+**Testes.** 195 → **217** (+22: 9 do executor com pool falso, 10 da decisão de
+persistência, 3 de escrita entre tenants, mais a verificação estática da política
+de RLS de `sessoes`, já que pg-mem não implementa RLS).
+
+**Regras fiscais e fontes.** Nenhuma. Nenhuma fonte oficial consultada.
+
+**Integrações reais x simuladas.** Nenhuma integração fiscal. A integração com o
+banco é **código real, execução não verificada**: o executor foi testado com pool
+falso. Nenhuma consulta rodou contra um Postgres.
+
+**Homologações pendentes.** Aplicar a migração na instância do Lovable Cloud e
+exercitar login/logout de verdade; confirmar que a política de RLS de `sessoes`
+se comporta como o teste estático afirma; confirmar que o pooler do Supabase
+preserva `set_config` em modo transação.
+
+**Limitações conhecidas.** Sem conexão validada; sem rota de documento exigindo
+contexto; sem MFA nem limite por IP; `bun.lock` dessincronizado (`pg-mem`, `pg`,
+`@types/pg` ausentes) — o sandbox não tem `bun`; 3 vulnerabilidades pré-existentes
+em `tinypool` (via `vitest`) permanecem porque corrigi-las exigiria
+`npm audit fix --force`, que quebra o `vitest`.
+
+**Próximas prioridades.** Colocar as rotas de documento atrás de
+`exigirContexto()` e ligar o motor monetário às entidades persistidas — o banco
+existe, mas o produto ainda não o usa.
+

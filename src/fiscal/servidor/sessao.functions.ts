@@ -39,6 +39,7 @@ import type { ContextoUsuario } from "@/fiscal/seguranca";
 import type { DependenciasSessao } from "@/fiscal/servidor/portas-servidor";
 import { SessoesMemoria, UsuariosMemoria } from "@/fiscal/servidor/repositorios-memoria";
 import { AuditoriaMemoria } from "@/fiscal/auditoria";
+import { decisaoAtual } from "@/fiscal/servidor/ambiente";
 
 const MINUTOS_COOKIE = 60;
 
@@ -65,45 +66,45 @@ let dependencias: DependenciasSessao | undefined;
 let trilha: AuditoriaMemoria | undefined;
 
 function memoria(): { deps: DependenciasSessao; auditoria: AuditoriaMemoria } {
-  if (!dependencias || !trilha) {
-    const usuarios = new UsuariosMemoria();
-    dependencias = { usuarios, sessoes: new SessoesMemoria() };
-    trilha = new AuditoriaMemoria();
-  }
-  return { deps: dependencias, auditoria: trilha };
+  if (dependencias && trilha) return { deps: dependencias, auditoria: trilha };
+  const usuarios = new UsuariosMemoria();
+  const novas: DependenciasSessao = { usuarios, sessoes: new SessoesMemoria() };
+  dependencias = novas;
+  trilha = new AuditoriaMemoria();
+  return { deps: novas, auditoria: trilha };
 }
 
 /**
  * Resolve as dependências de autenticação.
  *
- * Falha alto e explícito quando a persistência real não está conectada: um
- * sistema que "funcionasse" com repositório em memória em produção daria a
- * ilusão de login persistente sem guardar nada.
+ * Ordem de decisão:
+ *   1. `FISCAL_PERSISTENCIA=postgres` → Postgres obrigatório; sem conexão, falha.
+ *   2. `FISCAL_PERSISTENCIA=auto` (padrão) → Postgres se houver string de conexão
+ *      (`SUPABASE_DB_URL` do Lovable Cloud ou `DATABASE_URL`), memória caso contrário.
+ *   3. `FISCAL_PERSISTENCIA=memoria` → memória, **recusada em produção**.
+ *
+ * A regra 3 é a mais importante: um sistema que "funcionasse" com repositório em
+ * memória em produção daria a ilusão de login persistente sem guardar nada.
+ * Falhar alto é honesto; fingir não é.
  */
-export function obterDependencias(): DependenciasSessao {
-  const modo = process.env["FISCAL_PERSISTENCIA"] ?? "memoria";
-  if (modo === "postgres") {
-    // Os repositórios existem (`repositorios-postgres.ts`), mas falta o driver
-    // e a string de conexão. Falhar aqui é honesto: o sistema não pode fingir
-    // que tem banco. Quando DATABASE_URL e o driver existirem, este galho passa
-    // a construir `UsuariosPostgres`/`SessoesPostgres`.
-    if (!process.env["DATABASE_URL"]) {
-      throw new Error(
-        "FISCAL_PERSISTENCIA=postgres, mas DATABASE_URL não está definido. " +
-          "Sem banco não há sessão persistente. Consulte docs/banco-de-dados.md.",
-      );
-    }
-    throw new Error(
-      "Driver Postgres ainda não conectado nesta etapa (ver docs/banco-de-dados.md, " +
-        "seção 'o que falta para operar').",
-    );
+export async function obterDependencias(): Promise<DependenciasSessao> {
+  const decisao = decisaoAtual();
+  if (decisao.tipo === "erro") throw new Error(decisao.mensagem);
+  if (decisao.tipo === "memoria") return memoria().deps;
+
+  // Postgres. `conexao-postgres.ts` importa `pg` (Node puro) e por isso só pode
+  // ser carregado dinamicamente — nunca estaticamente por módulo alcançável a
+  // partir de uma rota.
+  const { obterExecutor } = await import("./conexao-postgres");
+  const { UsuariosPostgres, SessoesPostgres } = await import("./repositorios-postgres");
+  if (!dependencias) {
+    const executor = obterExecutor();
+    dependencias = {
+      usuarios: new UsuariosPostgres(executor),
+      sessoes: new SessoesPostgres(executor),
+    };
   }
-  if (process.env["NODE_ENV"] === "production") {
-    throw new Error(
-      "Autenticação em memória não é permitida em produção. Configure FISCAL_PERSISTENCIA=postgres.",
-    );
-  }
-  return memoria().deps;
+  return dependencias;
 }
 
 /** Trilha de auditoria da camada de sessão (mesma instância dos repositórios). */
@@ -131,7 +132,7 @@ export function garantirUsuarioDev(): Promise<void> {
       const tenantId = process.env["DEV_AUTH_TENANT"] ?? "tenant-dev";
       if (!email || !senha) return;
       const m = await logica();
-      await m.criarUsuario(memoria().deps, {
+      await m.criarUsuario(await obterDependencias(), {
         id: process.env["DEV_AUTH_USUARIO"] ?? "usr-dev-1",
         tenantId,
         email,
@@ -164,7 +165,7 @@ export const iniciarSessao = createServerFn({ method: "POST" })
     const auth = await logica();
     let resultado;
     try {
-      resultado = await auth.autenticar(obterDependencias(), {
+      resultado = await auth.autenticar(await obterDependencias(), {
         tenantId: data.tenantId,
         email: data.email,
         senha: data.senha,
@@ -229,7 +230,7 @@ export const encerrarSessao = createServerFn({ method: "POST" }).handler(
   async (): Promise<{ ok: true }> => {
     const token = (await http()).lerCookieSessao();
     if (token) {
-      await (await logica()).encerrarSessao(obterDependencias(), token).catch(() => {
+      await (await logica()).encerrarSessao(await obterDependencias(), token).catch(() => {
         /* logout é melhor-esforço: falhar aqui não é falha de segurança */
       });
     }
@@ -245,7 +246,7 @@ export const sessaoAtual = createServerFn({ method: "GET" }).handler(
     if (!token) return { autenticado: false };
     const contexto = await (
       await logica()
-    ).resolverContexto(obterDependencias(), token, new Date().toISOString());
+    ).resolverContexto(await obterDependencias(), token, new Date().toISOString());
     if (!contexto) return { autenticado: false };
     return { autenticado: true, contexto };
   },
@@ -258,7 +259,9 @@ export const sessaoAtual = createServerFn({ method: "GET" }).handler(
 export async function exigirContexto(): Promise<ContextoUsuario> {
   const token = (await http()).lerCookieSessao();
   const contexto = token
-    ? await (await logica()).resolverContexto(obterDependencias(), token, new Date().toISOString())
+    ? await (
+        await logica()
+      ).resolverContexto(await obterDependencias(), token, new Date().toISOString())
     : null;
   if (!contexto) throw new Error("Sessão inválida ou expirada. Faça login novamente.");
   return contexto;

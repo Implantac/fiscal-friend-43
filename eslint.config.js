@@ -39,15 +39,16 @@ export default tseslint.config(
   // ------------------------------------------------------------------------
   // MÓDULOS EXCLUSIVOS DE SERVIDOR
   // ------------------------------------------------------------------------
-  // `autenticacao.ts`, `persistencia-postgres.ts`, `servidor/sessao.ts` e
-  // `servidor/repositorios-postgres.ts` lidam com hash de senha, token de
-  // sessão e SQL. Se qualquer um deles for importado por código de rota (que
+  // `autenticacao.ts`, `persistencia-postgres.ts`, `conexao-postgres.ts` e os
+  // repositórios de `servidor/` lidam com hash de senha, token de sessão, SQL e
+  // driver de banco. Se qualquer um deles for importado por código de rota (que
   // roda no cliente), o material de credencial e a string de conexão entrariam
   // no bundle do navegador. A regra abaixo transforma esse erro de arquitetura
   // em falha de build.
   //
-  // `servidor/sessao.server.ts` NÃO entra na lista: é o ponto de entrada HTTP
+  // `servidor/sessao.functions.ts` NÃO entra na lista: é o ponto de entrada HTTP
   // autorizado (createServerFn), que as telas podem importar.
+  // `servidor/ambiente.ts` também não: não tem dependência de Node nem de driver.
   // ------------------------------------------------------------------------
   {
     files: ["src/routes/**/*.{ts,tsx}", "src/components/**/*.{ts,tsx}", "src/hooks/**/*.{ts,tsx}"],
@@ -64,6 +65,8 @@ export default tseslint.config(
                 "@/fiscal/persistencia-postgres",
                 "**/fiscal/servidor/sessao",
                 "@/fiscal/servidor/sessao",
+                "**/fiscal/servidor/conexao-postgres",
+                "@/fiscal/servidor/conexao-postgres",
                 "**/fiscal/servidor/repositorios-postgres",
                 "@/fiscal/servidor/repositorios-postgres",
                 "**/fiscal/servidor/repositorios-memoria",

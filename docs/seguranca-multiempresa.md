@@ -86,7 +86,20 @@ vez de fingir que existe banco. `FISCAL_PERSISTENCIA=postgres` exige
 `@tanstack/react-start/server` no cliente. O acesso a cookie/request vive em
 `http-cookies.ts`, carregado por `import()` dinâmico dentro dos `handler()`.
 Verificado no artefato de build: `.output/public/assets` não contém PBKDF2, o
-nome do cookie nem a lógica de sessão.
+nome do cookie, o driver `pg` nem a lógica de sessão.
+
+### Persistência no Lovable Cloud
+
+O projeto roda no Lovable Cloud, cujo backend é Supabase. A conexão é feita como
+o role `postgres` — **nunca** como `service_role`, que tem `BYPASSRLS` e anularia
+por completo o isolamento por tenant. Com `FORCE ROW LEVEL SECURITY` no migration,
+até o dono da tabela obedece à política.
+
+`sessoes` tem uma exceção deliberada: a leitura é permitida sem contexto de tenant
+porque o token de sessão é a credencial e o tenant só se revela depois da
+consulta. A escrita exige contexto de tenant. O raciocínio e as compensações
+estão comentados no migration; a política é verificada estaticamente por teste
+(pg-mem não implementa RLS).
 
 ## 6. O que ainda não está implementado
 

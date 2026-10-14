@@ -2,23 +2,26 @@
  * TESTES DOS REPOSITÓRIOS POSTGRES DE USUÁRIOS E SESSÕES.
  *
  * Com executor SQL falso, como em `persistencia-postgres.test.ts`. O objetivo
- * não é validar SQL contra banco real (isso é teste de integração, que ainda
- * não pode rodar aqui) e sim as garantias de segurança da camada:
+ * não é validar SQL contra banco real (isso é teste de integração, que ainda não
+ * pode rodar aqui) e sim as garantias de segurança da camada:
  *
  *   1. nenhum valor de dado é interpolado no texto do SQL;
- *   2. o token é consultado pelo hash, nunca pelo token em texto;
- *   3. revogação é condicional (`revogada_em IS NULL`);
- *   4. o hash de senha é serializado no formato validado, não em JSON solto.
+ *   2. toda ESCRITA passa por transação com o tenant em `params[0]` — sem isso a
+ *      RLS barraria a escrita e ela falharia em silêncio;
+ *   3. o token é consultado pelo hash, nunca pelo token em texto;
+ *   4. revogação é condicional a `revogada_em IS NULL` e filtrada por tenant;
+ *   5. o hash de senha é serializado no formato validado, não em JSON solto.
  */
 
 import { describe, expect, it } from "vitest";
 import { SessoesPostgres, UsuariosPostgres } from "./repositorios-postgres";
 import type { SqlExecutor } from "@/fiscal/persistencia-postgres";
-import { serializarSenhaHash, desserializarSenhaHash } from "@/fiscal/autenticacao";
+import { desserializarSenhaHash, serializarSenhaHash } from "@/fiscal/autenticacao";
 import type { UsuarioInterno } from "./portas-servidor";
 
 class SqlFalso implements SqlExecutor {
   queries: { sql: string; params: unknown[] }[] = [];
+  transacoes: string[] = [];
   usuarios: Record<string, unknown>[] = [];
   sessoes: Record<string, unknown>[] = [];
 
@@ -40,9 +43,9 @@ class SqlFalso implements SqlExecutor {
       return [] as T[];
     }
     if (/UPDATE usuarios/.test(sql)) {
-      const [usuarioId, falhas, bloqueadoAte] = params;
+      const [tenantId, usuarioId, falhas, bloqueadoAte] = params;
       for (const u of this.usuarios) {
-        if (u["id"] === usuarioId) {
+        if (u["id"] === usuarioId && u["tenant_id"] === tenantId) {
           if (/bloqueado_ate = NULL/.test(sql)) {
             u["falhas_login"] = 0;
             u["bloqueado_ate"] = null;
@@ -85,11 +88,15 @@ class SqlFalso implements SqlExecutor {
       ] as T[];
     }
     if (/UPDATE sessoes/.test(sql)) {
-      const [sessaoId] = params;
-      if (/usuario_id = \$1/.test(sql)) {
-        for (const s of this.sessoes) if (s["usuario_id"] === sessaoId) s["revogada_em"] = "agora";
+      const [tenantId, alvo] = params;
+      if (/usuario_id = \$2/.test(sql)) {
+        for (const s of this.sessoes) {
+          if (s["usuario_id"] === alvo && s["tenant_id"] === tenantId) s["revogada_em"] = "agora";
+        }
       } else {
-        for (const s of this.sessoes) if (s["id"] === sessaoId) s["revogada_em"] = "agora";
+        for (const s of this.sessoes) {
+          if (s["id"] === alvo && s["tenant_id"] === tenantId) s["revogada_em"] = "agora";
+        }
       }
       return [] as T[];
     }
@@ -116,6 +123,7 @@ class SqlFalso implements SqlExecutor {
   }
 
   async emTransacao<T>(tenantId: string, fn: (tx: SqlExecutor) => Promise<T>): Promise<T> {
+    this.transacoes.push(tenantId);
     return fn(this);
   }
 }
@@ -139,8 +147,17 @@ const usuario = (over: Partial<UsuarioInterno> = {}): UsuarioInterno => ({
   ...over,
 });
 
+const criarSessao = {
+  id: "ses-1",
+  tenantId: "tenant-a",
+  usuarioId: "usr-1",
+  papel: "operador" as const,
+  tokenHash: "h1",
+  expiraEm: "2026-10-14T13:00:00.000Z",
+};
+
 describe("UsuariosPostgres", () => {
-  it("insere o usuário com o hash serializado e o e-mail normalizado, sem interpolar valores", async () => {
+  it("insere o usuário dentro de transação com o tenant, sem interpolar valores", async () => {
     const sql = new SqlFalso();
     const repo = new UsuariosPostgres(sql);
     const emailInjetavel = "x'; DROP TABLE usuarios; --";
@@ -149,6 +166,9 @@ describe("UsuariosPostgres", () => {
     expect(sql.usuarios).toHaveLength(1);
     expect(sql.usuarios[0]?.["email"]).toBe(emailInjetavel.toLowerCase());
     expect(sql.usuarios[0]?.["hash_senha"]).toBe(hashFake);
+
+    // Escrita sempre em transação, sempre com o tenant.
+    expect(sql.transacoes).toEqual(["tenant-a"]);
 
     // A query enviada não contém nenhum desses valores no texto.
     const texto = sql.queries[0]?.sql ?? "";
@@ -178,40 +198,46 @@ describe("UsuariosPostgres", () => {
     expect(serializarSenhaHash(achado!.hashSenha)).toBe(hashFake);
   });
 
-  it("registra falha e bloqueio; sucesso zera os dois", async () => {
+  it("registra falha e bloqueio em transação com tenant, sucesso zera os dois", async () => {
     const sql = new SqlFalso();
     const repo = new UsuariosPostgres(sql);
     await repo.criar(usuario());
 
-    await repo.registrarFalhaLogin("usr-1", 5, "2026-10-14T12:15:00.000Z");
+    await repo.registrarFalhaLogin("tenant-a", "usr-1", 5, "2026-10-14T12:15:00.000Z");
+    expect(sql.transacoes).toEqual(["tenant-a", "tenant-a"]);
     let u = await repo.buscarPorId("tenant-a", "usr-1");
     expect(u?.falhasLogin).toBe(5);
     expect(u?.bloqueadoAte).toBe("2026-10-14T12:15:00.000Z");
 
-    await repo.registrarSucessoLogin("usr-1");
+    await repo.registrarSucessoLogin("tenant-a", "usr-1");
     u = await repo.buscarPorId("tenant-a", "usr-1");
     expect(u?.falhasLogin).toBe(0);
     expect(u?.bloqueadoAte).toBeNull();
   });
+
+  it("o tenant de outro usuário não altera nada", async () => {
+    const sql = new SqlFalso();
+    const repo = new UsuariosPostgres(sql);
+    await repo.criar(usuario());
+    await repo.registrarFalhaLogin("tenant-b", "usr-1", 5, "2026-10-14T12:15:00.000Z");
+    const u = await repo.buscarPorId("tenant-a", "usr-1");
+    expect(u?.falhasLogin).toBe(0);
+  });
 });
 
 describe("SessoesPostgres", () => {
-  it("consulta a sessão pelo HASH do token, nunca pelo token em texto", async () => {
+  it("cria a sessão em transação com o tenant e consulta pelo HASH do token", async () => {
     const sql = new SqlFalso();
     const sessoes = new SessoesPostgres(sql);
-    await sessoes.criar({
-      id: "ses-1",
-      tenantId: "tenant-a",
-      usuarioId: "usr-1",
-      papel: "operador",
-      tokenHash: "hash-do-token",
-      expiraEm: "2026-10-14T13:00:00.000Z",
-    });
-    await sessoes.buscarPorTokenHash("hash-do-token");
+    await sessoes.criar(criarSessao);
+    expect(sql.transacoes).toEqual(["tenant-a"]);
 
+    await sessoes.buscarPorTokenHash("hash-do-token");
     const busca = sql.queries.at(-1)?.sql ?? "";
     expect(busca).toContain("token_hash = $1");
     expect(busca).not.toContain("hash-do-token");
+    // A consulta pelo token é a ÚNICA leitura sem contexto de tenant.
+    expect(sql.transacoes).toEqual(["tenant-a"]);
   });
 
   it("devolve o papel do usuário e os dados da sessão", async () => {
@@ -219,15 +245,7 @@ describe("SessoesPostgres", () => {
     const usuarios = new UsuariosPostgres(sql);
     const sessoes = new SessoesPostgres(sql);
     await usuarios.criar(usuario({ papel: "fiscal" }));
-    await sessoes.criar({
-      id: "ses-1",
-      tenantId: "tenant-a",
-      usuarioId: "usr-1",
-      papel: "fiscal",
-      tokenHash: "h1",
-      expiraEm: "2026-10-14T13:00:00.000Z",
-      ip: "10.0.0.1",
-    });
+    await sessoes.criar({ ...criarSessao, papel: "fiscal", ip: "10.0.0.1" });
 
     const s = await sessoes.buscarPorTokenHash("h1");
     expect(s).toEqual({
@@ -240,36 +258,31 @@ describe("SessoesPostgres", () => {
     });
   });
 
-  it("revogação é condicional a revogada_em IS NULL (logout simultâneo não sobrescreve)", async () => {
+  it("revogação é condicional a revogada_em IS NULL e passa pelo tenant", async () => {
     const sql = new SqlFalso();
     const sessoes = new SessoesPostgres(sql);
-    await sessoes.criar({
-      id: "ses-1",
-      tenantId: "tenant-a",
-      usuarioId: "usr-1",
-      papel: "operador",
-      tokenHash: "h1",
-      expiraEm: "2026-10-14T13:00:00.000Z",
-    });
-    await sessoes.revogar("ses-1");
+    await sessoes.criar(criarSessao);
+    await sessoes.revogar("tenant-a", "ses-1");
     const update = sql.queries.at(-1)?.sql ?? "";
     expect(update).toContain("revogada_em IS NULL");
+    expect(update).toContain("WHERE id = $2");
+    expect(sql.transacoes.at(-1)).toBe("tenant-a");
   });
 
-  it("revoga todas as sessões do usuário", async () => {
+  it("revoga todas as sessões do usuário, apenas do tenant informado", async () => {
     const sql = new SqlFalso();
     const sessoes = new SessoesPostgres(sql);
     for (const id of ["ses-1", "ses-2"]) {
-      await sessoes.criar({
-        id,
-        tenantId: "tenant-a",
-        usuarioId: "usr-1",
-        papel: "operador",
-        tokenHash: `h-${id}`,
-        expiraEm: "2026-10-14T13:00:00.000Z",
-      });
+      await sessoes.criar({ ...criarSessao, id, tokenHash: `h-${id}` });
     }
-    await sessoes.revogarTodasDoUsuario("usr-1");
+    await sessoes.revogarTodasDoUsuario("tenant-a", "usr-1");
     expect(sql.sessoes.every((s) => s["revogada_em"] === "agora")).toBe(true);
+
+    // Outro tenant: nada é revogado.
+    const sql2 = new SqlFalso();
+    const s2 = new SessoesPostgres(sql2);
+    await s2.criar(criarSessao);
+    await s2.revogarTodasDoUsuario("tenant-b", "usr-1");
+    expect(sql2.sessoes.every((x) => x["revogada_em"] === null)).toBe(true);
   });
 });

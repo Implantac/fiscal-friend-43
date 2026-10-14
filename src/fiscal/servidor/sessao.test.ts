@@ -251,9 +251,18 @@ describe("sessão — resolução de contexto", () => {
     await comUsuario(deps);
     const a = await login(deps);
     const b = await login(deps);
-    await encerrarTodasAsSessoes(deps, "usr-1");
+    await encerrarTodasAsSessoes(deps, TENANT, "usr-1");
     expect(await resolverContexto(deps, a.token, AGORA)).toBeNull();
     expect(await resolverContexto(deps, b.token, AGORA)).toBeNull();
+  });
+
+  it("encerrar todas as sessões de OUTRO tenant não afeta as daqui", async () => {
+    const deps = montar();
+    await comUsuario(deps);
+    const a = await login(deps);
+    await encerrarTodasAsSessoes(deps, "tenant-b", "usr-1");
+    // A sessão continua válida: a revogação em massa exige o tenant certo.
+    expect(await resolverContexto(deps, a.token, AGORA)).not.toBeNull();
   });
 });
 

@@ -340,6 +340,37 @@ describe("schema: restrições de integridade", () => {
     expect(sql).toContain("char_length(uf) = 2");
   });
 
+  // ------------------------------------------------------------------------
+  // RLS: política de `sessoes` (exceção deliberada, NÃO exercitável no emulador)
+  // ------------------------------------------------------------------------
+  // `pg-mem` não implementa Row-Level Security. A política está no migration e
+  // é verificada aqui de forma ESTÁTICA — o que não substitui a validação contra
+  // um Postgres real, e por isso a limitação continua registrada no topo deste
+  // arquivo e em docs/banco-de-dados.md.
+  // ------------------------------------------------------------------------
+  it("sessoes: leitura sem contexto de tenant, escrita sempre com tenant", () => {
+    const sql = readFileSync(MIGRACAO, "utf8");
+
+    // A política de leitura permite `tenant_atual() IS NULL` — é o que torna o
+    // login possível: o token de sessão é a credencial e o tenant ainda não é
+    // conhecido no momento da consulta.
+    expect(sql).toContain("CREATE POLICY sessoes_leitura_token ON sessoes");
+    expect(sql).toContain("USING (tenant_id = tenant_atual() OR tenant_atual() IS NULL)");
+
+    // Toda escrita exige o contexto de tenant: revogar a sessão de outro tenant
+    // é o dano concreto que a política precisa impedir.
+    expect(sql).toContain("CREATE POLICY sessoes_escrita_tenant ON sessoes");
+    expect(sql).toContain("CREATE POLICY sessoes_atualiza_tenant ON sessoes");
+    expect(sql).toContain("CREATE POLICY sessoes_remove_tenant ON sessoes");
+    expect(
+      sql.match(/WITH CHECK \(tenant_id = tenant_atual\(\)\)/g)?.length ?? 0,
+    ).toBeGreaterThanOrEqual(2);
+
+    // `sessoes` continua com RLS habilitado E forçado.
+    expect(sql).toContain("ALTER TABLE sessoes ENABLE ROW LEVEL SECURITY");
+    expect(sql).toContain("ALTER TABLE sessoes FORCE ROW LEVEL SECURITY");
+  });
+
   it("certificado exige período de validade coerente", () => {
     criarBase();
     const sql = `INSERT INTO certificados_digitais

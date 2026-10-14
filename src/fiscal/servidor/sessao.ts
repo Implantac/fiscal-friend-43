@@ -96,14 +96,19 @@ export async function autenticar(
   const senhaOk = await verificarSenha(entrada.senha, usuario.hashSenha);
   if (!senhaOk) {
     const novo = registrarFalhaLogin(estado, entrada.agora);
-    await deps.usuarios.registrarFalhaLogin(usuario.id, novo.falhas, novo.bloqueadoAte);
+    await deps.usuarios.registrarFalhaLogin(
+      usuario.tenantId,
+      usuario.id,
+      novo.falhas,
+      novo.bloqueadoAte,
+    );
     if (loginBloqueado(novo, entrada.agora)) {
       throw new UsuarioBloqueado(segundosRestantesBloqueio(novo, entrada.agora));
     }
     throw new CredencialInvalida();
   }
 
-  await deps.usuarios.registrarSucessoLogin(usuario.id);
+  await deps.usuarios.registrarSucessoLogin(usuario.tenantId, usuario.id);
 
   const { token, tokenHash } = gerarTokenSessao();
   const expiraEm = new Date(
@@ -167,15 +172,18 @@ export async function encerrarSessao(deps: DependenciasSessao, token: string): P
   if (!token) return;
   const sessao = await deps.sessoes.buscarPorTokenHash(hashToken(token));
   if (!sessao || sessao.revogadaEm) return;
-  await deps.sessoes.revogar(sessao.id);
+  // O tenant só é conhecido AGORA, depois de a sessão ser encontrada. É ele que
+  // autoriza a revogação — a política de RLS de `sessoes` exige o contexto.
+  await deps.sessoes.revogar(sessao.tenantId, sessao.id);
 }
 
 /** Encerra todas as sessões de um usuário (ex.: troca de senha, desativação). */
 export async function encerrarTodasAsSessoes(
   deps: DependenciasSessao,
+  tenantId: string,
   usuarioId: string,
 ): Promise<void> {
-  await deps.sessoes.revogarTodasDoUsuario(usuarioId);
+  await deps.sessoes.revogarTodasDoUsuario(tenantId, usuarioId);
 }
 
 /**

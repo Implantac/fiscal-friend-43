@@ -40,6 +40,12 @@ Detalhes: [`docs/modelo-dados.md`](docs/modelo-dados.md) ·
   por senha), comparação em tempo constante, bloqueio após 5 falhas.
 - **Repositório real** (`src/fiscal/persistencia-postgres.ts`) com numeração
   atômica em uma única instrução e zero interpolação de SQL.
+- **Conexão Postgres** (`src/fiscal/servidor/conexao-postgres.ts`) contra o
+  Lovable Cloud via `SUPABASE_DB_URL`. A conexão é feita como o role `postgres`,
+  **não** como `service_role`: `service_role` tem `BYPASSRLS` e anularia o
+  isolamento por tenant. Com `FISCAL_PERSISTENCIA=auto` (padrão) o sistema usa
+  Postgres quando há conexão e memória em desenvolvimento — e recusa memória em
+  produção em vez de fingir que persiste.
 - **Camada HTTP de sessão** (`src/fiscal/servidor/`): token opaco em cookie
   `HttpOnly` + `SameSite=Lax` + `Secure` em produção, apenas o hash do token
   persistido, bloqueio progressivo após 5 falhas, resposta genérica a credencial
@@ -51,11 +57,12 @@ Detalhes: [`docs/modelo-dados.md`](docs/modelo-dados.md) ·
 Detalhes: [`docs/banco-de-dados.md`](docs/banco-de-dados.md) e
 [`docs/seguranca-multiempresa.md`](docs/seguranca-multiempresa.md).
 
-> **Sessão em desenvolvimento.** Sem `DATABASE_URL`, a sessão usa repositório em
-> memória do processo (`FISCAL_PERSISTENCIA=memoria`, recusado em produção):
-> reiniciar o servidor derruba todas as sessões. Defina `DEV_AUTH_EMAIL` e
-> `DEV_AUTH_SENHA` para criar o usuário de desenvolvimento — não existe senha
-> padrão no código. Autenticar **não** é autorizar documento fiscal.
+> **Sessão em desenvolvimento.** Sem `SUPABASE_DB_URL`/`DATABASE_URL`, a sessão
+> usa repositório em memória do processo (`FISCAL_PERSISTENCIA=auto`, e `memoria`
+> explícito é recusado em produção): reiniciar o servidor derruba todas as
+> sessões. Defina `DEV_AUTH_EMAIL` e `DEV_AUTH_SENHA` para criar o usuário de
+> desenvolvimento — não existe senha padrão no código. Autenticar **não** é
+> autorizar documento fiscal.
 
 ## O que este projeto não é
 

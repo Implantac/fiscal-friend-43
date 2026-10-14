@@ -85,7 +85,54 @@ Implementa as mesmas portas do domínio (`RepositorioDocumentos`,
 | Numeração atômica | `INSERT … ON CONFLICT DO UPDATE … RETURNING` em **uma** instrução (sem SELECT-then-UPDATE) |
 | Concorrência otimista | `ON CONFLICT … DO UPDATE … WHERE atualizado_em <= EXCLUDED.atualizado_em` |
 
-## 5. Como subir localmente
+## 5. Lovable Cloud (onde o projeto roda)
+
+O backend do Lovable Cloud é Supabase — Postgres gerenciado. A conexão entra por
+`SUPABASE_DB_URL`, que o Lovable injeta no servidor; `DATABASE_URL` é a
+alternativa genérica (banco próprio, CI, deploy fora do Lovable).
+
+```bash
+# 1. Ligar o Cloud no painel do Lovable e copiar as variáveis para .env.local
+#    (o Lovable já injeta SUPABASE_DB_URL no servidor)
+
+# 2. Aplicar a migração (uma vez, por ambiente)
+psql "$SUPABASE_DB_URL" -f db/migrations/001_fundacao.sql
+
+# 3. Aplicação — sem SUPABASE_DB_URL ela cai em repositório em memória
+npm run dev
+```
+
+### Por que a conexão é feita como `postgres`, não como `service_role`
+
+O role `service_role` do Supabase tem **`BYPASSRLS`**: as políticas de isolamento
+por tenant do migration 001 seriam ignoradas por completo, e o isolamento passaria
+a depender exclusivamente de o código não errar o filtro. A conexão direta como
+`postgres` **respeita** RLS — e o migration usa `FORCE ROW LEVEL SECURITY`, que
+sujeita até o dono da tabela à política.
+
+Consequência prática: a chave secreta do Supabase **não** deve aparecer em
+`.env.local` deste projeto, e nunca com prefixo `VITE_` (o Vite a embutiria no
+navegador). Se um dia for necessário acesso privilegiado a partir do navegador, o
+caminho é uma Edge Function que valide a sessão — não a chave no cliente.
+
+### Pooler e `SET LOCAL`
+
+`app.tenant_id` é fixado com `set_config('app.tenant_id', $1, true)` — o terceiro
+argumento `true` dá ao valor escopo de transação, que é exatamente o que
+`SET LOCAL` faz e o que o pooler do Supabase em modo transação preserva.
+`SET LOCAL app.tenant_id = $1` **não funciona**: Postgres não aceita parâmetro
+vinculado em utility statement, e a saída ingênua seria concatenar o tenant no
+texto do SQL.
+
+### A exceção deliberada na política de `sessoes`
+
+`sessoes` é a fronteira de autenticação, não a fronteira de dados de tenant: o
+token de sessão é a própria credencial, e para saber a qual tenant ele pertence
+é preciso primeiro **ler** a sessão. A política portanto permite leitura sem
+contexto de tenant e exige contexto em toda escrita. O raciocínio completo está
+comentado no próprio migration, junto às compensações.
+
+## 6. Como subir localmente
 
 ```bash
 # 1. Postgres (qualquer distribuição)
@@ -101,17 +148,21 @@ cp .env.example .env.local   # e preencha
 npm run dev
 ```
 
-## 6. O que falta para operar
+## 7. O que falta para operar
 
-1. Driver de conexão (`pg`/`postgres.js`) e pool — decisão de hospedagem.
+1. **Validar a conexão contra uma instância real.** O executor
+   (`src/fiscal/servidor/conexao-postgres.ts`) está implementado e testado com
+   pool falso, mas nenhum Postgres foi provisionado neste ambiente: SSL, pooler,
+   latência e a política de RLS de `sessoes` continuam não verificados.
 2. Migrações automatizadas no start (hoje são aplicadas via `psql`).
 3. Backup, retenção e descarte (Etapa 7).
 4. TLS em trânsito e criptografia em repouso (Etapa 7).
 
-A camada HTTP de login/sessão/cookie **existe desde a Etapa 2.6**
-(`src/fiscal/servidor/`): `usuarios` e `sessoes` já têm repositório Postgres
-implementado e testado (zero interpolação, hash no formato validado, revogação
-condicional). O que falta é o item 1 — sem driver e sem `DATABASE_URL`, a
-inicialização falha com mensagem explícita em vez de usar repositório em memória.
+A camada HTTP de login/sessão/cookie existe desde a Etapa 2.6
+(`src/fiscal/servidor/`) e desde a Etapa 2.7 escolhe sozinha onde persistir:
+Postgres quando há string de conexão, memória em desenvolvimento, e **falha alto**
+se alguém pedir memória em produção. O que não aconteceu ainda é uma única
+consulta real contra o banco do Lovable Cloud.
 
-Até 1–5 existirem, o sistema **não** está apto a dados reais de contribuintes.
+Até os itens acima existirem, o sistema **não** está apto a dados reais de
+contribuintes.
