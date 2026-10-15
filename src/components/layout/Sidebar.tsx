@@ -22,23 +22,24 @@ import {
   Grid3x3,
   FlaskConical,
   LifeBuoy,
+  NotebookPen,
   Gauge,
   Rocket,
-  NotebookPen,
   FolderOpen,
 } from "lucide-react";
+import { useSimulator } from "@/blueprint/SimulatorProvider";
 
 const secoes = [
   {
     titulo: "Módulos fiscais",
     itens: [
       { to: "/", label: "Manifestação", desc: "Notas recebidas", icon: Inbox },
-      { to: "/nfe", label: "NF-e 55", desc: "Produtos", icon: FileText },
-      { to: "/nfce", label: "NFC-e 65", desc: "Varejo / PDV", icon: ShoppingCart },
-      { to: "/nfse", label: "NFS-e", desc: "Serviços", icon: Briefcase },
-      { to: "/cte", label: "CT-e 57", desc: "Carga", icon: Truck },
-      { to: "/cte-os", label: "CT-e OS 67", desc: "Pessoas e valores", icon: Bus },
-      { to: "/mdfe", label: "MDF-e 58", desc: "Manifesto", icon: ClipboardList },
+      {
+        to: "/cobertura",
+        label: "Cobertura",
+        desc: "O que cada modelo faz de verdade",
+        icon: Grid3x3,
+      },
       {
         to: "/documentos",
         label: "Documentos",
@@ -60,9 +61,21 @@ const secoes = [
     ],
   },
   {
-    titulo: "Laboratórios",
+    titulo: "Simuladores",
     itens: [
-      { to: "/debugger", label: "Debugger", desc: "Regras e diagnóstico", icon: Bug },
+      { to: "/nfe", label: "NF-e 55", desc: "Produtos", icon: FileText },
+      { to: "/nfce", label: "NFC-e 65", desc: "Varejo / PDV", icon: ShoppingCart },
+      { to: "/nfse", label: "NFS-e", desc: "Serviços", icon: Briefcase },
+      { to: "/cte", label: "CT-e 57", desc: "Carga", icon: Truck },
+      { to: "/cte-os", label: "CT-e OS 67", desc: "Pessoas e valores", icon: Bus },
+      { to: "/mdfe", label: "MDF-e 58", desc: "Manifesto", icon: ClipboardList },
+    ],
+    /** Só aparece com o Modo Desenvolvedor ligado. */
+    somenteDev: true,
+  },
+  {
+    titulo: "Suporte",
+    itens: [
       { to: "/cstat", label: "Rejeições", desc: "Causa e correção", icon: ShieldAlert },
       {
         to: "/conferir-xml",
@@ -76,6 +89,12 @@ const secoes = [
         desc: "XML + descrição do erro",
         icon: FileSearch,
       },
+    ],
+  },
+  {
+    titulo: "Engenharia",
+    itens: [
+      { to: "/debugger", label: "Debugger", desc: "Regras e diagnóstico", icon: Bug },
       { to: "/xml-lab", label: "XML Lab", desc: "Tag → campo → regra", icon: Code2 },
       { to: "/regressao", label: "Regressão", desc: "Casos de teste", icon: FlaskConical },
       { to: "/suporte", label: "Modo suporte", desc: "Roteiro do analista", icon: LifeBuoy },
@@ -84,6 +103,8 @@ const secoes = [
       { to: "/governanca", label: "Governança", desc: "Revisão e base oficial", icon: ShieldCheck },
       { to: "/math-lab", label: "Cálculos", desc: "Fórmula e resultado", icon: Calculator },
     ],
+    /** Só aparece com o Modo Desenvolvedor ligado. */
+    somenteDev: true,
   },
   {
     titulo: "Aprendizado",
@@ -94,6 +115,10 @@ const secoes = [
 ] as const;
 
 export function Sidebar() {
+  const { devMode } = useSimulator();
+
+  const visiveis = secoes.filter((s) => devMode || !("somenteDev" in s && s.somenteDev));
+
   return (
     <nav
       aria-label="Navegação principal"
@@ -105,7 +130,7 @@ export function Sidebar() {
       </div>
 
       <div className="flex-1 space-y-4 px-2 pb-6">
-        {secoes.map((s) => (
+        {visiveis.map((s) => (
           <div key={s.titulo}>
             <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-nav-muted">
               {s.titulo}
@@ -129,6 +154,12 @@ export function Sidebar() {
             </ul>
           </div>
         ))}
+
+        {devMode ? null : (
+          <p className="px-3 pt-2 text-[11px] leading-relaxed text-nav-muted">
+            Simuladores e ferramentas de engenharia aparecem com o Modo Desenvolvedor ativado.
+          </p>
+        )}
       </div>
     </nav>
   );

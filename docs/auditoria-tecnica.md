@@ -567,10 +567,93 @@ motor de regras versionado com rastreabilidade até fonte oficial.
 - cadastro de empresa e estabelecimento em produção (hoje só existe o arranque
   de desenvolvimento, e sem ele a criação de documento é recusada);
 - MFA e rate limiting por IP (hoje o bloqueio é por conta);
-- regenerar `bun.lock` (`bun install`) — está dessincronizado desde a Etapa 2.5;
+- regenerar `bun.lock` (`bun install`) — está dessincronizado desde a Etapa 2.5
+  e agora tem 24 pacotes a mais que `package.json` (a Etapa 2.9 os removeu do
+  `package.json`, mas o lock não pôde ser regenerado: este ambiente não tem
+  `bun`);
 - backup, retenção, TLS e criptografia em repouso (Etapa 7).
 
-### 9.12 Relatório de fim de etapa — 2.7 (modelo obrigatório)
+### 9.12 Etapa 2.9 — enxugamento de portfólio (2026-10-15)
+
+Análise completa em `docs/analise-portfolio-modulos.md`. O usuário escolheu o
+caminho **B**: cortar o morto e reorganizar a navegação.
+
+| Item | Situação |
+|---|---|
+| Matriz de cobertura por modelo (`src/knowledge/cobertura.ts`) | implementado + 9 testes |
+| Página `/cobertura` (`src/routes/cobertura.tsx`) | implementado |
+| 24 dependências de produção removidas (55 → 31) | verificado: zero imports |
+| 27 componentes de `src/components/ui/` removidos | verificado: zero imports |
+| Seções Engenharia e Simuladores atrás do Modo Desenvolvedor | implementado |
+| Seção Suporte (cstat, conferir-xml, diagnostico-ia) sempre visível | implementado |
+| Fusão das 6 telas de emissão em 1 simulador | **não executado** — ver abaixo |
+
+**Correção de um número que autorizaria a mudança errada.** A primeira versão
+da análise afirmava ~1.900 LOC duplicadas entre as 6 telas de emissão. O número
+vinha de um diff que removia caracteres alfabéticos e portanto contava
+fechamentos de JSX como linhas idênticas. Medindo direito: 73–125 linhas em
+comum entre pares, 69 no núcleo das seis (~44 sendo fechamentos e pontuação).
+A duplicação real é ~400 linhas de cromo compartilhado. **A fusão foi
+abandonada** porque destruiria campos fiscalmente distintos em troca de ~15%
+das linhas.
+
+**Decisão de UX equivalente:** em vez de fundir, as 6 telas saíram do menu
+principal e passaram a ser alcançadas por `/cobertura`, que declara capacidade
+por capacidade o que cada modelo faz de verdade. O menu principal deixou de
+prometer seis emissões. Nenhuma rota foi apagada — as 22 respondem HTTP 200.
+
+**Risco residual.** O gate de navegação foi verificado por SSR (dev desligado =
+seções ausentes do HTML servido), mas **não foi verificado em navegador real**:
+o comportamento de ligar o Modo Desenvolvedor e ver as seções aparecerem é
+inferido do código, não observado.
+
+### 9.13 Relatório de fim de etapa — 2.9 (modelo obrigatório)
+
+**Arquivos alterados.** Removidos: 27 arquivos em `src/components/ui/` e 24
+entradas em `package.json`. Novos: `src/knowledge/cobertura.ts`,
+`src/knowledge/cobertura.test.ts`, `src/routes/cobertura.tsx`. Alterados:
+`src/components/layout/Sidebar.tsx` (seções condicionadas a `devMode`),
+`src/routeTree.gen.ts` (regenerado pelo plugin), `CHANGELOG.md`,
+`docs/auditoria-tecnica.md`, `docs/analise-portfolio-modulos.md`.
+
+**O que foi implementado.** Matriz de cobertura por modelo com três níveis de
+maturidade, testada para não poder mentir; página que a apresenta; remoção
+verificada de 24 dependências e 27 componentes sem uso; navegação reorganizada
+com duas seções atrás do Modo Desenvolvedor.
+
+**O que foi corrigido.** Um número errado na própria análise que autorizaria a
+mudança. A fusão das telas foi abandonada depois de medir.
+
+**Testes executados e resultado.** `tsc --noEmit` 0 erros; `eslint` 0 erros e 6
+warnings `react-refresh` pré-existentes (eram 10, 4 estavam nos componentes
+removidos); `vitest` **255 testes em 19 arquivos**, todos passando; `vite build`
+exit 0 com bundle de cliente limpo de `createPool`, `node:net`, `node:tls`,
+`set_config`, `ff_sessao`, `valor_total_centavos` e `INSERT INTO`; fumaça HTTP
+do fluxo autenticado real 8/8 passos verdes.
+
+**Regras fiscais e fontes.** Nenhuma nova. Nenhuma fonte oficial consultada.
+
+**Integrações reais x simuladas.** Nenhuma integração fiscal. Nenhuma mudança
+nessa frente.
+
+**Homologações pendentes.** Regenerar `bun.lock`; verificar em navegador real
+que ligar o Modo Desenvolvedor revela as seções Engenharia e Simuladores;
+confirmar que os 24 pacotes removidos não são dependência transitiva exigida
+por algum dos 31 restantes (a remoção foi validada por imports, não por
+resolução de dependências).
+
+**Limitações conhecidas.** `node_modules` foi reinstalado com `npm install`
+neste ambiente, que declara bun. Nenhuma conexão com Postgres real. Nenhum
+documento autorizado por serviço fiscal. A fusão das telas de simulação e a
+extração do cromo compartilhado continuam pendentes.
+
+**Próximas prioridades.** Extrair o cromo compartilhado das 6 telas de emissão
+(`head.meta`, par `ExportarDocumento`/`ResultadoAlert`, grid) em um componente
+reutilizável — ~400 linhas, risco baixo, sem tocar nos campos fiscais; e
+retomar a validação contra Postgres real, que continua sendo o elo não provado.
+
+
+### 9.14 Relatório de fim de etapa — 2.7 (modelo obrigatório)
 
 **Arquivos alterados.** Novos: `src/fiscal/servidor/{conexao-postgres,ambiente}.ts`
 e seus dois arquivos de teste. Modificados: `src/fiscal/servidor/sessao.functions.ts`,

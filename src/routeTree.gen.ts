@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AcademiaRouteImport } from './routes/academia'
 import { Route as CenariosRouteImport } from './routes/cenarios'
+import { Route as CoberturaRouteImport } from './routes/cobertura'
 import { Route as ComeceAquiRouteImport } from './routes/comece-aqui'
 import { Route as ConferirXmlRouteImport } from './routes/conferir-xml'
 import { Route as ConhecimentoRouteImport } from './routes/conhecimento'
@@ -51,6 +52,11 @@ const AcademiaRoute = AcademiaRouteImport.update({
 const CenariosRoute = CenariosRouteImport.update({
   id: '/cenarios',
   path: '/cenarios',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CoberturaRoute = CoberturaRouteImport.update({
+  id: '/cobertura',
+  path: '/cobertura',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ComeceAquiRoute = ComeceAquiRouteImport.update({
@@ -183,6 +189,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/academia': typeof AcademiaRoute
   '/cenarios': typeof CenariosRoute
+  '/cobertura': typeof CoberturaRoute
   '/comece-aqui': typeof ComeceAquiRoute
   '/conferir-xml': typeof ConferirXmlRoute
   '/conhecimento': typeof ConhecimentoRoute
@@ -213,6 +220,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/academia': typeof AcademiaRoute
   '/cenarios': typeof CenariosRoute
+  '/cobertura': typeof CoberturaRoute
   '/comece-aqui': typeof ComeceAquiRoute
   '/conferir-xml': typeof ConferirXmlRoute
   '/conhecimento': typeof ConhecimentoRoute
@@ -244,6 +252,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/academia': typeof AcademiaRoute
   '/cenarios': typeof CenariosRoute
+  '/cobertura': typeof CoberturaRoute
   '/comece-aqui': typeof ComeceAquiRoute
   '/conferir-xml': typeof ConferirXmlRoute
   '/conhecimento': typeof ConhecimentoRoute
@@ -276,6 +285,7 @@ export interface FileRouteTypes {
     | '/'
     | '/academia'
     | '/cenarios'
+    | '/cobertura'
     | '/comece-aqui'
     | '/conferir-xml'
     | '/conhecimento'
@@ -306,6 +316,7 @@ export interface FileRouteTypes {
     | '/'
     | '/academia'
     | '/cenarios'
+    | '/cobertura'
     | '/comece-aqui'
     | '/conferir-xml'
     | '/conhecimento'
@@ -336,6 +347,7 @@ export interface FileRouteTypes {
     | '/'
     | '/academia'
     | '/cenarios'
+    | '/cobertura'
     | '/comece-aqui'
     | '/conferir-xml'
     | '/conhecimento'
@@ -367,6 +379,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AcademiaRoute: typeof AcademiaRoute
   CenariosRoute: typeof CenariosRoute
+  CoberturaRoute: typeof CoberturaRoute
   ComeceAquiRoute: typeof ComeceAquiRoute
   ConferirXmlRoute: typeof ConferirXmlRoute
   ConhecimentoRoute: typeof ConhecimentoRoute
@@ -415,6 +428,13 @@ declare module '@tanstack/react-router' {
       path: '/cenarios'
       fullPath: '/cenarios'
       preLoaderRoute: typeof CenariosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cobertura': {
+      id: '/cobertura'
+      path: '/cobertura'
+      fullPath: '/cobertura'
+      preLoaderRoute: typeof CoberturaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/comece-aqui': {
@@ -599,6 +619,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AcademiaRoute: AcademiaRoute,
   CenariosRoute: CenariosRoute,
+  CoberturaRoute: CoberturaRoute,
   ComeceAquiRoute: ComeceAquiRoute,
   ConferirXmlRoute: ConferirXmlRoute,
   ConhecimentoRoute: ConhecimentoRoute,

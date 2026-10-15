@@ -3,6 +3,100 @@
 Todas as mudanças relevantes deste repositório são registradas aqui.
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [Não publicado] — 2026-10-15 (Etapa 2.9 — enxugamento de portfólio)
+
+Decisão de produto: `docs/analise-portfolio-modulos.md`. O usuário escolheu o
+caminho **B** (cortar o morto + reorganizar a navegação).
+
+### Adicionado
+
+- `src/knowledge/cobertura.ts` — matriz de cobertura por modelo de documento.
+  Cada capacidade declara o que é: `estrutural` (código real e testado, sem
+  integração provada), `simulado` (tela de demonstração que **não emite
+  documento válido**) ou `documentado` (só descrição). Nenhuma entrada declara
+  prontidão de produção. As pendências do catálogo são **preservadas**, não
+  sobrescritas.
+- `src/knowledge/cobertura.test.ts` — 9 testes. Trava a honestidade da matriz:
+  transmissão e assinatura nunca podem aparecer como prontas, e nenhum modelo
+  pode alegar documento autorizado.
+- `src/routes/cobertura.tsx` — página `/cobertura`: resumo por nível e ficha por
+  modelo, com link para a simulação e a lista de pendências. Inclui os modelos
+  previstos e ainda não construídos (NF3e, NFCom, BP-e, DERE).
+
+### Removido — 24 dependências e 27 componentes sem uso
+
+Verificado antes de remover: **zero** imports fora de `src/components/ui/`, zero
+referências por string em rotas, features, `src/fiscal`, `src/lib` e testes, e
+zero imports cruzados entre componentes de `ui/`.
+
+- 15 pacotes Radix: `alert-dialog`, `aspect-ratio`, `avatar`, `collapsible`,
+  `context-menu`, `hover-card`, `menubar`, `navigation-menu`, `popover`,
+  `progress`, `radio-group`, `slider`, `toggle`, `toggle-group`, `tooltip`.
+- 8 pacotes de terceiros: `recharts`, `embla-carousel-react`, `vaul`,
+  `react-resizable-panels`, `react-day-picker`, `react-hook-form`,
+  `@hookform/resolvers`, `input-otp`.
+- `date-fns` — zero imports em todo o `src/`.
+- 27 arquivos de `src/components/ui/`, cada um importado por nada.
+- Produção: 55 → 31 dependências (−44%).
+
+### Alterado — navegação
+
+- Seções **Engenharia** (8 itens) e **Simuladores** (6 itens) só aparecem com o
+  **Modo Desenvolvedor** ativado — interruptor que já existia no cabeçalho.
+- Nova seção **Suporte** (Rejeições, Conferir XML, Diagnóstico com IA) sempre
+  visível: são ferramentas de quem atende cliente, não de engenharia.
+- **Módulos fiscais** passou a ter 3 entradas (Manifestação, Cobertura,
+  Documentos) em vez de 8. Menu principal: 27 → 14 entradas (22 com dev ligado).
+- Nenhuma rota foi apagada. Todas as 22 continuam respondendo HTTP 200.
+
+### Corrigido — número errado na análise que autorizou a mudança
+
+A primeira versão de `docs/analise-portfolio-modulos.md` afirmava "~1.900 LOC de
+duplicação" entre as 6 telas de emissão. O número vinha de um diff que removia
+caracteres alfabéticos e contava tags de fechamento de JSX como linhas
+idênticas. Medindo corretamente: 73–125 linhas em comum entre pares, 69 no
+núcleo das seis (das quais ~44 são fechamentos e pontuação). A duplicação real
+é ~400 linhas de cromo, não 1.900.
+
+**Consequência: a fusão das 6 telas em 1 simulador parametrizado não foi
+executada.** Os campos são fiscalmente distintos (itens/NCM/CFOP/frete em NF-e;
+tomador/serviço/tributação municipal em NFS-e; arrastar-e-soltar XML e
+composição de frete em CT-e; abas de modalidade e malotes em CT-e OS;
+documentos manifestados e percurso em MDF-e; frente de caixa em NFC-e). Fundir
+destruiria o detalhe que dá valor ao catálogo em troca de ~15% das linhas.
+
+### Evidência
+
+- `tsc --noEmit`: 0 erros.
+- `eslint`: 0 erros, 6 warnings (todos `react-refresh` pré-existentes; eram 10,
+  4 estavam nos componentes removidos).
+- `vitest`: **255 testes em 19 arquivos**, todos passando (246 + 9 novos).
+- `vite build`: exit 0. Bundle do cliente sem `createPool`, `node:net`,
+  `node:tls`, `set_config`, `ff_sessao`, `valor_total_centavos` nem
+  `INSERT INTO`.
+- Fumaça HTTP contra o servidor de dev, fluxo autenticado real: 8/8 passos
+  verdes — recusa sem sessão, login com cookie `ff_sessao` HttpOnly,
+  `sessaoAtual`, `listarDocumentos`, `criarDocumento` (UUID real criado),
+  `avancarDocumento`, e recusa de cookie forjado.
+- Gate de navegação verificado por SSR: com dev desligado, "Engenharia",
+  "Regressão", "XML Lab", "Governança", "Debugger", "Qualidade", "Incidentes",
+  "Modo suporte", "Cálculos" e os 6 simuladores estão **ausentes** do HTML
+  servido; "Suporte" e "Cobertura" presentes.
+
+### Pendente — não resolvido nesta etapa
+
+- `bun.lock` continua **fora de sincronia** com `package.json`: faltavam
+  `pg-mem`, `pg` e `@types/pg` antes, e agora sobravam os 24 pacotes removidos.
+  Não foi regenerado porque `bun` não existe neste ambiente. Precisa de
+  `bun install` onde bun estiver disponível.
+- `node_modules` foi reinstalado com `npm install` neste ambiente; o projeto
+  declara bun (`bunfig.toml`, `minimumReleaseAge = 86400`).
+- A fusão das telas de simulação e a extração do cromo compartilhado
+  (`head.meta`, `ExportarDocumento`/`ResultadoAlert`, grid) **não** foram
+  feitas — ver "Corrigido" acima.
+- Nenhuma conexão com Postgres real foi feita. Nenhum documento foi autorizado
+  por serviço fiscal em qualquer ambiente.
+
 ## [Não publicado] — 2026-10-14 (Etapa 2.8)
 
 ### Adicionado — documentos fiscais reais, atrás de autenticação
