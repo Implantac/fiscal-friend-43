@@ -802,7 +802,61 @@ junto. Só a execução real resolve.
 do Lovable Cloud. Agora ela tem mais valor: cobre também a C5, que é o caminho
 da sessão.
 
-### 9.18 Etapa 2.13 — extração do cromo de emissão (2026-10-15)
+### 9.18 Etapa 2.14 — deliverables documentais (2026-10-15)
+
+Cinco documentos pedidos. **Três não existiam; dois existiam e estavam
+desatualizados.**
+
+| Documento | Situação anterior | Ação |
+|---|---|---|
+| Manual do desenvolvedor | inexistente | criado (220 linhas) |
+| Procedimento de atualização normativa | inexistente | criado (182 linhas) |
+| Relatório final de limitações | inexistente | criado (149 linhas) |
+| Mapa de integrações | existia, de 23/09, **zero menções a tenant** | revisado (107 → 142 linhas) |
+| Arquitetura | existia, atualizado na Etapa 2.5 | **mantido** — já descreve multi-tenant e Postgres |
+
+**A descoberta que mudou o escopo:** `docs/` já tinha `architecture.md`,
+`integration-map.md`, `modelo-dados.md`, `fiscal-assumptions.md` e
+`test-scenarios.md`. Dois dos cinco pedidos já existiam. Criar novos arquivos
+teria gerado duas versões da mesma verdade. `integration-map.md` foi revisado
+porque descrevia um **back-end Python separado que foi abandonado** — a divisão
+atual é front-end / servidor TanStack / provedor, e a revisão anterior não
+sabia que multi-tenant existia.
+
+### 9.19 Relatório de fim de etapa — 2.14 (modelo obrigatório)
+
+**Arquivos alterados.** Novos: `docs/manual-desenvolvedor.md`,
+`docs/atualizacao-normativa.md`, `docs/relatorio-limitacoes.md`. Alterado:
+`docs/integration-map.md`.
+
+**O que foi implementado.** Três documentos novos e a revisão de um quarto,
+todos escritos contra o código real — nenhuma afirmação que o repositório não
+sustente.
+
+**O que não foi implementado, e por quê.** Nenhum documento de arquitetura
+novo: `architecture.md` já estava atualizado desde a Etapa 2.5.
+
+**Testes executados e resultado.** Documentação não altera comportamento;
+gate inalterado e reverificado: `tsc` 0 erros; `eslint` 0 erros e 6 warnings;
+`vitest` **298 passando, 13 pulados**, 23 arquivos; `vite build` exit 0.
+
+**Regras fiscais e fontes.** Nenhuma nova. O relatório de limitações registra
+que **nenhuma documentação fiscal oficial foi consultada** — é a primeira coisa
+que precisa mudar antes de qualquer afirmação de conformidade.
+
+**Integrações reais x simuladas.** Nenhuma mudança. Os gateways seguem `Mock`.
+
+**Homologações pendentes.** As mesmas, e o relatório de limitações agora as
+lista em ordem de valor por esforço.
+
+**Limitações conhecidas.** O procedimento de atualização normativa **nunca foi
+executado** — nenhuma regra foi promovida de `candidata` a `validada`. Está
+escito no próprio documento.
+
+**Próximas prioridades.** Validação contra Postgres real; regenerar
+`bun.lock`.
+
+### 9.20 Etapa 2.13 — extração do cromo de emissão (2026-10-15)
 
 **A medição derrubou a estimativa de trabalho.** A estimativa era "~400 linhas
 de cromo compartilhado" nas seis telas de emissão. A medição real: o núcleo
@@ -827,7 +881,7 @@ extraído em componentes**.
 do botão e o wrapper `<Documented>`. Cada família tem o seu `docId` (`m2.*` a
 `m7.*`) e o seu texto; fundir apagaria documentação específica de módulo.
 
-### 9.19 Relatório de fim de etapa — 2.13 (modelo obrigatório)
+### 9.21 Relatório de fim de etapa — 2.13 (modelo obrigatório)
 
 **Arquivos alterados.** Novo: `src/components/blueprint/IconeTransmissao.tsx`,
 `src/components/blueprint/IconeTransmissao.test.tsx`. Alterados: as seis rotas de
@@ -856,7 +910,7 @@ dessincronizado.
 
 **Próximas prioridades.** Deliverables documentais faltantes.
 
-### 9.20 Etapa 2.12 — cabeçalhos de segurança (2026-10-15)
+### 9.22 Etapa 2.12 — cabeçalhos de segurança (2026-10-15)
 
 Motivado pela verificação do que está publicado em
 `fiscal-friend-43.lovable.app`: HSTS, `x-content-type-options` e
@@ -889,7 +943,7 @@ não a `Response`. O teste era sempre falso: nenhum header era aplicado e nenhum
 erro surgia. Os 11 testes de unidade passavam verdes sobre um middleware inerte
 — só a verificação contra servidor real pegou.
 
-### 9.21 Relatório de fim de etapa — 2.12 (modelo obrigatório)
+### 9.23 Relatório de fim de etapa — 2.12 (modelo obrigatório)
 
 **Arquivos alterados.** Novos: `src/lib/headers-seguranca.ts`,
 `src/lib/headers-seguranca.test.ts`. Alterado: `src/start.ts`.
@@ -921,7 +975,7 @@ possível com nonce.
 **Próximas prioridades.** Rodar a validação contra Postgres real, que continua
 sendo o elo não provado mais importante.
 
-### 9.22 Relatório de fim de etapa — 2.7 (modelo obrigatório)
+### 9.24 Relatório de fim de etapa — 2.7 (modelo obrigatório)
 
 **Arquivos alterados.** Novos: `src/fiscal/servidor/{conexao-postgres,ambiente}.ts`
 e seus dois arquivos de teste. Modificados: `src/fiscal/servidor/sessao.functions.ts`,

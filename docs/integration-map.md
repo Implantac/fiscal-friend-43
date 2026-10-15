@@ -1,8 +1,14 @@
 # Mapa de integração
 
-Este documento registra **para onde cada bloco de dados deve ir** quando a integração real for
-implementada. Nenhum nome de campo, endpoint ou código de provedor foi copiado de documentação
-oficial — o que existe aqui é a intenção de mapeamento, marcada como pendente de validação.
+> **Estado:** revisado em 2026-10-15 (Etapa 2.13). A revisão anterior era de
+> 23/09/2025 e ainda descrevia a arquitetura original, com back-end Python
+> separado. **A arquitetura mudou** — ver "Responsabilidades" abaixo. As
+> tabelas de mapeamento por módulo continuam válidas e foram mantidas.
+
+Este documento registra **para onde cada bloco de dados deve ir** quando a
+integração real for implementada. Nenhum nome de campo, endpoint ou código de
+provedor foi copiado de documentação oficial — o que existe aqui é a intenção
+de mapeamento, marcada como pendente de validação.
 
 ## Regra de leitura
 
@@ -12,20 +18,50 @@ oficial — o que existe aqui é a intenção de mapeamento, marcada como penden
 | Ilustrativo | Estrutura proposta pelo protótipo, coerente mas não confirmada |
 | Pendente de validação | Precisa ser conferido no manual da versão contratada antes de codificar |
 
-Neste momento **não há nenhuma entrada marcada como Validado**, porque nenhuma documentação
-oficial de TecnoSpeed, PlugNotas ou SEFAZ foi consultada durante a construção do protótipo.
+Neste momento **não há nenhuma entrada marcada como Validado**, porque nenhuma
+documentação oficial de TecnoSpeed, PlugNotas ou SEFAZ foi consultada durante a
+construção do protótipo.
+
+## Situação real em 2026-10-15
+
+**Nenhuma integração existe.** As portas `EmissaoGateway`
+(`src/simulation/emissao-gateway.ts`) e `FiscalGateway`
+(`src/simulation/fiscal-gateway.ts`) têm apenas implementação `Mock`. Não há
+chamada de transmissão, consulta, cancelamento, inutilização, manifestação ou
+download real. O que este documento descreve é **destino**, não estado.
 
 ## Responsabilidades
 
+A revisão de 23/09/2025 previa um back-end Python separado. **Isso foi
+abandonado:** um segundo back-end introduziria um segundo lugar para regra
+fiscal viver, e a arquitetura ficaria com duas fontes de verdade. A divisão
+atual é:
+
 | Camada | Responsabilidade |
 |--------|------------------|
-| Front-end | Coleta, validação de usabilidade, apresentação, distinção de tipos de falha |
-| Back-end Python | Montagem, assinatura, transmissão, persistência, regras fiscais versionadas |
-| TecnoSpeed | NF-e 55, NFC-e 65, CT-e 57, CT-e OS 67, MDF-e 58 (escopo previsto) |
-| PlugNotas | NFS-e (escopo previsto) |
+| Front-end (`src/routes/`, `src/components/`) | Coleta, validação de usabilidade, apresentação, distinção de tipos de falha. **Nunca** fala com provedor. |
+| Servidor (`src/fiscal/servidor/`) | Sessão, contexto de tenant, persistência, ciclo de vida, numeração, auditoria. **É aqui que a integração real entra.** |
+| Provedor (TecnoSpeed / PlugNotas) | NF-e 55, NFC-e 65, CT-e 57, CT-e OS 67, MDF-e 58 (escopo previsto) e NFS-e. Ainda não contratado. |
 
-O certificado digital, tokens e credenciais ficam exclusivamente no back-end. O front-end nunca os
-recebe, exibe ou armazena.
+O certificado digital, tokens e credenciais ficam exclusivamente no servidor.
+O front-end nunca os recebe, exibe ou armazena — e o bundle do cliente é
+verificado contra vazamento disso a cada build.
+
+### A dimensão que a revisão anterior não tinha: tenant
+
+Todo mapeamento abaixo agora precisa carregar **contexto de tenant**. O servidor
+abre a transação com `set_config('app.tenant_id', $1, true)` e o RLS do
+migration 001 garante que uma linha de tenant nunca seja visível para outro.
+Consequência para integração: **todo request ao provedor precisa ser
+correlacionado ao tenant de origem**, e a resposta precisa voltar para o mesmo
+contexto. Um documento transmitido não pode cair no tenant errado por
+confusão de conexão de pool.
+
+### Conexão com o banco
+
+`SUPABASE_DB_URL` (Lovable Cloud) ou `DATABASE_URL` (genérico), como papel
+`postgres` — **nunca** `service_role`, que tem `BYPASSRLS` e anularia o
+isolamento por tenant inteiro.
 
 ## Módulo 1 — Manifestação
 

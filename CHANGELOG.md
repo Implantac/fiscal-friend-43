@@ -3,6 +3,62 @@
 Todas as mudanças relevantes deste repositório são registradas aqui.
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [Não publicado] — 2026-10-15 (Etapa 2.14 — deliverables documentais)
+
+Cinco documentos pedidos. **Três não existiam; dois já existiam.**
+
+| Documento                             | Situação anterior                            | Ação                 |
+| ------------------------------------- | -------------------------------------------- | -------------------- |
+| Manual do desenvolvedor               | inexistente                                  | criado (220 linhas)  |
+| Procedimento de atualização normativa | inexistente                                  | criado (182 linhas)  |
+| Relatório final de limitações         | inexistente                                  | criado (149 linhas)  |
+| Mapa de integrações                   | existia, de 23/09, **zero menções a tenant** | revisado (107 → 142) |
+| Arquitetura                           | existia, atualizado na Etapa 2.5             | **mantido**          |
+
+### A descoberta que mudou o escopo
+
+`docs/` já tinha `architecture.md`, `integration-map.md`, `modelo-dados.md`,
+`fiscal-assumptions.md` e `test-scenarios.md`. Dois dos cinco pedidos já
+existiam. Criar arquivos novos teria gerado duas versões da mesma verdade.
+
+`integration-map.md` foi revisado porque descrevia um **back-end Python separado
+que foi abandonado** — a divisão atual é front-end / servidor TanStack /
+provedor — e porque a revisão anterior não sabia que multi-tenant existia. As
+tabelas de mapeamento por módulo eram precisas e foram mantidas.
+
+### Manual do desenvolvedor
+
+Inclui as dez armadilhas que já custaram tempo neste repositório, entre elas:
+`vite preview` não funciona neste projeto (preset Cloudflare, devolve 500 em
+tudo); `node_modules` não persiste no snapshot do workspace; query sem contexto
+de tenant não enxerga nada sob RLS; `pg` não liga `bigint`; `pg-mem` não
+implementa RLS; e `next()` em `requestMiddleware` não devolve uma `Response`.
+
+### Procedimento de atualização normativa
+
+Define o ciclo `candidata → validada → revogada/substituida`, proíbe scraping
+como fonte, exige `casoTeste` falseável para qualquer regra, e trata a Reforma
+Tributária como caso particular por ter transição em vez de data de troca.
+
+**Nunca foi executado** — nenhuma regra foi promovida. Está escrito no próprio
+documento.
+
+### Relatório final de limitações
+
+Separa o que está provado (com evidência) do que não está. Os itens não
+provados são os que importam: nenhuma conexão com Postgres real, zero
+integração com SEFAZ ou provedor, zero regras validadas, sem XSD, sem
+assinatura, sem credenciamento.
+
+Lista explicitamente as afirmações que o relatório **não** faz: não é "100%
+funcional", não é "100% conforme a legislação", não é "pronto para produção".
+
+### Evidência
+
+Documentação não altera comportamento; gate reverificado: `tsc` 0 erros;
+`eslint` 0 erros e 6 warnings; `vitest` **298 passando, 13 pulados**, 23
+arquivos; `vite build` exit 0.
+
 ## [Não publicado] — 2026-10-15 (Etapa 2.13 — extração do cromo de emissão)
 
 ### A medição derrubou a estimativa
