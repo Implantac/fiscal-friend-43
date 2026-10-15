@@ -653,7 +653,82 @@ reutilizável — ~400 linhas, risco baixo, sem tocar nos campos fiscais; e
 retomar a validação contra Postgres real, que continua sendo o elo não provado.
 
 
-### 9.14 Relatório de fim de etapa — 2.7 (modelo obrigatório)
+### 9.14 Etapa 2.10 — validação contra Postgres real (2026-10-15)
+
+**Não foi executada.** Este ambiente não tem Postgres, `psql` nem Docker. O que
+existe agora é a validação **executável**, integrada ao gate.
+
+| Item | Situação |
+|---|---|
+| Planejador de migrações (ordenação, checksum, divergência, órfãs) | `src/fiscal/servidor/migracoes.ts` + 23 testes |
+| Nove verificações contra Postgres real (C1–C9) | `src/fiscal/servidor/validacao-postgres.test.ts` |
+| Runbook com critérios de falsificação | `docs/validacao-postgres.md` |
+| Execução contra instância real | **pendente** |
+
+**Defeito real encontrado pelos testes novos.** `planejar()` preservava a ordem
+do array recebido. Um chamador que passasse a lista fora de ordem aplicaria
+`002` antes de `001` — silencioso, e só apareceria em produção. Agora reordena
+internamente. Pegado por um teste que passava a lista deliberadamente invertida.
+
+**Como executar (um comando):**
+
+```bash
+DATABASE_URL='postgres://postgres:<senha>@<host>:5432/postgres' \
+  npx vitest run src/fiscal/servidor/validacao-postgres.test.ts
+```
+
+Para aplicar as migrações, ligar o opt-in `VALIDAR_APLICAR_MIGRACOES=1`. Sem
+`DATABASE_URL`, a suíte é pulada e diz por quê — 13 verificações aparecem como
+`skipped` no gate.
+
+**A verificação que decide se o produto é o que diz ser é a C4:** com contexto
+do tenant A, `SELECT` em `empresas` precisa devolver **só** a linha de A, e sem
+contexto, **zero** linhas. Se ela falhar, nada do resto compensa.
+
+**O que continua não provado, mesmo depois que tudo passar:** credenciamento,
+certificado digital e homologação (nenhum documento foi autorizado por serviço
+fiscal em nenhum ambiente); comportamento do pooler do Supabase em modo
+transação sob concorrência; SSL de verdade; backup, restauração, retenção e
+criptografia em repouso; desempenho.
+
+### 9.15 Relatório de fim de etapa — 2.10 (modelo obrigatório)
+
+**Arquivos alterados.** Novos: `src/fiscal/servidor/migracoes.ts`,
+`src/fiscal/servidor/migracoes.test.ts`,
+`src/fiscal/servidor/validacao-postgres.test.ts`, `docs/validacao-postgres.md`.
+Alterados: `CHANGELOG.md`, `docs/auditoria-tecnica.md`.
+
+**O que foi implementado.** Planejador de migrações testado e uma suíte de nove
+verificações que só roda contra Postgres real, mais o runbook que diz o que cada
+uma prova e o que a derrubaria.
+
+**O que foi corrigido.** `planejar()` confiava na ordem de quem chama.
+
+**Testes executados e resultado.** `tsc --noEmit` 0 erros; `eslint` 0 erros e 6
+warnings `react-refresh` pré-existentes; `vitest` **279 passando, 13 pulados**
+(21 arquivos) — os 13 pulados são as verificações que exigem `DATABASE_URL`;
+`vite build` exit 0 com bundle de cliente limpo.
+
+**Regras fiscais e fontes.** Nenhuma. Nenhuma fonte oficial consultada.
+
+**Integrações reais x simuladas.** Nenhuma integração fiscal. A validação contra
+Postgres é o que estaria sendo testado aqui, e ela **não rodou**.
+
+**Homologações pendentes.** Rodar a suíte contra a instância do Lovable Cloud
+com o role `postgres`; confirmar que a C4 (isolamento real) passa; aplicar as
+migrações 001/002 com o opt-in; verificar o comportamento do pooler em modo
+transação.
+
+**Limitações conhecidas.** Sem instância para validar. A suíte foi escrita mas
+nunca executada contra Postgres — ela pode ter erro de sintaxe SQL ou de
+pressuposto que só apareça na primeira execução real. Isso está dito aqui para
+que ninguém trate o gate verde como evidência de banco validado.
+
+**Próximas prioridades.** Rodar a validação. Enquanto a C4 não rodar, a
+afirmação "multi-tenant com RLS forçada" é um **desenho**, não uma propriedade
+verificada do sistema.
+
+### 9.16 Relatório de fim de etapa — 2.7 (modelo obrigatório)
 
 **Arquivos alterados.** Novos: `src/fiscal/servidor/{conexao-postgres,ambiente}.ts`
 e seus dois arquivos de teste. Modificados: `src/fiscal/servidor/sessao.functions.ts`,

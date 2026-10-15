@@ -3,6 +3,38 @@
 Todas as mudanças relevantes deste repositório são registradas aqui.
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [Não publicado] — 2026-10-15 (Etapa 2.10 — validação contra Postgres real)
+
+Não foi possível _executar_ a validação: este ambiente não tem Postgres, não
+tem `psql`, não tem Docker. O que foi feito é tornar a validação **executável
+por quem tem a instância**, em um comando, e integrá-la ao gate para que ela
+não possa ser esquecida nem passar em silêncio.
+
+### Adicionado
+
+- `src/fiscal/servidor/migracoes.ts` — planejador de migrações, lógica pura sem
+  I/O e sem banco: descoberta, ordenação lexicográfica, checksum SHA-256,
+  decisão de aplicar/pular/recusar, detecção de órfãs, tabela de controle
+  `schema_migracoes`. **Recusa aplicar** migração cujo nome já exista no banco
+  com checksum diferente, e acusa como órfã a que o banco tem e o disco perdeu.
+- `src/fiscal/servidor/migracoes.test.ts` — 23 testes.
+- `src/fiscal/servidor/validacao-postgres.test.ts` — nove verificações (C1–C9)
+  contra Postgres real: privilégios do role, estado das migrações, RLS **forçada**
+  em todas as tabelas, isolamento real entre dois tenants, política de `sessoes`,
+  round-trip de centavos em 2^53+1, trigger de imutabilidade, aplicação opt-in de
+  migrações e relatório do que foi **observado**. Sem `DATABASE_URL` é pulada e
+  diz por quê.
+- `docs/validacao-postgres.md` — runbook: como rodar, o que cada verificação
+  prova, o que a derrubaria, e o que continua não provado **mesmo depois** que
+  tudo passar.
+
+### Corrigido — defeito real encontrado pelos testes novos
+
+`planejar()` preservava a ordem do array recebido. Um chamador que passasse a
+lista fora de ordem aplicaria `002` antes de `001` — silencioso, e só apareceria
+em produção. Agora reordena internamente, sem confiar em quem chama. Pegado por
+um teste que passava a lista deliberadamente invertida.
+
 ## [Não publicado] — 2026-10-15 (Etapa 2.9 — enxugamento de portfólio)
 
 Decisão de produto: `docs/analise-portfolio-modulos.md`. O usuário escolheu o
@@ -323,7 +355,7 @@ cookie, nem a lógica de sessão.
 ### Provado por execução (servidor de desenvolvimento real)
 
 - login com credencial correta → HTTP 200 + `set-cookie: ff_sessao=…; Max-Age=3600;
-  Path=/; HttpOnly; SameSite=Lax`;
+Path=/; HttpOnly; SameSite=Lax`;
 - `sessaoAtual` com cookie → contexto `{usuarioId, tenantId, papel}`; sem cookie
   ou após logout → `{autenticado: false}`;
 - 4 senhas erradas → `"E-mail ou senha inválidos."`; 5ª → bloqueio de 900 s; com a
