@@ -802,7 +802,73 @@ junto. Só a execução real resolve.
 do Lovable Cloud. Agora ela tem mais valor: cobre também a C5, que é o caminho
 da sessão.
 
-### 9.18 Etapa 2.14 — deliverables documentais (2026-10-15)
+### 9.18 Etapa 2.15 — primeiras regras fiscais com fonte (2026-10-15)
+
+Resposta a "o sistema não parece ser um emissor de documentos reais". O
+diagnóstico estava certo. Esta etapa ataca a raiz — a que o usuário priorizou:
+sem regra validada, XML bem-formado é ficção bem-formada.
+
+**Bug real encontrado:** `src/simulation/documento-saida.ts` tinha cópia própria
+de `dvModulo11` com `Number(base[i])`. Com CNPJ alfanumérico (IN RFB
+2.229/2024, vigente desde 2026), `Number("A")` é `NaN` e a chave inteira ficava
+com DV `NaN` — inválida, sem erro visível.
+
+| Item | Situação |
+|---|---|
+| `src/fiscal/chave-acesso.ts` (domínio, 22 testes) | criado |
+| `src/fiscal/regras-oficiais.ts` (3 regras com fonte, 13 testes) | criado |
+| Verificação independente | contra exemplo publicado no MOC 7.00, DV 5 |
+| Regras `aprovada_para_uso` | **zero** — conferência no PDF original não feita |
+| Cópia com bug no simulador | removida; delega ao domínio |
+| Isolamento do simulador | preservado — zero import de servidor/autenticação |
+
+**Por que nenhuma regra está aprovada.** O portal `nfe.fazenda.gov.br` bloqueia
+requisição automatizada (loop de redirect 302 sem cookie de sessão) e o PDF do
+MOC 7.00 não pôde ser aberto. As regras foram confirmadas por múltiplas fontes
+independentes que citam o MOC — não pelo texto original.
+`docs/atualizacao-normativa.md` exige a conferência original antes de promover.
+
+**Um erro meu, registrado.** O primeiro rascunho do teste afirmava DV `6` —
+valor inventado. A implementação estava certa e o teste errado; a âncora
+oficial pegou. Um teste que não tem valor esperado vindo de fonte externa só
+mede o código contra si mesmo.
+
+### 9.19 Relatório de fim de etapa — 2.15 (modelo obrigatório)
+
+**Arquivos alterados.** Novos: `src/fiscal/chave-acesso.ts`,
+`src/fiscal/chave-acesso.test.ts`, `src/fiscal/regras-oficiais.ts`,
+`src/fiscal/regras-oficiais.test.ts`. Alterados:
+`src/simulation/documento-saida.ts`, `src/simulation/documento-saida.test.ts`,
+`src/knowledge/cobertura.ts`, `src/knowledge/cobertura.test.ts`.
+
+**O que foi implementado.** Implementação oficial da chave de acesso e do DV no
+domínio, com 3 regras registradas tendo fonte normativa e caso de teste
+falseável, mais executor que roda os casos contra o código real.
+
+**O que foi corrigido.** Bug de `NaN` na chave com CNPJ alfanumérico, e a cópia
+duplicada no simulador.
+
+**Testes executados e resultado.** `tsc` 0 erros; `eslint` 0 erros e 6 warnings;
+`vitest` **334 passando, 13 pulados**, 25 arquivos (era 298/23); `vite build`
+exit 0; isolamento do simulador verificado; trava nova na cobertura.
+
+**Regras fiscais e fontes.** 3 regras com fonte (MOC 7.00 e IN RFB 2.229/2024),
+todas `validada_tecnicamente`, nenhuma liberada para cálculo real.
+
+**Integrações reais x simuladas.** Nenhuma mudança. Gateways seguem `Mock`.
+
+**Homologações pendentes.** Conferir o MOC 7.00 no PDF original para promover as
+regras; validar contra Postgres real; regenerar `bun.lock`.
+
+**Limitações conhecidas.** As 3 regras cobrem só a chave de acesso. Não cobrem
+tributo, CFOP, CST, alíquota, rejeição, XSD, assinatura ou transmissão. Nenhum
+documento autorizado em nenhum ambiente.
+
+**Próximas prioridades.** Buscar mais documentação oficial (CFOP no CONFAZ,
+tributos, códigos de rejeição) e ampliar o registro; aplicar migrações e rodar
+a validação C1–C9.
+
+### 9.20 Etapa 2.14 — deliverables documentais (2026-10-15)
 
 Cinco documentos pedidos. **Três não existiam; dois existiam e estavam
 desatualizados.**
@@ -823,7 +889,7 @@ porque descrevia um **back-end Python separado que foi abandonado** — a divis�
 atual é front-end / servidor TanStack / provedor, e a revisão anterior não
 sabia que multi-tenant existia.
 
-### 9.19 Relatório de fim de etapa — 2.14 (modelo obrigatório)
+### 9.21 Relatório de fim de etapa — 2.14 (modelo obrigatório)
 
 **Arquivos alterados.** Novos: `docs/manual-desenvolvedor.md`,
 `docs/atualizacao-normativa.md`, `docs/relatorio-limitacoes.md`. Alterado:
@@ -856,7 +922,7 @@ escito no próprio documento.
 **Próximas prioridades.** Validação contra Postgres real; regenerar
 `bun.lock`.
 
-### 9.20 Etapa 2.13 — extração do cromo de emissão (2026-10-15)
+### 9.22 Etapa 2.13 — extração do cromo de emissão (2026-10-15)
 
 **A medição derrubou a estimativa de trabalho.** A estimativa era "~400 linhas
 de cromo compartilhado" nas seis telas de emissão. A medição real: o núcleo
@@ -881,7 +947,7 @@ extraído em componentes**.
 do botão e o wrapper `<Documented>`. Cada família tem o seu `docId` (`m2.*` a
 `m7.*`) e o seu texto; fundir apagaria documentação específica de módulo.
 
-### 9.21 Relatório de fim de etapa — 2.13 (modelo obrigatório)
+### 9.23 Relatório de fim de etapa — 2.13 (modelo obrigatório)
 
 **Arquivos alterados.** Novo: `src/components/blueprint/IconeTransmissao.tsx`,
 `src/components/blueprint/IconeTransmissao.test.tsx`. Alterados: as seis rotas de
@@ -910,7 +976,7 @@ dessincronizado.
 
 **Próximas prioridades.** Deliverables documentais faltantes.
 
-### 9.22 Etapa 2.12 — cabeçalhos de segurança (2026-10-15)
+### 9.24 Etapa 2.12 — cabeçalhos de segurança (2026-10-15)
 
 Motivado pela verificação do que está publicado em
 `fiscal-friend-43.lovable.app`: HSTS, `x-content-type-options` e
@@ -943,7 +1009,7 @@ não a `Response`. O teste era sempre falso: nenhum header era aplicado e nenhum
 erro surgia. Os 11 testes de unidade passavam verdes sobre um middleware inerte
 — só a verificação contra servidor real pegou.
 
-### 9.23 Relatório de fim de etapa — 2.12 (modelo obrigatório)
+### 9.25 Relatório de fim de etapa — 2.12 (modelo obrigatório)
 
 **Arquivos alterados.** Novos: `src/lib/headers-seguranca.ts`,
 `src/lib/headers-seguranca.test.ts`. Alterado: `src/start.ts`.
@@ -975,7 +1041,7 @@ possível com nonce.
 **Próximas prioridades.** Rodar a validação contra Postgres real, que continua
 sendo o elo não provado mais importante.
 
-### 9.24 Relatório de fim de etapa — 2.7 (modelo obrigatório)
+### 9.26 Relatório de fim de etapa — 2.7 (modelo obrigatório)
 
 **Arquivos alterados.** Novos: `src/fiscal/servidor/{conexao-postgres,ambiente}.ts`
 e seus dois arquivos de teste. Modificados: `src/fiscal/servidor/sessao.functions.ts`,

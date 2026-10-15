@@ -32,6 +32,25 @@ describe("matriz de cobertura", () => {
     }
   });
 
+  it("o registro de regras nunca aparece como pronto enquanto nada estiver aprovado", () => {
+    // As regras com fonte estão `validada_tecnicamente`: a conferência no PDF
+    // original do MOC não foi feita, e o motor se recusa a calcular com elas.
+    // `estrutural` é o teto honesto — dizer mais seria repetir o erro que esta
+    // matriz existe para evitar.
+    for (const m of matrizCobertura()) {
+      for (const c of m.capacidades) {
+        if (
+          c.area === "Registro de regras fiscais" ||
+          c.area === "Chave de acesso e dígito verificador"
+        ) {
+          expect(["documentado", "estrutural"]).toContain(c.nivel);
+          expect(c.realidade).not.toMatch(/pront[oa] para produ/i);
+          expect(c.realidade).not.toMatch(/validada e aprovada/i);
+        }
+      }
+    }
+  });
+
   it("nenhum modelo alega ter autorizado documento fiscal", () => {
     for (const m of matrizCobertura()) {
       for (const p of m.pendencias) {

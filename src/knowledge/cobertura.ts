@@ -71,6 +71,18 @@ const CAPACIDADES_COMUNS: Capacidade[] = [
       "Numeração por série com controle de concorrência no domínio; faixas e credenciamento não verificados.",
   },
   {
+    area: "Chave de acesso e dígito verificador",
+    nivel: "estrutural",
+    realidade:
+      "Estrutura de 44 posições e DV módulo 11 implementados em `src/fiscal/chave-acesso.ts`, verificados contra exemplo publicado no MOC 7.00, com suporte a CNPJ alfanumérico (IN RFB 2.229/2024).",
+  },
+  {
+    area: "Registro de regras fiscais",
+    nivel: "estrutural",
+    realidade:
+      "3 regras com fonte normativa identificada e caso de teste falseável (chave de acesso). Todas em `validada_tecnicamente` — a conferência no PDF original do MOC ainda não foi feita, então nenhuma está liberada para cálculo real.",
+  },
+  {
     area: "Valores monetários",
     nivel: "estrutural",
     realidade:

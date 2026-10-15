@@ -3,6 +3,85 @@
 Todas as mudanças relevantes deste repositório são registradas aqui.
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [Não publicado] — 2026-10-15 (Etapa 2.15 — primeiras regras fiscais com fonte)
+
+Resposta a "o sistema não parece ser um emissor de documentos reais". O
+diagnóstico estava certo. Esta etapa ataca a **raiz**, que é a que o usuário
+priorizou: sem regra validada, XML bem-formado é ficção bem-formada.
+
+### Encontrado — bug real na chave de acesso
+
+`src/simulation/documento-saida.ts` tinha sua própria cópia de `dvModulo11`
+usando `Number(base[i])`. Com o **CNPJ alfanumérico** (IN RFB 2.229/2024,
+vigente desde 2026), `Number("A")` é `NaN`, `NaN * peso` é `NaN`, e a chave
+inteira ficava com DV `NaN` — **inválida, sem erro visível**.
+
+A cópia também estava no lugar errado: regra fiscal no simulador não pode ser
+usada pelo domínio.
+
+### Adicionado
+
+- `src/fiscal/chave-acesso.ts` — implementação oficial da chave de 44 posições
+  e do DV módulo 11, com a regra **ASCII − 48** para letras (CNPJ alfanumérico)
+  e **recusa explícita** de caractere inválido em vez de devolver NaN. 22 testes.
+- `src/fiscal/regras-oficiais.ts` — popula o registro de `regras.ts` com **3
+  regras que têm fonte normativa identificada** e caso de teste falseável, mais
+  um executor que roda os casos contra a implementação real. 13 testes.
+- Capacidades novas na matriz de cobertura: "Chave de acesso e dígito
+  verificador" e "Registro de regras fiscais", ambas `estrutural`.
+
+### Verificação independente
+
+O algoritmo foi conferido contra **exemplo publicado na documentação oficial**,
+não contra valor calculado por este código:
+
+    35 2607 12345678000199 55 001 000012345 1 23456789 | DV 5
+    → 35260712345678000199550010000123451234567895  ✓
+
+Um primeiro rascunho do teste afirmava DV `6` — valor que eu **inventei**. A
+implementação estava certa e o teste errado; a âncora oficial pegou.
+
+### Corrigido
+
+`src/simulation/documento-saida.ts` delega ao domínio. A cópia local foi
+removida. Isolamento preservado: o simulador continua sem importar repositório,
+sessão ou conexão — `chave-acesso.ts` é algoritmo puro, sem driver, sem
+credencial e sem API de Node.
+
+Um teste do simulador passava base de **44** caracteres a uma função que espera
+43; a implementação antiga era leniente e aceitava. A nova rejeita
+corretamente, e o teste foi corrigido para a base oficial de 43.
+
+### O que estas regras NÃO são
+
+**Nenhuma está `aprovada_para_uso`**, e o motor se recusa a calcular com elas.
+O motivo é procedural: o portal `nfe.fazenda.gov.br` bloqueia requisição
+automatizada (loop de redirect 302 sem cookie de sessão), então **o PDF do MOC
+7.00 não pôde ser aberto**. As regras foram confirmadas por múltiplas fontes
+independentes que citam o MOC explicitamente — não pelo texto original.
+
+`docs/atualizacao-normativa.md` exige conferência no documento original antes de
+promover. Até lá, `validada_tecnicamente` é o estado correto, e a tela de
+conhecimento continua dizendo a verdade.
+
+### Evidência
+
+- `tsc --noEmit`: 0 erros.
+- `eslint`: 0 erros, 6 warnings `react-refresh` pré-existentes.
+- `vitest`: **334 passando, 13 pulados**, 25 arquivos (era 298/23).
+- `vite build`: exit 0.
+- Isolamento do simulador verificado: zero import de `fiscal/servidor`,
+  `fiscal/autenticacao` ou `fiscal/persistencia*`.
+- Trava nova na cobertura: registro de regras e chave de acesso nunca passam de
+  `estrutural`, e nunca dizem "pronto para produção".
+
+### O que continua não sendo um emissor real
+
+As três regras cobrem a **chave de acesso**. Não cobrem tributo, CFOP, CST,
+alíquota, rejeição, XSD, assinatura ou transmissão. Nenhum documento foi
+autorizado por serviço fiscal em nenhum ambiente. Ver
+`docs/relatorio-limitacoes.md`.
+
 ## [Não publicado] — 2026-10-15 (Etapa 2.14 — deliverables documentais)
 
 Cinco documentos pedidos. **Três não existiam; dois já existiam.**

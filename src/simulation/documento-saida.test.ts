@@ -16,10 +16,12 @@ function itensNfe() {
 
 describe("chave de acesso", () => {
   it("calcula o dígito verificador módulo 11", () => {
-    // Base de 43 dígitos com DV conhecido (exemplo de manual didático).
-    expect(dvModulo11("35260100000000000000550010000000010123456789")).toBeTypeOf("number");
-    expect(dvModulo11("35260100000000000000550010000000010123456789")).toBeGreaterThanOrEqual(0);
-    expect(dvModulo11("35260100000000000000550010000000010123456789")).toBeLessThanOrEqual(9);
+    // Exemplo publicado na documentação oficial (MOC 7.00), com DV conhecido:
+    //   35 2607 12345678000199 55 001 000012345 1 23456789 | DV 5
+    // Base de 43 posições. A implementação antiga aceitava base de qualquer
+    // tamanho; a do domínio rejeita, e é o comportamento correto.
+    expect(dvModulo11("3526071234567800019955001000012345123456789")).toBe(5);
+    expect(dvModulo11("0".repeat(43))).toBe(0);
   });
 
   it("gera chave de 44 dígitos com DV coerente", () => {

@@ -11,6 +11,7 @@
  *   os schemas XSD oficiais ainda está Pendente de validação.
  */
 import { empresaSimulada } from "@/simulation/mock-data";
+import { dvChave, montarChaveAcesso } from "@/fiscal/chave-acesso";
 import type { Cliente, Motorista, Produto, Veiculo } from "@/simulation/cadastros";
 
 export type TipoSaida = "nfe55" | "nfce65" | "nfse" | "cte57" | "cteos67" | "mdfe58";
@@ -93,16 +94,23 @@ function numeroSeq() {
   return String(Math.floor(Date.now() / 1000) % 999_999_999 || 1);
 }
 
-/** DV módulo 11 com pesos 2 a 9 (da direita para a esquerda). */
+/**
+ * DV da chave de acesso — delegado ao domínio.
+ *
+ * Havia aqui uma cópia local que usava `Number(base[i])`. Com o CNPJ
+ * alfanumérico (IN RFB 2.229/2024, vigente desde 2026) `Number("A")` é `NaN`,
+ * e a chave inteira ficava com DV `NaN` — inválida, sem erro visível. A
+ * implementação correta, com a regra ASCII − 48 e recusa explícita de
+ * caractere inválido, está em `src/fiscal/chave-acesso.ts`, testada contra
+ * exemplo publicado na documentação oficial.
+ *
+ * A delegação é segura: `chave-acesso.ts` é algoritmo puro, sem driver de
+ * banco, sem credencial e sem API de Node — não é módulo exclusivo de
+ * servidor. O que o simulador continua sem fazer é importar repositório,
+ * sessão ou conexão: aí o isolamento segue valendo.
+ */
 export function dvModulo11(base: string) {
-  let peso = 2;
-  let soma = 0;
-  for (let i = base.length - 1; i >= 0; i--) {
-    soma += Number(base[i]) * peso;
-    peso = peso === 9 ? 2 : peso + 1;
-  }
-  const r = soma % 11;
-  return r < 2 ? 0 : 11 - r;
+  return dvChave(base);
 }
 
 /** Chave de acesso de 44 dígitos: cUF AAMM CNPJ mod serie nNF tpEmis cNF DV. */
@@ -115,17 +123,17 @@ function montarChave(
   tpEmis = "1",
 ) {
   const cNF = String(Math.floor(Math.random() * 1e8)).padStart(8, "0");
-  const base =
-    (cUF[uf] ?? "35") +
-    aamm +
-    empresaSimulada.cnpj.padStart(14, "0") +
-    mod +
-    serie.padStart(3, "0") +
-    n.padStart(9, "0") +
-    tpEmis +
-    cNF;
-  const dv = dvModulo11(base);
-  return { chave: base + dv, cNF, dv: String(dv) };
+  const chave = montarChaveAcesso({
+    cUF: cUF[uf] ?? "35",
+    aamm,
+    cnpj: empresaSimulada.cnpj,
+    modelo: mod as "55",
+    serie: Number(serie),
+    numero: Number(n),
+    tpEmis: tpEmis as "1",
+    cNF,
+  });
+  return { chave, cNF, dv: chave.slice(-1) };
 }
 
 const fmtChave = (c: string) => c.replace(/(\d{4})(?=\d)/g, "$1 ");
