@@ -3,6 +3,80 @@
 Todas as mudanças relevantes deste repositório são registradas aqui.
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [Não publicado] — 2026-10-15 (Etapa 2.11 — o login que quebraria sob RLS)
+
+### Corrigido — bug crítico que nenhum teste existente podia pegar
+
+`buscarPorTokenHash` fazia `JOIN usuarios` para trazer o papel. Essa é a **única**
+query do sistema que roda com `app.tenant_id` desligado — o tenant ainda é
+desconhecido. A política de `sessoes` permite essa leitura
+(`tenant_atual() IS NULL`), mas `usuarios` tem política **estrita**
+(`usuarios_tenant_isolation`, `tenant_id = tenant_atual()`). Com o contexto
+desligado a expressão avalia para `NULL`, que não é verdadeiro, e **nenhuma**
+linha de `usuarios` fica visível. O `JOIN` eliminava a própria sessão procurada.
+
+Sintoma em produção: o login responde 200 e grava o cookie; cada request
+seguinte falha com "Sessão inválida ou expirada".
+
+**Por que 281 testes passavam:** o `pg-mem` não implementa Row-Level Security, e
+o caminho em memória — o único exercitado por HTTP — não tem política alguma.
+O defeito só existiria contra Postgres real, que é justamente o elo não provado.
+
+### Corrigido — segundo defeito encontrado no caminho
+
+`SessaoInterna` carregava `papel`, e ele era **ignorado** por `resolverContexto`,
+que relê o papel de `usuarios` dentro do contexto do tenant. Ou seja: o campo
+era redundante _e_ perigoso. Se um administrador rebaixasse um usuário de
+`administrador` para `leitor`, a sessão já aberta continuaria reportando
+`administrador` — autorização velha na sessão.
+
+O campo foi removido de `SessaoInterna`, de `RepositorioSessoes.criar`, dos dois
+repositórios e da query. O papel passa a ser sempre relido do usuário.
+
+### Adicionado — um executor que implementa a RLS
+
+`SqlComRls` no `repositorios-postgres.test.ts` emula as políticas reais do
+migration: `sessoes` permite leitura sem contexto, `usuarios` não permite. Com
+ele, reintroduzir o `JOIN` faz **dois** testes falharem.
+
+A verificação de `usuarios` vem **antes** da de `sessoes`, e a ordem é o ponto:
+se um lado do JOIN é invisível, o resultado inteiro é vazio. Uma primeira versão
+do fake fazia o match ao contrário e devolvia a linha mesmo com o JOIN presente
+— o fake não emulava nada.
+
+### Corrigido — dois testes que passavam por acidente
+
+1. O teste de regressão lia `sql.queries.at(-1)` **antes** de chamar a query, então
+   validava o `INSERT` e não a busca. Reintroduzir o `JOIN` não o derrubava.
+2. O `SqlFalso` devolvia a coluna `papel_usuario`, que a query real não
+   seleciona mais — o teste validava uma coluna que o Postgres não entregaria.
+
+Ambos corrigidos e verificados por fuzzing: com o `JOIN` reintroduzido, 2 testes
+falham; sem ele, 11 passam.
+
+### Evidência
+
+- `tsc --noEmit`: 0 erros. (Pegou algo que o `vitest` não pega: a assinatura de
+  `criar` na classe ainda declarava `papel` depois de eu ter corrigido só a
+  interface — a substituição anterior não casou o texto e silenciosamente não
+  fez nada.)
+- `eslint`: 0 erros, 6 warnings `react-refresh` pré-existentes.
+- `vitest`: **281 passando, 13 pulados**, 21 arquivos.
+- `vite build`: exit 0, bundle de cliente limpo.
+- Fumaça HTTP do fluxo autenticado real: **7/7 verdes** — recusa sem sessão,
+  login com cookie `ff_sessao` HttpOnly, `sessaoAtual` com usuário,
+  `listarDocumentos`, `criarDocumento` com UUID real, `avancarDocumento`, e
+  recusa de cookie forjado.
+- Fuzzing da regressão: com o `JOIN` de volta, 2 testes falham; sem ele, 11
+  passam.
+
+### Pendente
+
+- A query corrigida **não foi executada contra Postgres real**. A prova é de
+  fuzzing contra um executor que emula a RLS, não contra o Postgres.
+- `node_modules` precisou ser reinstalado com `npm install` no meio da etapa
+  (o snapshot do workspace não o preserva).
+
 ## [Não publicado] — 2026-10-15 (Etapa 2.10 — validação contra Postgres real)
 
 Não foi possível _executar_ a validação: este ambiente não tem Postgres, não

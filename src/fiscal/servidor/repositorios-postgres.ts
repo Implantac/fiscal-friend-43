@@ -67,7 +67,6 @@ function paraSessao(l: LinhaSessao): SessaoInterna {
     id: l.id,
     tenantId: l.tenant_id,
     usuarioId: l.usuario_id,
-    papel: l.papel,
     expiraEm: l.expira_em,
     revogadaEm: l.revogada_em,
   };
@@ -152,7 +151,6 @@ export class SessoesPostgres implements RepositorioSessoes {
     id: string;
     tenantId: string;
     usuarioId: string;
-    papel: UsuarioInterno["papel"];
     tokenHash: string;
     expiraEm: string;
     ip?: string | undefined;
@@ -173,18 +171,37 @@ export class SessoesPostgres implements RepositorioSessoes {
    * único e é a própria credencial; o tenant vem da linha encontrada. É a única
    * leitura do sistema autorizada a rodar sem contexto de tenant (ver a política
    * `sessoes_leitura_token` no migration).
+   *
+   * ---------------------------------------------------------------------------
+   * POR QUE ESTA CONSULTA NÃO FAZ `JOIN usuarios`
+   * ---------------------------------------------------------------------------
+   * Fazia, e por isso o login inteiro quebrava sob RLS. Esta é a única query do
+   * sistema que roda com `app.tenant_id` desligado — o tenant ainda é
+   * desconhecido. A política de `sessoes` permite essa leitura
+   * (`tenant_atual() IS NULL`), mas `usuarios` tem política estrita: com o
+   * contexto desligado, `tenant_id = tenant_atual()` avalia para `NULL`, que não
+   * é verdadeiro, e **nenhuma** linha de `usuarios` fica visível. O `JOIN`
+   * eliminava a própria sessão procurada: `buscarPorTokenHash` devolvia
+   * `undefined` para todo token válido, o login respondia 200 e cada request
+   * seguinte falhava com "Sessão inválida ou expirada".
+   *
+   * Nenhum teste pegou: o `pg-mem` não implementa Row-Level Security, e o
+   * caminho em memãria — o único exercitado por HTTP — não tem política alguma.
+   *
+   * O `papel` do usuário também saiu daqui: ele é relido por
+   * `usuarios.buscarPorId(tenantId, usuarioId)`, já dentro do contexto do
+   * tenant. Além de correto sob RLS, evita que a sessão guarde um papel velho.
    */
   async buscarPorTokenHash(tokenHash: string): Promise<SessaoInterna | undefined> {
-    const linhas = await this.db.query<LinhaSessao & { papel_usuario: string }>(
-      `SELECT s.id, s.tenant_id, s.usuario_id, u.papel AS papel_usuario, s.expira_em, s.revogada_em
-         FROM sessoes s
-         JOIN usuarios u ON u.id = s.usuario_id
-        WHERE s.token_hash = $1`,
+    const linhas = await this.db.query<LinhaSessao>(
+      `SELECT id, tenant_id, usuario_id, expira_em, revogada_em
+         FROM sessoes
+        WHERE token_hash = $1`,
       [tokenHash],
     );
     const l = linhas[0];
     if (!l) return undefined;
-    return paraSessao({ ...l, papel: l.papel_usuario as UsuarioInterno["papel"] });
+    return paraSessao(l);
   }
 
   async revogar(tenantId: string, sessaoId: string): Promise<void> {

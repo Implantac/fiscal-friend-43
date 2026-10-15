@@ -66,7 +66,6 @@ export class SessoesMemoria implements RepositorioSessoes {
     id: string;
     tenantId: string;
     usuarioId: string;
-    papel: Papel;
     tokenHash: string;
     expiraEm: string;
     ip?: string | undefined;

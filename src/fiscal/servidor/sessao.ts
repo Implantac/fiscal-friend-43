@@ -115,11 +115,13 @@ export async function autenticar(
     new Date(entrada.agora).getTime() + MINUTOS_SESSAO * 60_000,
   ).toISOString();
 
+  // `papel` deliberadamente NAO vai para a sessao: ele e relido de `usuarios`
+  // a cada request, dentro do contexto do tenant. Ver o comentario em
+  // `portas-servidor.ts`.
   await deps.sessoes.criar({
     id: crypto.randomUUID(),
     tenantId: usuario.tenantId,
     usuarioId: usuario.id,
-    papel: usuario.papel,
     tokenHash,
     expiraEm,
     ip: entrada.ip,

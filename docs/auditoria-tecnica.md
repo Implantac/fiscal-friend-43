@@ -728,7 +728,81 @@ que ninguém trate o gate verde como evidência de banco validado.
 afirmação "multi-tenant com RLS forçada" é um **desenho**, não uma propriedade
 verificada do sistema.
 
-### 9.16 Relatório de fim de etapa — 2.7 (modelo obrigatório)
+### 9.16 Etapa 2.11 — o login que quebraria sob RLS (2026-10-15)
+
+Encontado ao revisar o código da validação da Etapa 2.10, não por teste.
+
+| Item | Situação |
+|---|---|
+| `buscarPorTokenHash` com `JOIN usuarios` | **corrigido** — JOIN removido |
+| `SessaoInterna.papel` (papel velho na sessão) | **corrigido** — campo removido |
+| Executor que emula a RLS (`SqlComRls`) | adicionado |
+| Dois testes que passavam por acidente | **corrigidos** e verificados por fuzzing |
+| Query executada contra Postgres real | **pendente** |
+
+**O defeito.** `buscarPorTokenHash` é a única query do sistema que roda com
+`app.tenant_id` desligado — o tenant ainda é desconhecido. A política de
+`sessoes` permite essa leitura (`tenant_atual() IS NULL`), mas `usuarios` tem
+política estrita. Com o contexto desligado, `tenant_id = tenant_atual()` avalia
+para `NULL`, nenhuma linha de `usuarios` fica visível, e o `JOIN` eliminava a
+própria sessão procurada. Sintoma: login responde 200, cada request seguinte
+falha com "Sessão inválida ou expirada".
+
+**Por que nada pegou.** O `pg-mem` não implementa Row-Level Security, e o caminho
+em memória — o único exercitado por HTTP — não tem política alguma. 281 testes
+passavam sobre um login que não funcionaria contra Postgres real.
+
+**O segundo defeito, encontrado no caminho.** `SessaoInterna` carregava `papel`,
+e `resolverContexto` o ignorava e relia de `usuarios`. O campo era redundante e
+perigoso: rebaixar um usuário não rebaixaria a sessão já aberta.
+
+**A prova de que a correção funciona.** `SqlComRls` emula as políticas reais do
+migration. Reintroduzir o `JOIN` derruba **dois** testes; sem ele, 11 passam. A
+verificação de `usuarios` vem antes da de `sessoes` porque, se um lado do JOIN é
+invisível, o resultado inteiro é vazio.
+
+**Dois testes que passavam por acidente, corrigidos.** O de regressão lia
+`queries.at(-1)` antes de chamar a query — validava o `INSERT`. E o `SqlFalso`
+devolvia `papel_usuario`, coluna que a query real não seleciona mais.
+
+**Lição de processo registrada.** `tsc` pegou o que `vitest` não: corrigi a
+interface `RepositorioSessoes.criar` mas não a assinatura da classe, porque a
+substituição de texto não casou e silenciosamente não fez nada. Os dois gates
+são necessários; nenhum substitui o outro.
+
+### 9.17 Relatório de fim de etapa — 2.11 (modelo obrigatório)
+
+**Arquivos alterados.** `src/fiscal/servidor/{portas-servidor,repositorios-memoria,repositorios-postgres,sessao}.ts`
+e `src/fiscal/servidor/repositorios-postgres.test.ts`.
+
+**O que foi corrigido.** O `JOIN usuarios` na consulta por token, que tornaria o
+login inoperante sob RLS; e o `papel` guardado na sessão, que mantinha
+autorização velha.
+
+**O que foi adicionado.** `SqlComRls`, executor que implementa a política de RLS
+do migration, e dois testes de regressão.
+
+**Testes executados e resultado.** `tsc` 0 erros; `eslint` 0 erros e 6 warnings
+pré-existentes; `vitest` **281 passando, 13 pulados**; `vite build` exit 0 com
+bundle limpo; fumaça HTTP do fluxo autenticado **7/7**; fuzzing da regressão
+confirmado nos dois sentidos.
+
+**Regras fiscais e fontes.** Nenhuma.
+
+**Integrações reais x simuladas.** Nenhuma integração fiscal.
+
+**Homologações pendentes.** Executar a query corrigida contra Postgres real — a
+prova é de fuzzing contra um executor que emula a RLS, não contra o Postgres.
+
+**Limitações conhecidas.** O `SqlComRls` emula as políticas que eu entendi do
+migration. Se a minha leitura da política estiver errada, o fake está errado
+junto. Só a execução real resolve.
+
+**Próximas prioridades.** Rodar `validacao-postgres.test.ts` contra a instância
+do Lovable Cloud. Agora ela tem mais valor: cobre também a C5, que é o caminho
+da sessão.
+
+### 9.18 Relatório de fim de etapa — 2.7 (modelo obrigatório)
 
 **Arquivos alterados.** Novos: `src/fiscal/servidor/{conexao-postgres,ambiente}.ts`
 e seus dois arquivos de teste. Modificados: `src/fiscal/servidor/sessao.functions.ts`,
