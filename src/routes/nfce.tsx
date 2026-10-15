@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Loader2, Plus, Send, Trash2, Wifi, WifiOff } from "lucide-react";
+import { Plus, Trash2, Wifi, WifiOff } from "lucide-react";
 
 import { ExportarDocumento } from "@/components/blueprint/ExportarDocumento";
 import { gerarNfe } from "@/simulation/documento-saida";
 import { PageHeader } from "@/components/layout/AppShell";
+import { IconeTransmissao } from "@/components/blueprint/IconeTransmissao";
 import { Documented } from "@/components/blueprint/Documented";
 import { ResultadoAlert } from "@/components/blueprint/ResultadoAlert";
 import { useEmissao } from "@/simulation/useEmissao";
@@ -367,11 +368,7 @@ function Pdv() {
               ) : null}
               <Separator />
               <Button className="w-full" disabled={processando} onClick={finalizar}>
-                {processando ? (
-                  <Loader2 className="size-4 animate-spin" aria-hidden />
-                ) : (
-                  <Send className="size-4" aria-hidden />
-                )}
+                <IconeTransmissao processando={processando} />
                 Finalizar venda (F10 simulado)
               </Button>
               <p className="text-xs text-muted-foreground">

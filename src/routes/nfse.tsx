@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Loader2, Save, Send } from "lucide-react";
+import { Save } from "lucide-react";
 
 import { ExportarDocumento } from "@/components/blueprint/ExportarDocumento";
 import { gerarNfse } from "@/simulation/documento-saida";
 import { PageHeader } from "@/components/layout/AppShell";
+import { IconeTransmissao } from "@/components/blueprint/IconeTransmissao";
 import { Documented } from "@/components/blueprint/Documented";
 import { ResultadoAlert } from "@/components/blueprint/ResultadoAlert";
 import { useEmissao } from "@/simulation/useEmissao";
@@ -109,11 +110,7 @@ function EmissaoNfse() {
               <Save className="size-4" aria-hidden /> Salvar rascunho (F9)
             </Button>
             <Button disabled={processando} onClick={() => transmitir({ resumo, problemas })}>
-              {processando ? (
-                <Loader2 className="size-4 animate-spin" aria-hidden />
-              ) : (
-                <Send className="size-4" aria-hidden />
-              )}
+              <IconeTransmissao processando={processando} />
               Emitir (simulado)
             </Button>
           </div>

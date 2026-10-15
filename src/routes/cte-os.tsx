@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { Loader2, Plus, Send, Trash2 } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 
 import { ExportarDocumento } from "@/components/blueprint/ExportarDocumento";
 import { gerarCteOs } from "@/simulation/documento-saida";
 import { PageHeader } from "@/components/layout/AppShell";
+import { IconeTransmissao } from "@/components/blueprint/IconeTransmissao";
 import { Documented } from "@/components/blueprint/Documented";
 import { ResultadoAlert } from "@/components/blueprint/ResultadoAlert";
 import { useEmissao } from "@/simulation/useEmissao";
@@ -132,11 +133,7 @@ function EmissaoCteOs() {
               })
             }
           >
-            {processando ? (
-              <Loader2 className="size-4 animate-spin" aria-hidden />
-            ) : (
-              <Send className="size-4" aria-hidden />
-            )}
+            <IconeTransmissao processando={processando} />
             Transmitir (simulado)
           </Button>
         }

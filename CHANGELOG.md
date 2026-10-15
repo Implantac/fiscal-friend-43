@@ -3,6 +3,72 @@
 Todas as mudanças relevantes deste repositório são registradas aqui.
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [Não publicado] — 2026-10-15 (Etapa 2.13 — extração do cromo de emissão)
+
+### A medição derrubou a estimativa
+
+A estimativa de trabalho era "~400 linhas de cromo compartilhado" nas seis
+telas de emissão. **A medição real é outra**: o núcleo comum às seis é de **56
+linhas normalizadas**, e quase tudo é tag de fechamento de JSX (`</CardContent>`,
+`</div>`, `/>`). Os ~400 linhas mediam a soma da duplicação aos pares (76–125
+linhas idênticas por par), não o que é extraível.
+
+O cromo de verdade **já estava extraído em componentes**: `PageHeader`,
+`Documented`, `ResultadoAlert`, `ExportarDocumento`, `useEmissao`, `brl` e os
+primitivos de `ui/`.
+
+### Extraído
+
+Um único bloco semântico era genuinamente idêntico nas seis — o spinner enquanto
+processa, o ícone de envio quando parado:
+
+    {processando ? (
+      <Loader2 className="size-4 animate-spin" aria-hidden />
+    ) : (
+      <Send className="size-4" aria-hidden />
+    )}
+
+Virou `src/components/blueprint/IconeTransmissao.tsx`, com 6 testes que travam o
+markup servido via `react-dom/server` em Node puro (sem DOM).
+
+Resultado: **21 inserções, 37 remoções**. Um componente de 41 linhas substitui
+30 linhas repetidas, e o que se ganha de fato é a garantia de que o tratamento
+do spinner é idêntico nas seis telas.
+
+### O que continua fora, de propósito
+
+`variant`, `className`, `onClick`, o texto do botão ("Transmitir (simulado)",
+"Emitir (simulado)", "Finalizar venda (F10 simulado)", "Encerrar montagem e
+transmitir (simulado)") e o wrapper `<Documented>`. Cada família tem o seu
+`docId` (`m2.*` NF-e, `m3.*` NFC-e, `m4.*` NFS-e, `m5.*` CT-e, `m6.*` CT-e OS,
+`m7.*` MDF-e) e o seu texto — fundir isso apagaria documentação específica de
+módulo. **A fusão das seis rotas em uma não foi feita e não deve ser
+reproposta.**
+
+### Também
+
+`vitest.config.ts` passa a aceitar `src/**/*.test.{ts,tsx}` — `tsx` entrou para
+os testes de componente.
+
+### Evidência
+
+- `tsc --noEmit`: 0 erros.
+- `eslint`: 0 erros, 6 warnings `react-refresh` pré-existentes.
+- `vitest`: **298 passando, 13 pulados**, 23 arquivos (era 292/22).
+- `vite build`: exit 0.
+- Seis rotas de emissão em 200 no servidor real.
+- `lucide-send size-4` presente no HTML servido das seis — o componente renderiza
+  no SSR.
+- Rótulos por família preservados e verificados no HTML servido.
+- `docId` por módulo preservado e verificado no fonte.
+
+### Pendente
+
+- Verificação no dev server, não no preview de produção (preset Cloudflare
+  module, preview via wrangler, sem rede aqui).
+- `bun.lock` continua dessincronizado e precisa ser regenerado com `bun install`
+  onde bun existir.
+
 ## [Não publicado] — 2026-10-15 (Etapa 2.12 — cabeçalhos de segurança)
 
 Motivado pela verificação do que está publicado em

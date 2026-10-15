@@ -1,10 +1,11 @@
 import { useState, type DragEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { FileUp, Loader2, Send, Trash2 } from "lucide-react";
+import { FileUp, Trash2 } from "lucide-react";
 
 import { ExportarDocumento } from "@/components/blueprint/ExportarDocumento";
 import { gerarCte } from "@/simulation/documento-saida";
 import { PageHeader } from "@/components/layout/AppShell";
+import { IconeTransmissao } from "@/components/blueprint/IconeTransmissao";
 import { Documented } from "@/components/blueprint/Documented";
 import { ResultadoAlert } from "@/components/blueprint/ResultadoAlert";
 import { useEmissao } from "@/simulation/useEmissao";
@@ -172,11 +173,7 @@ function EmissaoCte() {
               })
             }
           >
-            {processando ? (
-              <Loader2 className="size-4 animate-spin" aria-hidden />
-            ) : (
-              <Send className="size-4" aria-hidden />
-            )}
+            <IconeTransmissao processando={processando} />
             Transmitir (simulado)
           </Button>
         }

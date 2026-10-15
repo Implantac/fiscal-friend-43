@@ -802,7 +802,61 @@ junto. Só a execução real resolve.
 do Lovable Cloud. Agora ela tem mais valor: cobre também a C5, que é o caminho
 da sessão.
 
-### 9.18 Etapa 2.12 — cabeçalhos de segurança (2026-10-15)
+### 9.18 Etapa 2.13 — extração do cromo de emissão (2026-10-15)
+
+**A medição derrubou a estimativa de trabalho.** A estimativa era "~400 linhas
+de cromo compartilhado" nas seis telas de emissão. A medição real: o núcleo
+comum às seis é de **56 linhas normalizadas**, quase toda tag de fechamento de
+JSX. Os ~400 linhas mediam a soma da duplicação aos pares (76–125 linhas
+idênticas por par), não o que é extraível.
+
+O cromo de verdade — `PageHeader`, `Documented`, `ResultadoAlert`,
+`ExportarDocumento`, `useEmissao`, `brl`, primitivos de `ui/` — **já estava
+extraído em componentes**.
+
+| Item | Situação |
+|---|---|
+| Núcleo comum real medido | 56 linhas normalizadas |
+| Estimativa anterior | ~400 linhas (errada — media duplicação aos pares) |
+| Bloco semântico realmente idêntico nas 6 | 1 (o spinner/ícone de envio) |
+| Extraído | `IconeTransmissao` + 6 testes |
+| Saldo | 21 inserções, 37 remoções |
+| Fusão das 6 rotas em 1 | **não feita, não repropor** |
+
+**O que continua fora, de propósito:** `variant`, `className`, `onClick`, o texto
+do botão e o wrapper `<Documented>`. Cada família tem o seu `docId` (`m2.*` a
+`m7.*`) e o seu texto; fundir apagaria documentação específica de módulo.
+
+### 9.19 Relatório de fim de etapa — 2.13 (modelo obrigatório)
+
+**Arquivos alterados.** Novo: `src/components/blueprint/IconeTransmissao.tsx`,
+`src/components/blueprint/IconeTransmissao.test.tsx`. Alterados: as seis rotas de
+emissão e `vitest.config.ts` (que passou a aceitar `*.test.tsx`).
+
+**O que foi implementado.** Um componente, testado, para o único bloco
+genuinamente comum às seis telas.
+
+**O que não foi implementado, e por quê.** A fusão das seis rotas. A medição
+mostrou que o ganho seria marginal e o custo seria a perda de `docId` e de texto
+específicos por família.
+
+**Testes executados e resultado.** `tsc` 0 erros; `eslint` 0 erros e 6 warnings
+pré-existentes; `vitest` **298 passando, 13 pulados**, 23 arquivos (era 292/22);
+`vite build` exit 0; seis rotas em 200; `lucide-send size-4` no HTML servido das
+seis; rótulos e `docId` por família verificados.
+
+**Regras fiscais e fontes.** Nenhuma.
+
+**Integrações reais x simuladas.** Nenhuma mudança.
+
+**Homologações pendentes.** As mesmas de antes.
+
+**Limitações conhecidas.** Verificação no dev server. `bun.lock` continua
+dessincronizado.
+
+**Próximas prioridades.** Deliverables documentais faltantes.
+
+### 9.20 Etapa 2.12 — cabeçalhos de segurança (2026-10-15)
 
 Motivado pela verificação do que está publicado em
 `fiscal-friend-43.lovable.app`: HSTS, `x-content-type-options` e
@@ -835,7 +889,7 @@ não a `Response`. O teste era sempre falso: nenhum header era aplicado e nenhum
 erro surgia. Os 11 testes de unidade passavam verdes sobre um middleware inerte
 — só a verificação contra servidor real pegou.
 
-### 9.19 Relatório de fim de etapa — 2.12 (modelo obrigatório)
+### 9.21 Relatório de fim de etapa — 2.12 (modelo obrigatório)
 
 **Arquivos alterados.** Novos: `src/lib/headers-seguranca.ts`,
 `src/lib/headers-seguranca.test.ts`. Alterado: `src/start.ts`.
@@ -867,7 +921,7 @@ possível com nonce.
 **Próximas prioridades.** Rodar a validação contra Postgres real, que continua
 sendo o elo não provado mais importante.
 
-### 9.20 Relatório de fim de etapa — 2.7 (modelo obrigatório)
+### 9.22 Relatório de fim de etapa — 2.7 (modelo obrigatório)
 
 **Arquivos alterados.** Novos: `src/fiscal/servidor/{conexao-postgres,ambiente}.ts`
 e seus dois arquivos de teste. Modificados: `src/fiscal/servidor/sessao.functions.ts`,
