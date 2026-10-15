@@ -3,6 +3,85 @@
 Todas as mudanças relevantes deste repositório são registradas aqui.
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [Não publicado] — 2026-10-15 (Etapa 2.12 — cabeçalhos de segurança)
+
+Motivado pela verificação do que está publicado em
+`fiscal-friend-43.lovable.app`: o ar tinha HSTS, `x-content-type-options` e
+`referrer-policy`, mas **não tinha** `Content-Security-Policy` nem
+`X-Frame-Options`.
+
+### Adicionado
+
+- `src/lib/headers-seguranca.ts` — política CSP e os três cabeçalhos, em módulo
+  puro. 11 testes.
+- `src/lib/headers-seguranca.test.ts` — trava o que a política precisa conter
+  (`default-src 'self'`, `frame-ancestors 'none'`, `object-src 'none'`,
+  `base-uri 'self'`, `connect-src 'self'`) e o que **não** pode conter
+  (`ai.gateway.lovable.dev` em `connect-src`, origem externa em `script-src`).
+- Middleware em `src/start.ts` aplicando os cabeçalhos em toda resposta.
+
+### Por que no middleware e não no `_headers`
+
+O build gera `.output/public/_headers` via Nitro e ele é **sobrescrito** a cada
+build — editar o artefato não sobrevive. E o app é publicado no Lovable Cloud e
+pode mudar de host; prender os headers à config de um host os perderia na
+mudança.
+
+### O que a política protege — e o que não
+
+Protege: injeção de script de terceiro, embutir o app em iframe alheio,
+plugins, mudança de `<base>`, e exfiltração por `fetch`/XHR para origem
+externa.
+
+**Não protege contra XSS, e isto é deliberado e honesto.** `script-src` precisa
+de `'unsafe-inline'` porque o TanStack Start injeta dois scripts inline no HTML
+servido — o bootstrap de hydration (`$tsr-stream-barrier`) e o de restauração de
+scroll. Sem `'unsafe-inline'` o app não hidrata. Com ele, um XSS já existente
+continua executando. XSS mitigado de verdade exige nonce ou hash, o que precisa
+de suporte do framework à injeção de nonce — não tentado aqui.
+
+`style-src` também leva `'unsafe-inline'` (Tailwind + estilos inline do SSR), e
+`https://fonts.googleapis.com`/`https://fonts.gstatic.com` porque o `__root.tsx`
+carrega a IBM Plex por stylesheet externo. `connect-src 'self'` é suficiente: as
+server functions são same-origin e o `fetch` para `ai.gateway.lovable.dev` roda
+**no servidor**, dentro de `diagnostico-ia.functions.ts`.
+
+### Corrigido — um middleware que não fazia nada, sem erro
+
+A primeira versão testava `resultado instanceof Response`. Em
+`requestMiddleware`, `next()` **não devolve uma `Response`**: devolve o contexto
+do request — `{request, pathname, handlerType, context, response}` — e a
+`Response` está em `.response`. O teste era sempre falso, então o middleware
+não aplicava header algum e não lançava erro.
+
+**Só foi pego porque a verificação foi feita contra servidor real.** Os 11
+testes de unidade passavam verdes sobre um middleware inerte. A rota correta é
+`resultado.response.headers`.
+
+### Evidência
+
+- `tsc --noEmit`: 0 erros.
+- `eslint`: 0 erros, 6 warnings `react-refresh` pré-existentes.
+- `vitest`: **292 passando, 13 pulados**, 22 arquivos.
+- `vite build`: exit 0.
+- Headers verificados em servidor real (dev server, mesmo `src/start.ts`):
+  `content-security-policy`, `x-frame-options: DENY` e `x-content-type-options`
+  presentes em `/` e `/documentos`.
+- Fumaça HTTP do fluxo autenticado: **8/8 verdes**, incluindo "CSP presente na
+  resposta de login" — um CSP quebrado barraria as server functions.
+- 7 rotas em 200 com os headers aplicados.
+- Middleware compilado em `.output/server/_ssr/start-*.mjs` e **ausente** do
+  bundle do cliente.
+
+### Pendente
+
+- A verificação dos headers foi no dev server, não no preview de produção: o
+  build gera um preset Cloudflare module cujo preview exige `wrangler`, que
+  precisa de rede e não está disponível aqui. O mesmo `src/start.ts` é compilado
+  para os dois, mas a execução em produção não foi observada.
+- O CSP usa `'unsafe-inline'` em `script-src`; nonce/hash ficou para quando o
+  framework oferecer injeção de nonce.
+
 ## [Não publicado] — 2026-10-15 (Etapa 2.11 — o login que quebraria sob RLS)
 
 ### Corrigido — bug crítico que nenhum teste existente podia pegar

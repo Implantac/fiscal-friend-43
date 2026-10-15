@@ -802,7 +802,72 @@ junto. Só a execução real resolve.
 do Lovable Cloud. Agora ela tem mais valor: cobre também a C5, que é o caminho
 da sessão.
 
-### 9.18 Relatório de fim de etapa — 2.7 (modelo obrigatório)
+### 9.18 Etapa 2.12 — cabeçalhos de segurança (2026-10-15)
+
+Motivado pela verificação do que está publicado em
+`fiscal-friend-43.lovable.app`: HSTS, `x-content-type-options` e
+`referrer-policy` presentes; `Content-Security-Policy` e `X-Frame-Options`
+**ausentes**.
+
+| Item | Situação |
+|---|---|
+| Módulo puro com a política (`src/lib/headers-seguranca.ts`) | implementado + 11 testes |
+| Middleware aplicando em toda resposta (`src/start.ts`) | implementado |
+| Headers verificados em servidor real | sim, no dev server |
+| Headers verificados no preview de produção | **não** — preset Cloudflare, preview exige wrangler |
+| XSS mitigado por nonce/hash | **não** — `'unsafe-inline'` em `script-src` |
+
+**Por que no middleware.** O `_headers` gerado pelo Nitro é sobrescrito a cada
+build, e o app pode mudar de host. Os headers passam a seguir o código.
+
+**O que a política não faz, dito explicitamente.** `script-src` precisa de
+`'unsafe-inline'` porque o TanStack Start injeta dois scripts inline no HTML
+servido (bootstrap de hydration e restauração de scroll). Sem ele o app não
+hidrata; com ele, um XSS já existente continua executando. A política reduz
+superfície de ataque — injeção de script de terceiro, iframe alheio, plugins,
+mudança de `<base>`, exfiltração por `fetch` — mas **não substitui** sanitização
+de entrada.
+
+**Um middleware que não fazia nada, sem erro.** A primeira versão testava
+`resultado instanceof Response`. Em `requestMiddleware`, `next()` devolve o
+**contexto** do request (`{request, pathname, handlerType, context, response}`),
+não a `Response`. O teste era sempre falso: nenhum header era aplicado e nenhum
+erro surgia. Os 11 testes de unidade passavam verdes sobre um middleware inerte
+— só a verificação contra servidor real pegou.
+
+### 9.19 Relatório de fim de etapa — 2.12 (modelo obrigatório)
+
+**Arquivos alterados.** Novos: `src/lib/headers-seguranca.ts`,
+`src/lib/headers-seguranca.test.ts`. Alterado: `src/start.ts`.
+
+**O que foi implementado.** Política CSP e três cabeçalhos em módulo puro e
+testado, aplicados por middleware a toda resposta.
+
+**O que foi corrigido.** Um middleware inerte, por hipótese errada sobre o que
+`next()` devolve.
+
+**Testes executados e resultado.** `tsc` 0 erros; `eslint` 0 erros e 6 warnings
+pré-existentes; `vitest` **292 passando, 13 pulados**; `vite build` exit 0;
+headers confirmados em `/` e `/documentos`; fumaça HTTP **8/8** com "CSP
+presente na resposta de login"; 7 rotas em 200; middleware compilado no servidor
+e ausente do bundle do cliente.
+
+**Regras fiscais e fontes.** Nenhuma.
+
+**Integrações reais x simuladas.** Nenhuma mudança.
+
+**Homologações pendentes.** Confirmar os headers no ambiente publicado do
+Lovable após o próximo deploy.
+
+**Limitações conhecidas.** Verificação feita no dev server; o preview de
+produção não pôde rodar (preset Cloudflare module, preview via wrangler, sem
+rede). `'unsafe-inline'` em `script-src` mantém a política aquém do que seria
+possível com nonce.
+
+**Próximas prioridades.** Rodar a validação contra Postgres real, que continua
+sendo o elo não provado mais importante.
+
+### 9.20 Relatório de fim de etapa — 2.7 (modelo obrigatório)
 
 **Arquivos alterados.** Novos: `src/fiscal/servidor/{conexao-postgres,ambiente}.ts`
 e seus dois arquivos de teste. Modificados: `src/fiscal/servidor/sessao.functions.ts`,
