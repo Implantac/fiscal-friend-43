@@ -15,9 +15,9 @@ describe("registro de regras com fonte oficial", () => {
     registrarRegrasComFonte();
   });
 
-  it("registra as três regras com fonte", () => {
-    expect(REGRAS_COM_FONTE).toHaveLength(3);
-    expect(listarRegras()).toHaveLength(3);
+  it("registra as cinco regras com fonte", () => {
+    expect(REGRAS_COM_FONTE).toHaveLength(5);
+    expect(listarRegras()).toHaveLength(5);
   });
 
   it("toda regra tem fonte normativa identificada", () => {
@@ -63,7 +63,7 @@ describe("registro de regras com fonte oficial", () => {
 
   it("registrar duas vezes não duplica", () => {
     registrarRegrasComFonte();
-    expect(listarRegras()).toHaveLength(3);
+    expect(listarRegras()).toHaveLength(5);
   });
 
   it("cada regra declara suas limitações conhecidas", () => {
@@ -80,6 +80,15 @@ describe("registro de regras com fonte oficial", () => {
     const ids = REGRAS_COM_FONTE.map((r) => r.id);
     expect(new Set(ids).size).toBe(ids.length);
     for (const id of ids) expect(id).toMatch(/^[A-Z0-9-]+$/);
+  });
+
+  it("cobre as cinco áreas de regra com fonte", () => {
+    const ids = REGRAS_COM_FONTE.map((r) => r.id);
+    expect(ids).toContain("CHAVE-ACESSO-ESTRUTURA-44");
+    expect(ids).toContain("CHAVE-ACESSO-DV-MOD11");
+    expect(ids).toContain("CHAVE-ACESSO-CARACTERE-ASCII48");
+    expect(ids).toContain("CFOP-ESTRUTURA-PRIMEIRO-DIGITO");
+    expect(ids).toContain("CST-COMPOSICAO-ORIGEM-TRIBUTACAO");
   });
 
   it("as três regras são recuperáveis individualmente", () => {

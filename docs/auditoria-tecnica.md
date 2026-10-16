@@ -802,7 +802,63 @@ junto. Só a execução real resolve.
 do Lovable Cloud. Agora ela tem mais valor: cobre também a C5, que é o caminho
 da sessão.
 
-### 9.18 Etapa 2.15 — primeiras regras fiscais com fonte (2026-10-15)
+### 9.18 Etapa 2.16 — classificador fiscal com tabelas oficiais (2026-10-16)
+
+Continuação da frente de regras. Substitui **heurística inventada por tabela
+oficial** na classificação de operação.
+
+| Item | Situação |
+|---|---|
+| `src/fiscal/classificacao.ts` + 33 testes | criado |
+| Regras no registro | 3 → **5** (CFOP e CST com fonte) |
+| Capacidade nova na cobertura | "Classificação fiscal (CFOP, CST, CSOSN)" |
+| Classificador escolhe tributação sozinho | **não**, e não deve |
+
+**A regra que governa o classificador:** quando a tabela não cobre o caso,
+devolve pendência — não inventa código. `crt: "1"` devolve "CSOSN não
+determinado"; sem `tributacao`, devolve "Tributação não informada" em vez de
+assumir `00`; CFOP fora da tabela devolve "CFOP não determinável". E
+`completa === false` sempre que há pendência.
+
+**Por que não escolhe a tributação.** A escolha entre as 15 situações da Tabela
+B depende de legislação estadual, de benefício fiscal e de cadastro do
+contribuinte. Nada disso é normativa em tabela nacional — e nenhum foi
+inventado. Um classificador que "resolve" isso estaria fabricando decisão
+fiscal, que é exatamente o que o projeto se propõs a não fazer.
+
+### 9.19 Relatório de fim de etapa — 2.16 (modelo obrigatório)
+
+**Arquivos alterados.** Novos: `src/fiscal/classificacao.ts`,
+`src/fiscal/classificacao.test.ts`. Alterados: `src/fiscal/regras-oficiais.ts`,
+`src/fiscal/regras-oficiais.test.ts`, `src/knowledge/cobertura.ts`,
+`src/knowledge/cobertura.test.ts`.
+
+**O que foi implementado.** Tabelas oficiais de CFOP, CST e CSOSN no domínio, e
+um classificador que as consulta e declara pendência quando não cobre.
+
+**O que não foi implementado, e por quê.** Escolha automática de tributação.
+Não é normativa; seria fabricação.
+
+**Testes executados e resultado.** `tsc` 0 erros; `eslint` 0 erros e 6 warnings;
+`vitest` **368 passando, 13 pulados**, 26 arquivos (era 334/25); `vite build`
+exit 0; trava na cobertura verificada.
+
+**Regras fiscais e fontes.** 2 novas (Convênio SINIEF s/nº de 15/12/1970 —
+CFOP e CST). Total 5, todas `validada_tecnicamente`.
+
+**Integrações reais x simuladas.** Nenhuma mudança.
+
+**Homologações pendentes.** Conferir os atos originais; validar contra Postgres
+real; regenerar `bun.lock`.
+
+**Limitações conhecidas.** `CFOP_CONHECIDOS` cobre 24 códigos, não a tabela
+completa. CST de PIS, COFINS, IPI e da reforma não mapeados. Nenhum documento
+autorizado em nenhum ambiente.
+
+**Próximas prioridades.** Mais tabelas oficiais (PIS/COFINS, IPI, códigos de
+rejeição); aplicar migrações e rodar C1–C9.
+
+### 9.20 Etapa 2.15 — primeiras regras fiscais com fonte (2026-10-15)
 
 Resposta a "o sistema não parece ser um emissor de documentos reais". O
 diagnóstico estava certo. Esta etapa ataca a raiz — a que o usuário priorizou:
@@ -833,7 +889,7 @@ valor inventado. A implementação estava certa e o teste errado; a âncora
 oficial pegou. Um teste que não tem valor esperado vindo de fonte externa só
 mede o código contra si mesmo.
 
-### 9.19 Relatório de fim de etapa — 2.15 (modelo obrigatório)
+### 9.21 Relatório de fim de etapa — 2.15 (modelo obrigatório)
 
 **Arquivos alterados.** Novos: `src/fiscal/chave-acesso.ts`,
 `src/fiscal/chave-acesso.test.ts`, `src/fiscal/regras-oficiais.ts`,
@@ -868,7 +924,7 @@ documento autorizado em nenhum ambiente.
 tributos, códigos de rejeição) e ampliar o registro; aplicar migrações e rodar
 a validação C1–C9.
 
-### 9.20 Etapa 2.14 — deliverables documentais (2026-10-15)
+### 9.22 Etapa 2.14 — deliverables documentais (2026-10-15)
 
 Cinco documentos pedidos. **Três não existiam; dois existiam e estavam
 desatualizados.**
@@ -889,7 +945,7 @@ porque descrevia um **back-end Python separado que foi abandonado** — a divis�
 atual é front-end / servidor TanStack / provedor, e a revisão anterior não
 sabia que multi-tenant existia.
 
-### 9.21 Relatório de fim de etapa — 2.14 (modelo obrigatório)
+### 9.23 Relatório de fim de etapa — 2.14 (modelo obrigatório)
 
 **Arquivos alterados.** Novos: `docs/manual-desenvolvedor.md`,
 `docs/atualizacao-normativa.md`, `docs/relatorio-limitacoes.md`. Alterado:
@@ -922,7 +978,7 @@ escito no próprio documento.
 **Próximas prioridades.** Validação contra Postgres real; regenerar
 `bun.lock`.
 
-### 9.22 Etapa 2.13 — extração do cromo de emissão (2026-10-15)
+### 9.24 Etapa 2.13 — extração do cromo de emissão (2026-10-15)
 
 **A medição derrubou a estimativa de trabalho.** A estimativa era "~400 linhas
 de cromo compartilhado" nas seis telas de emissão. A medição real: o núcleo
@@ -947,7 +1003,7 @@ extraído em componentes**.
 do botão e o wrapper `<Documented>`. Cada família tem o seu `docId` (`m2.*` a
 `m7.*`) e o seu texto; fundir apagaria documentação específica de módulo.
 
-### 9.23 Relatório de fim de etapa — 2.13 (modelo obrigatório)
+### 9.25 Relatório de fim de etapa — 2.13 (modelo obrigatório)
 
 **Arquivos alterados.** Novo: `src/components/blueprint/IconeTransmissao.tsx`,
 `src/components/blueprint/IconeTransmissao.test.tsx`. Alterados: as seis rotas de
@@ -976,7 +1032,7 @@ dessincronizado.
 
 **Próximas prioridades.** Deliverables documentais faltantes.
 
-### 9.24 Etapa 2.12 — cabeçalhos de segurança (2026-10-15)
+### 9.26 Etapa 2.12 — cabeçalhos de segurança (2026-10-15)
 
 Motivado pela verificação do que está publicado em
 `fiscal-friend-43.lovable.app`: HSTS, `x-content-type-options` e
@@ -1009,7 +1065,7 @@ não a `Response`. O teste era sempre falso: nenhum header era aplicado e nenhum
 erro surgia. Os 11 testes de unidade passavam verdes sobre um middleware inerte
 — só a verificação contra servidor real pegou.
 
-### 9.25 Relatório de fim de etapa — 2.12 (modelo obrigatório)
+### 9.27 Relatório de fim de etapa — 2.12 (modelo obrigatório)
 
 **Arquivos alterados.** Novos: `src/lib/headers-seguranca.ts`,
 `src/lib/headers-seguranca.test.ts`. Alterado: `src/start.ts`.
@@ -1041,7 +1097,7 @@ possível com nonce.
 **Próximas prioridades.** Rodar a validação contra Postgres real, que continua
 sendo o elo não provado mais importante.
 
-### 9.26 Relatório de fim de etapa — 2.7 (modelo obrigatório)
+### 9.28 Relatório de fim de etapa — 2.7 (modelo obrigatório)
 
 **Arquivos alterados.** Novos: `src/fiscal/servidor/{conexao-postgres,ambiente}.ts`
 e seus dois arquivos de teste. Modificados: `src/fiscal/servidor/sessao.functions.ts`,

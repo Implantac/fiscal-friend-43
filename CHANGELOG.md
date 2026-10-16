@@ -3,6 +3,68 @@
 Todas as mudanças relevantes deste repositório são registradas aqui.
 Formato: [Keep a Changelog](https://keepachangelog.com/pt-BR/1.1.0/).
 
+## [Não publicado] — 2026-10-16 (Etapa 2.16 — classificador fiscal com tabelas oficiais)
+
+Continuação da frente de regras. O objetivo declarado era transformar o
+simulador em sistema de emissão; o que esta etapa faz é substituir **heurística
+inventada por tabela oficial** na classificação.
+
+### Adicionado
+
+- `src/fiscal/classificacao.ts` — tabelas oficiais e classificador:
+  - **CFOP**: `CFOP_SENTIDO` (6 primeiros dígitos), `CFOP_GRUPO` (segundo
+    dígito) e `CFOP_CONHECIDOS` (24 códigos de uso frequente).
+  - **CST**: `CST_ORIGEM` (Tabela A, 9 origens), `CST_TRIBUTACAO` (Tabela B, 15
+    situações), `CSOSN` (10 códigos), `CRT` (3 regimes).
+  - `decomporCfop`, `decomporCst`, `sugerirCfop` e `classificarOperacao`.
+    33 testes.
+- Duas regras novas no registro, com fonte: `CFOP-ESTRUTURA-PRIMEIRO-DIGITO` e
+  `CST-COMPOSICAO-ORIGEM-TRIBUTACAO`. O registro passou de 3 para **5 regras**.
+- Capacidade nova na cobertura: "Classificação fiscal (CFOP, CST, CSOSN)".
+
+### A regra que governa o classificador
+
+**Quando a tabela não cobre o caso, devolve pendência — não inventa código.**
+
+Concretamente: `classificarOperacao` com `crt: "1"` devolve
+`CSOSN não determinado` em vez de escolher entre 101/102/103/...; sem
+`tributacao` informada, devolve `Tributação não informada` em vez de assumir
+`00`; CFOP fora de `CFOP_CONHECIDOS` devolve `CFOP não determinável`. E
+`completa === false` sempre que há pendência, para que o chamador trate como
+"não classificado", nunca como "classificado com ressalva".
+
+### Fontes
+
+- **CFOP**: Convênio SINIEF s/nº, de 15 de dezembro de 1970 (CONFAZ).
+- **CST**: mesmo convênio, Anexo — Código de Situação Tributária, Tabelas A e B.
+
+Como nas regras da Etapa 2.15, os portais do CONFAZ e da NF-e bloqueiam
+requisição automatizada. As tabelas foram confirmadas por múltiplas fontes
+independentes que citam os atos — **não** pelo texto original. Daí
+`validada_tecnicamente` e o motor continuar se recusando a calcular.
+
+### Armadilha repetida
+
+`exactOptionalPropertyTypes` barrou `tributacao: undefined` no teste. Corrigido
+com `tributacao?: string | undefined` na interface — sem isso, o caminho de
+"tributação ausente" ficaria sem cobertura de teste.
+
+### Evidência
+
+- `tsc --noEmit`: 0 erros.
+- `eslint`: 0 erros, 6 warnings `react-refresh` pré-existentes.
+- `vitest`: **368 passando, 13 pulados**, 26 arquivos (era 334/25).
+- `vite build`: exit 0.
+- Trava na cobertura: classificação e registro de regras nunca passam de
+  `estrutural` e nunca dizem "pronto para produção".
+
+### O que isto não é
+
+**Não é emissão.** O classificador não calcula tributo, não escolhe alíquota e
+não decide entre isenção, ST e redução de base — nenhuma dessas escolhas é
+normativa em tabela nacional. Nenhum documento foi autorizado por serviço
+fiscal em nenhum ambiente. Ver `docs/relatorio-limitacoes.md`.
+
 ## [Não publicado] — 2026-10-15 (Etapa 2.15 — primeiras regras fiscais com fonte)
 
 Resposta a "o sistema não parece ser um emissor de documentos reais". O

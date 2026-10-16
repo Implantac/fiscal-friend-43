@@ -80,7 +80,13 @@ const CAPACIDADES_COMUNS: Capacidade[] = [
     area: "Registro de regras fiscais",
     nivel: "estrutural",
     realidade:
-      "3 regras com fonte normativa identificada e caso de teste falseável (chave de acesso). Todas em `validada_tecnicamente` — a conferência no PDF original do MOC ainda não foi feita, então nenhuma está liberada para cálculo real.",
+      "5 regras com fonte normativa identificada e caso de teste falseável: chave de acesso (estrutura, DV, caractere), CFOP (primeiro dígito) e CST (Tabela A + Tabela B). Todas em `validada_tecnicamente` — o texto original dos atos não foi conferido, então nenhuma está liberada para cálculo real.",
+  },
+  {
+    area: "Classificação fiscal (CFOP, CST, CSOSN)",
+    nivel: "estrutural",
+    realidade:
+      "Tabelas oficiais em `src/fiscal/classificacao.ts` e classificador que as consulta. Quando a tabela não cobre o caso, devolve pendência em vez de inventar código. **A escolha entre as situações da Tabela B não é decidida** — depende de legislação estadual e de cadastro.",
   },
   {
     area: "Valores monetários",

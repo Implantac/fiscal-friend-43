@@ -33,6 +33,7 @@
 
 import { registrarRegra, type RegraFiscal } from "./regras";
 import { dvChave, montarChaveAcesso, valorCaractere } from "./chave-acesso";
+import { decomporCfop, decomporCst } from "./classificacao";
 
 /**
  * Data desta consulta. Como o PDF original não pôde ser aberto, esta data é a
@@ -257,11 +258,144 @@ export const REGRA_CHAVE_ALFANUMERICO: RegraFiscal = {
   ],
 };
 
+/**
+ * Regra 4 — estrutura do CFOP.
+ *
+ * O classificador de `classificacao.ts` usa esta estrutura. O que a regra
+ * garante é o que **não** existe: primeiro dígito 4, 8 ou 0.
+ */
+export const REGRA_CFOP_ESTRUTURA: RegraFiscal = {
+  id: "CFOP-ESTRUTURA-PRIMEIRO-DIGITO",
+  versao: "1.0.0",
+  titulo: "Estrutura do CFOP — sentido e abrangência pelo primeiro dígito",
+  descricao:
+    "O CFOP tem 4 dígitos. O primeiro indica sentido e abrangência: 1 entrada interna, 2 entrada interestadual, 3 entrada do exterior, 5 saída interna, 6 saída interestadual, 7 saída para o exterior. **Não existe primeiro dígito 4, 8 ou 0.** Séries 1-3 são entrada; 5-7 são saída.",
+  fonte: {
+    orgao: "CONFAZ",
+    documento: "Convênio SINIEF s/nº, de 15 de dezembro de 1970",
+    dispositivo: "Tabela de Códigos Fiscais de Operações e Prestações",
+    consultadaEm: CONSULTADA_EM,
+  },
+  jurisdicao: "Nacional",
+  escopo: "NF-e, NFC-e, CT-e, CT-e OS, MDF-e e SPED Fiscal",
+  estado: "validada_tecnicamente",
+  condicoes: [
+    "1 = entrada, mesma UF.",
+    "2 = entrada, outra UF.",
+    "3 = entrada, do exterior.",
+    "5 = saída, mesma UF.",
+    "6 = saída, outra UF.",
+    "7 = saída, para o exterior.",
+  ],
+  casosTeste: [
+    {
+      id: "CFOP-EST-001",
+      descricao: "5102 é saída interna",
+      entrada: { cfop: "5102" },
+      saidaEsperada: { sentido: "saida", abrangencia: "interna" },
+      origem: "fonte_oficial",
+    },
+    {
+      id: "CFOP-EST-002",
+      descricao: "6102 é saída interestadual",
+      entrada: { cfop: "6102" },
+      saidaEsperada: { sentido: "saida", abrangencia: "interestadual" },
+      origem: "fonte_oficial",
+    },
+    {
+      id: "CFOP-EST-003",
+      descricao: "1102 é entrada interna — espelho de 5102",
+      entrada: { cfop: "1102" },
+      saidaEsperada: { sentido: "entrada", abrangencia: "interna" },
+      origem: "fonte_oficial",
+    },
+    {
+      id: "CFOP-EST-004",
+      descricao: "4102 não existe — primeiro dígito 4 não está na tabela",
+      entrada: { cfop: "4102" },
+      saidaEsperada: { valido: false },
+      origem: "fonte_oficial",
+    },
+  ],
+  responsavel: "pendente — revisão por contador responsável não realizada",
+  limitacoes: [
+    "Texto original do Convênio SINIEF s/nº de 15/12/1970 não conferido; portal do CONFAZ bloqueia acesso automatizado.",
+    "A tabela completa tem centenas de códigos; `CFOP_CONHECIDOS` cobre apenas os de uso frequente.",
+    "Códigos estaduais específicos e CFOP de serviços municipais não mapeados.",
+  ],
+};
+
+/**
+ * Regra 5 — composição do CST.
+ *
+ * O CST tem 3 dígitos: o primeiro da Tabela A (origem, 0 a 8), os dois
+ * últimos da Tabela B (tributação). CSOSN substitui a Tabela B quando CRT = 1.
+ */
+export const REGRA_CST_COMPOSICAO: RegraFiscal = {
+  id: "CST-COMPOSICAO-ORIGEM-TRIBUTACAO",
+  versao: "1.0.0",
+  titulo: "Composição do CST — Tabela A (origem) e Tabela B (tributação)",
+  descricao:
+    "O CST do ICMS tem 3 dígitos. O primeiro vem da Tabela A (origem da mercadoria, códigos 0 a 8) e os dois últimos da Tabela B (tributação pelo ICMS, 15 situações de 00 a 90). Quando CRT = 1 (Simples Nacional), o CSOSN substitui a Tabela B.",
+  fonte: {
+    orgao: "CONFAZ",
+    documento: "Convênio SINIEF s/nº de 15.12.1970, Anexo — Código de Situação Tributária",
+    dispositivo: "Tabela A e Tabela B",
+    consultadaEm: CONSULTADA_EM,
+  },
+  jurisdicao: "Nacional",
+  escopo: "NF-e, NFC-e, CT-e, CT-e OS, MDF-e",
+  estado: "validada_tecnicamente",
+  condicoes: [
+    "Tabela A tem 9 origens, de 0 a 8.",
+    "Tabela B tem 15 situações: 00, 02, 10, 15, 20, 30, 40, 41, 50, 51, 53, 60, 61, 70, 90.",
+    "CSOSN (101, 102, 103, 201, 202, 203, 300, 400, 500, 900) é usado exclusivamente quando CRT = 1.",
+  ],
+  casosTeste: [
+    {
+      id: "CST-COMP-001",
+      descricao: "060 = origem 0 (nacional) + tributação 60 (ICMS-ST anterior)",
+      entrada: { cst: "060" },
+      saidaEsperada: { origem: "0", tributacao: "60", valido: true },
+      origem: "fonte_oficial",
+    },
+    {
+      id: "CST-COMP-002",
+      descricao: "000 = origem 0 + tributação 00 (tributada integralmente)",
+      entrada: { cst: "000" },
+      saidaEsperada: { origem: "0", tributacao: "00", valido: true },
+      origem: "fonte_oficial",
+    },
+    {
+      id: "CST-COMP-003",
+      descricao: "099 não existe — tributação 99 não está na Tabela B",
+      entrada: { cst: "099" },
+      saidaEsperada: { valido: false },
+      origem: "fonte_oficial",
+    },
+    {
+      id: "CST-COMP-004",
+      descricao: "900 não existe — origem 9 não está na Tabela A",
+      entrada: { cst: "900" },
+      saidaEsperada: { valido: false },
+      origem: "fonte_oficial",
+    },
+  ],
+  responsavel: "pendente — revisão por contador responsável não realizada",
+  limitacoes: [
+    "Texto original do Convênio SINIEF s/nº de 15.12.1970 não conferido.",
+    "A escolha entre as 15 situações da Tabela B depende de legislação estadual, benefício fiscal e cadastro — nenhuma regra de escolha é normativa e nenhuma foi inventada.",
+    "CST de PIS, COFINS, IPI e da reforma (IBS/CBS) não mapeados.",
+  ],
+};
+
 /** Todas as regras com fonte oficial registradas até aqui. */
 export const REGRAS_COM_FONTE: RegraFiscal[] = [
   REGRA_CHAVE_ESTRUTURA,
   REGRA_CHAVE_DV,
   REGRA_CHAVE_ALFANUMERICO,
+  REGRA_CFOP_ESTRUTURA,
+  REGRA_CST_COMPOSICAO,
 ];
 
 /**
@@ -372,6 +506,34 @@ function executarCaso(
           cNF: String(e["cNF"]),
         });
         return { passou: chave.length === s["comprimento"], detalhe: `len ${chave.length}` };
+      }
+      case "CFOP-ESTRUTURA-PRIMEIRO-DIGITO": {
+        const d = decomporCfop(String(e["cfop"]));
+        if (s["valido"] === false) return { passou: !d.valido, detalhe: `valido=${d.valido}` };
+        const sentido = d.sentido?.startsWith("Saída")
+          ? "saida"
+          : d.sentido?.startsWith("Entrada")
+            ? "entrada"
+            : undefined;
+        const abrangencia = d.sentido?.includes("interna")
+          ? "interna"
+          : d.sentido?.includes("interestadual")
+            ? "interestadual"
+            : d.sentido?.includes("exterior")
+              ? "exterior"
+              : undefined;
+        return {
+          passou: sentido === s["sentido"] && abrangencia === s["abrangencia"],
+          detalhe: `${sentido}/${abrangencia}`,
+        };
+      }
+      case "CST-COMPOSICAO-ORIGEM-TRIBUTACAO": {
+        const d = decomporCst(String(e["cst"]));
+        if (s["valido"] === false) return { passou: !d.valido, detalhe: `valido=${d.valido}` };
+        return {
+          passou: d.valido && d.origem === s["origem"] && d.tributacao === s["tributacao"],
+          detalhe: `${d.origem}/${d.tributacao}`,
+        };
       }
       default:
         return { passou: false, detalhe: "regra sem executor de caso" };
